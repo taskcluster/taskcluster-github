@@ -29,16 +29,26 @@ var launch = async function(profile) {
     filename:     'taskcluster-github'
   });
 
+  // Create a default stats drain, which just prints to stdout
+  let statsDrain = {
+      addPoint: (...args) => {debug("stats:", args)}
+  }
+
   // Create InfluxDB connection for submitting statistics
-  var influx = new base.stats.Influx({
-    connectionString:   cfg.get('influx:connectionString'),
-    maxDelay:           cfg.get('influx:maxDelay'),
-    maxPendingPoints:   cfg.get('influx:maxPendingPoints')
-  });
+  let influxConnectionString = cfg.get('influx:connectionString')
+  if (influxConnectionString) {
+      statsDrain = new base.stats.Influx({
+        connectionString:   influxConnectionString,
+        maxDelay:           cfg.get('influx:maxDelay'),
+        maxPendingPoints:   cfg.get('influx:maxPendingPoints')
+      });
+  } else {
+      debug("Missing influx_connectionString: stats collection disabled.")
+  }
 
   // Start monitoring the process
   base.stats.startProcessUsageReporting({
-    drain:      influx,
+    drain:      statsDrain,
     component:  cfg.get('taskclusterGithub:statsComponent'),
     process:    'server'
   });
@@ -51,17 +61,23 @@ var launch = async function(profile) {
     aws:              cfg.get('aws')
   });
 
-  let publisher = await exchanges.setup({
-    credentials:        cfg.get('pulse'),
-    exchangePrefix:     cfg.get('taskclusterGithub:exchangePrefix'),
-    validator:          validator,
-    referencePrefix:    'github/v1/exchanges.json',
-    publish:            cfg.get('taskclusterGithub:publishMetaData') === 'true',
-    aws:                cfg.get('aws'),
-    drain:              influx,
-    component:          cfg.get('taskclusterGithub:statsComponent'),
-    process:            'server'
-  });
+  let publisher = undefined
+  let pulseCredentials = cfg.get('pulse')
+  if (pulseCredentials.username && pulseCredentials.password) {
+      publisher = await exchanges.setup({
+        credentials:        pulseCredentials,
+        exchangePrefix:     cfg.get('taskclusterGithub:exchangePrefix'),
+        validator:          validator,
+        referencePrefix:    'github/v1/exchanges.json',
+        publish:            cfg.get('taskclusterGithub:publishMetaData') === 'true',
+        aws:                cfg.get('aws'),
+        drain:              statsDrain,
+        component:          cfg.get('taskclusterGithub:statsComponent'),
+        process:            'server'
+      });
+ } else {
+    debug("Missing pulse credentials: leaving publisher undefined.")
+ }
 
   // Create API router and publish reference if needed
   debug("Creating API router");
@@ -76,7 +92,7 @@ var launch = async function(profile) {
     referencePrefix:  'github/v1/api.json',
     aws:              cfg.get('aws'),
     component:        cfg.get('taskclusterGithub:statsComponent'),
-    drain:            influx
+    drain:            statsDrain
   });
 
   debug("Configuring app");

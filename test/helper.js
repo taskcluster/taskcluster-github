@@ -23,10 +23,9 @@ var cfg = base.config({
     'taskcluster_credentials_accessToken',
     'aws_accessKeyId',
     'aws_secretAccessKey',
-    'influx_connectionString',
-    'webhook_secret'
+    'influx_connectionString'
   ],
-  filename:     'taskcluster-github'
+  filename:     'taskcluster-purge-cache'
 });
 
 // Some default clients for the mockAuthServer
@@ -46,6 +45,21 @@ var defaultClients = [
 
 // Create and export helper object
 var helper = module.exports = {};
+
+// Skip tests if no credentials is configured
+if (!cfg.get('pulse:password')) {
+  console.log("No pulse credentials: integration tests should be skipped.");
+} else {
+  // Configure PulseTestReceiver
+  helper.events = new base.testing.PulseTestReceiver(cfg.get('pulse'), mocha);
+  // Create client for binding to reference
+  var exchangeReference = exchanges.reference({
+    exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
+    credentials:      cfg.get('pulse')
+  });
+  helper.TaskclusterGitHubEvents = taskcluster.createClient(exchangeReference);
+  helper.taskclusterGithubEvents = new helper.TaskclusterGitHubEvents();
+}
 
 // Hold reference to authServer
 var authServer = null;
@@ -82,6 +96,7 @@ mocha.before(async () => {
 
   // Initialize purge-cache client
   helper.scopes();
+
 });
 
 // Setup before each test

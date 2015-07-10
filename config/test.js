@@ -18,9 +18,9 @@ module.exports = {
     port:                         60415
   },
 
-  pulse: {
+  /*pulse: {
     username:   'public',
     password:   'public',
     hostname:   'pulse.mozilla.org'
-  }
+  }*/
 };
