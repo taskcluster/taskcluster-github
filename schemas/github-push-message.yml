@@ -1,0 +1,31 @@
+id: http://schemas.taskcluster.net/github/v1/github-pull-request-message.json#
+$schema:  http://json-schema.org/draft-04/schema#
+title:        "GitHub Push Message"
+description: |
+  Message reporting that a GitHub push has occurred
+type:         object
+properties:
+  version:    {$const: message-version}
+  organizationName:
+    description: |
+      The GitHub `organizationName` which had an event.
+    type:         string
+    minLength:    {$const: identifier-min-length}
+    maxLength:    {$const: identifier-max-length}
+    pattern:      {$const: identifier-pattern}
+  repositoryName:
+    description: |
+      The GitHub `repositoryName` which had an event.
+    type:         string
+    minLength:    {$const: identifier-min-length}
+    maxLength:    {$const: identifier-max-length}
+    pattern:      {$const: identifier-pattern}
+  details:
+    type:         object
+    description: |
+      Metadata describing the push.
+additionalProperties: false
+required:
+  - version
+  - organizationName
+  - repositoryName
