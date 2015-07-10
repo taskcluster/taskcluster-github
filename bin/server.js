@@ -61,7 +61,7 @@ var launch = async function(profile) {
     aws:              cfg.get('aws')
   });
 
-  let publisher = undefined
+  let publisher = {}
   let pulseCredentials = cfg.get('pulse')
   if (pulseCredentials.username && pulseCredentials.password) {
       publisher = await exchanges.setup({
