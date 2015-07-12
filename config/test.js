@@ -1,4 +1,8 @@
 module.exports = {
+  webhook: {
+    secret:                 'c-etait-un-secret'
+  },
+
   exports: {
     publishMetaData:              'false',
     statsComponent:               'test-queue',
