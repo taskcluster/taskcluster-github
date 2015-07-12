@@ -8,7 +8,7 @@ var exchanges         = require('../lib/exchanges');
 var _                 = require('lodash');
 
 /** Launch server */
-var launch = async function(profile) {
+var launch = async function(profile, customPublisher) {
   debug("Launching with profile: %s", profile);
 
   // Load configuration
@@ -61,7 +61,7 @@ var launch = async function(profile) {
     aws:              cfg.get('aws')
   });
 
-  let publisher = {}
+  let publisher = customPublisher
   let pulseCredentials = cfg.get('pulse')
   if (pulseCredentials.username && pulseCredentials.password) {
       publisher = await exchanges.setup({
