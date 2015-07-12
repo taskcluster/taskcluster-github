@@ -10,7 +10,7 @@ module.exports = {
 
   taskcluster: {
     authBaseUrl:                  'http://localhost:60414/v1',
-
+    authPort:                     60414,
     credentials: {
       clientId:                   "test-server",
       accessToken:                "none"
