@@ -22,5 +22,5 @@ suite("TaskCluster-Github", () => {
   // Bad data: should all return 400 responses
   statusTest('pushWithNoSecret', 'webhook.push.no_secret.json', 400)
   statusTest('unknownEvent', 'webhook.unknown_event.json', 400)
-  statusTest('pushWithBadSecret', 'webhook.push.bad_secret.json', 400)
+  statusTest('pushWithBadSecret', 'webhook.push.bad_secret.json', 403)
 });
