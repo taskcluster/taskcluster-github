@@ -15,9 +15,9 @@ suite("TaskCluster-Github", () => {
   }
 
   // Good data: should all return 200 responses
-  statusTest('pullRequestOpen', 'webhook.pull_request.open.json', 200)
-  statusTest('pullRequestClose', 'webhook.pull_request.close.json', 200)
-  statusTest('push', 'webhook.push.json', 200)
+  statusTest('pullRequestOpen', 'webhook.pull_request.open.json', 204)
+  statusTest('pullRequestClose', 'webhook.pull_request.close.json', 204)
+  statusTest('push', 'webhook.push.json', 204)
 
   // Bad data: should all return 400 responses
   statusTest('pushWithNoSecret', 'webhook.push.no_secret.json', 400)
