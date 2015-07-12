@@ -64,7 +64,7 @@ var launch = async function(profile, customPublisher) {
   let publisher = customPublisher
   let pulseCredentials = cfg.get('pulse')
   if (publisher) {
-    debug("Using a custom publiser instead of pulse")
+    debug("Using a custom publisher instead of pulse")
   } else if (pulseCredentials.username && pulseCredentials.password) {
       publisher = await exchanges.setup({
         credentials:        pulseCredentials,
