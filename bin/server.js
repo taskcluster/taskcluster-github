@@ -63,7 +63,9 @@ var launch = async function(profile, customPublisher) {
 
   let publisher = customPublisher
   let pulseCredentials = cfg.get('pulse')
-  if (pulseCredentials.username && pulseCredentials.password) {
+  if (publisher) {
+    debug("Using a custom publiser instead of pulse")
+  } else if (pulseCredentials.username && pulseCredentials.password) {
       publisher = await exchanges.setup({
         credentials:        pulseCredentials,
         exchangePrefix:     cfg.get('taskclusterGithub:exchangePrefix'),
@@ -76,7 +78,7 @@ var launch = async function(profile, customPublisher) {
         process:            'server'
       });
  } else {
-    debug("Missing pulse credentials: leaving publisher undefined.")
+    throw "Can't initialize pulse publisher: missing credentials"
  }
 
   // Create API router and publish reference if needed
