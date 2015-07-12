@@ -1,6 +1,6 @@
 module.exports = {
   webhook: {
-    secret:                 'c-etait-un-secret'
+    secret:                       'c-etait-un-secret'
   },
 
   exports: {
