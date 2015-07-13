@@ -1,5 +1,5 @@
 module.exports = {
-  // TaskCluster purge cache configuration
+  // TaskCluster GitHub configuration
   taskclusterGithub: {
     // Publish references and schemas
     publishMetaData:              'false',
