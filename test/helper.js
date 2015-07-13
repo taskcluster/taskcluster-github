@@ -49,6 +49,13 @@ var defaultClients = [
 // Create and export helper object
 var helper = module.exports = {};
 
+// Turn integration tests on or off depending on pulse credentials being set
+helper.canRunIntegrationTests = true;
+if (!cfg.get('pulse:password')) {
+  helper.canRunIntegrationTests = false;
+  console.log("No pulse credentials: integration tests will be skipped.");
+}
+
 // Build an http request from a json file with fields describing
 // headers and a body
 helper.jsonHttpRequest = function(jsonFile, options) {
@@ -91,19 +98,21 @@ mocha.before(async () => {
   clients:  defaultClients
   });
 
-  // Start a web server with custom publishers (mocked pulse)
-  let stubbedPublisher = (data) => {
-    return Promise.resolve(data);
-   };
-  webServer = await bin.server('test', {
-    pullRequest: stubbedPublisher,
-    push: stubbedPublisher,
-  });
-
   // Skip tests if no credentials is configured
-  if (!cfg.get('pulse:password')) {
-    console.log("No pulse credentials: integration tests should be skipped.");
+  if (!helper.canRunIntegrationTests) {
+    // Start a web server with custom publishers (mocked pulse)
+    let stubbedPublisher = (data) => {
+      return Promise.resolve(data);
+    };
+
+    webServer = await bin.server('test', {
+      pullRequest: stubbedPublisher,
+      push: stubbedPublisher,
+    });
   } else {
+    // Start a normal webserver, with pulse publisher
+    webServer = await bin.server('test')
+
     // Configure PulseTestReceiver
     helper.events = new base.testing.PulseTestReceiver(cfg.get('pulse'), mocha);
     // Create client for binding to reference
