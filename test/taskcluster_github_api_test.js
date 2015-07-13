@@ -7,10 +7,8 @@ suite("TaskCluster-Github", () => {
   function statusTest(testName, jsonFile, statusCode) {
     test(testName, async () => {
       let response = await helper.jsonHttpRequest('./test/data/' + jsonFile)
-      response.on('data', (data) => {
-          console.log(testName, "->", data.toString())
-      })
       assert.equal(response.statusCode, statusCode)
+      response.connection.destroy()
     });
   }
 
