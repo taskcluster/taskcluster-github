@@ -1,6 +1,5 @@
 suite("TaskCluster-Github", () => {
   var helper = require('./helper');
-  var assume = require('assume');
   var assert = require('assert');
 
   // Check the status code returned from a request containing some test data
