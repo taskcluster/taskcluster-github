@@ -98,7 +98,7 @@ mocha.before(async () => {
   clients:  defaultClients
   });
 
-  // Skip tests if no credentials is configured
+  // Skip tests if no credentials are configured
   if (!helper.canRunIntegrationTests) {
     // Start a web server with custom publishers (mocked pulse)
     let stubbedPublisher = (data) => {
