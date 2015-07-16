@@ -15,7 +15,7 @@ module.exports = {
   // identifiers can't contain dots `.` is critical.
   "identifier-pattern":     "^([a-zA-Z0-9-_]*)$",
   "identifier-min-length":  1,
-  "identifier-max-length":  22,
+  "identifier-max-length":  100,
 
   // Message version numbers
   "message-version": {

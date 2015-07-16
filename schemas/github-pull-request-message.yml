@@ -25,7 +25,7 @@ properties:
       The GitHub `action` which triggered an event.
     type:         string
     minLength:    {$const: identifier-min-length}
-    maxLength:    {$const: identifier-max-length}
+    maxLength:    22
     pattern:      {$const: identifier-pattern}
   details:
     type:         object
