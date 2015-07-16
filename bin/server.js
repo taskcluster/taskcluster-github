@@ -119,7 +119,7 @@ if (!module.parent) {
   // Find configuration profile
   var profile = process.argv[2];
   if (!profile) {
-    console.log("Usage: server.js [profile]")
+    console.log("Usage: server.js [profile]");
     console.error("ERROR: No configuration profile is provided");
   }
   // Launch with given profile
