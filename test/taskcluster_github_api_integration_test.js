@@ -16,8 +16,8 @@ suite("TaskCluster-GitHub-Integration", () => {
       res.connection.destroy()
       // Wait for message and validate details
       var m = await helper.events.waitFor(listenFor);
-      assert.equal(m.payload.organizationName, routingKey.organizationName);
-      assert.equal(m.payload.repositoryName, routingKey.repositoryName);
+      assert.equal(m.payload.organization, routingKey.organization);
+      assert.equal(m.payload.repository, routingKey.repository);
     });
   };
 
@@ -26,8 +26,8 @@ suite("TaskCluster-GitHub-Integration", () => {
       'pull-request',
       'pullRequest',
       {
-        organizationName: 'ninethings',
-        repositoryName:   'website',
+        organization: 'ninethings',
+        repository:   'website',
         action:           'opened'
       },
       'webhook.pull_request.open.json'
@@ -37,8 +37,8 @@ suite("TaskCluster-GitHub-Integration", () => {
       'push',
       'push',
       {
-        organizationName: 'ninethings',
-        repositoryName:   'website',
+        organization: 'ninethings',
+        repository:   'website',
       },
       'webhook.push.json'
     );

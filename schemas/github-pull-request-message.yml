@@ -6,16 +6,16 @@ description: |
 type:         object
 properties:
   version:    {$const: message-version}
-  organizationName:
+  organization:
     description: |
-      The GitHub `organizationName` which had an event.
+      The GitHub `organization` which had an event.
     type:         string
     minLength:    {$const: identifier-min-length}
     maxLength:    {$const: identifier-max-length}
     pattern:      {$const: identifier-pattern}
-  repositoryName:
+  repository:
     description: |
-      The GitHub `repositoryName` which had an event.
+      The GitHub `repository` which had an event.
     type:         string
     minLength:    {$const: identifier-min-length}
     maxLength:    {$const: identifier-max-length}
@@ -34,6 +34,6 @@ properties:
 additionalProperties: false
 required:
   - version
-  - organizationName
-  - repositoryName
+  - organization
+  - repository
   - action
