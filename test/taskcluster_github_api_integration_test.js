@@ -27,7 +27,7 @@ suite("TaskCluster-GitHub-Integration", () => {
       'pullRequest',
       {
         organizationName: 'ninethings',
-        repositoryName:   'ninethings/website',
+        repositoryName:   'website',
         action:           'opened'
       },
       'webhook.pull_request.open.json'
@@ -38,7 +38,7 @@ suite("TaskCluster-GitHub-Integration", () => {
       'push',
       {
         organizationName: 'ninethings',
-        repositoryName:   'ninethings/website',
+        repositoryName:   'website',
       },
       'webhook.push.json'
     );
