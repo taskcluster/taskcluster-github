@@ -68,13 +68,13 @@ helper.jsonHttpRequest = function(jsonFile, options) {
   if (options === undefined) {
       options = defaultOptions
   } else {
-      let mergedOptions = {}
+      let mergedOptions = {};
       for (var k in defaultOptions) { mergedOptions[k] = defaultOptions[k]; }
       for (var k in options) { mergedOptions[k] = options[k]; }
-      options = mergedOptions
+      options = mergedOptions;
   }
-  let jsonData = JSON.parse(fs.readFileSync(jsonFile))
-  options.headers = jsonData.headers
+  let jsonData = JSON.parse(fs.readFileSync(jsonFile));
+  options.headers = jsonData.headers;
   return new Promise(function(accept, reject) {
       try {
           let req = http.request(options, accept)
@@ -83,7 +83,7 @@ helper.jsonHttpRequest = function(jsonFile, options) {
       } catch(e) {
           reject(e)
       }
-  })
+  });
 };
 
 // Hold reference to authServer
