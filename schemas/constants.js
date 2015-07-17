@@ -13,7 +13,7 @@ module.exports = {
   // limitation, the identifiers won't be useful as routing keys in RabbitMQ
   // topic exchanges. Specifically, the length limitation and the fact that
   // identifiers can't contain dots `.` is critical.
-  "identifier-pattern":     "^([a-zA-Z0-9-_]*)$",
+  "identifier-pattern":     "^([a-zA-Z0-9-_%]*)$",
   "identifier-min-length":  1,
   "identifier-max-length":  100,
 

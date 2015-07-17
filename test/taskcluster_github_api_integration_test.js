@@ -42,5 +42,15 @@ suite("TaskCluster-GitHub-Integration", () => {
       },
       'webhook.push.json'
     );
-  }
+
+    pulseTest('Publish Push With Dots In Name',
+      'push',
+      'push',
+      {
+        organization: 'ninethings',
+        repository:   'website%test',
+      },
+      'webhook.push.dots_in_name.json'
+    );
+  };
 });
