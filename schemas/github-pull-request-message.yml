@@ -23,10 +23,7 @@ properties:
   action:
     description: |
       The GitHub `action` which triggered an event.
-    type:         string
-    minLength:    {$const: identifier-min-length}
-    maxLength:    22
-    pattern:      {$const: identifier-pattern}
+    enum: [assigned, unassigned, labeled, unlabeled, opened, closed, reopened]
   details:
     type:         object
     description: |
