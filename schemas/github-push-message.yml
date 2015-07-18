@@ -10,16 +10,16 @@ properties:
     description: |
       The GitHub `organization` which had an event.
     type:         string
-    minLength:    {$const: identifier-min-length}
-    maxLength:    {$const: identifier-max-length}
-    pattern:      {$const: identifier-pattern}
+    minLength:    {$const: github-identifier-min-length}
+    maxLength:    {$const: github-identifier-max-length}
+    pattern:      {$const: github-identifier-pattern}
   repository:
     description: |
       The GitHub `repository` which had an event.
     type:         string
-    minLength:    {$const: identifier-min-length}
-    maxLength:    {$const: identifier-max-length}
-    pattern:      {$const: identifier-pattern}
+    minLength:    {$const: github-identifier-min-length}
+    maxLength:    {$const: github-identifier-max-length}
+    pattern:      {$const: github-identifier-pattern}
   details:
     type:         object
     description: |
