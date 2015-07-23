@@ -5,7 +5,8 @@ var Promise           = require('promise');
 var exchanges         = require('../lib/exchanges');
 var worker            = require('../lib/worker');
 var _                 = require('lodash');
-var taskcluster       = require('taskcluster-client')
+var taskcluster       = require('taskcluster-client');
+var GitHubAPI         = require('github');
 
 /** Launch worker */
 var launch = async function(profile) {
@@ -29,6 +30,9 @@ var launch = async function(profile) {
     filename:     'taskcluster-github'
   });
 
+  // Create a single connection to the GithubAPI to pass around
+  var githubAPI = new GitHubAPI(cfg.get('github:config'));
+  githubAPI.authenticate(cfg.get('github:credentials'));
   // Create a default stats drain, which just prints to stdout
   let statsDrain = {
       addPoint: (...args) => {debug("stats:", args)}
@@ -73,10 +77,11 @@ var launch = async function(profile) {
     await pullRequestListener.bind(githubEvents.pullRequest(
       {organization: '*', repository: '*', action: 'opened'}));
 
-    let context = {cfg};
+    let context = {cfg, githubAPI};
     pullRequestListener.on('message', function(message) {
       worker.pullRequestHandler(message, context);
     });
+
    await pullRequestListener.resume()
    } else {
     throw "Missing pulse credentials"
