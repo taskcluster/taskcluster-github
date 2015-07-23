@@ -33,6 +33,10 @@ var launch = async function(profile) {
   // Create a single connection to the GithubAPI to pass around
   var githubAPI = new GitHubAPI(cfg.get('github:config'));
   githubAPI.authenticate(cfg.get('github:credentials'));
+
+  // A context to be passed into message handlers
+  let context = {cfg, githubAPI};
+
   // Create a default stats drain, which just prints to stdout
   let statsDrain = {
       addPoint: (...args) => {debug("stats:", args)}
@@ -67,6 +71,8 @@ var launch = async function(profile) {
       }
     });
 
+
+    // Listen for, and handle, WebHook triggered events: i.e. pull requests
     let exchangeReference = exchanges.reference({
       exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
       credentials:      cfg.get('pulse')
@@ -77,12 +83,12 @@ var launch = async function(profile) {
     await pullRequestListener.bind(githubEvents.pullRequest(
       {organization: '*', repository: '*', action: 'opened'}));
 
-    let context = {cfg, githubAPI};
     pullRequestListener.on('message', function(message) {
       worker.pullRequestHandler(message, context);
     });
 
-   await pullRequestListener.resume()
+   await pullRequestListener.resume();
+
    } else {
     throw "Missing pulse credentials"
    }
