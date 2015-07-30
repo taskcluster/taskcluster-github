@@ -71,8 +71,6 @@ var launch = async function(profile) {
       }
     });
 
-
-    // Listen for, and handle, WebHook triggered events: i.e. pull requests
     let exchangeReference = exchanges.reference({
       exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
       credentials:      cfg.get('pulse')
@@ -80,18 +78,31 @@ var launch = async function(profile) {
 
     let GitHubEvents = taskcluster.createClient(exchangeReference);
     let githubEvents = new GitHubEvents();
+    // Listen for, and handle, WebHook triggered events: i.e. pull requests
     await pullRequestListener.bind(githubEvents.pullRequest(
       {organization: '*', repository: '*', action: 'opened'}));
 
+    // Listen for, and handle, changes in graph/task state: to reset status
+    // messages, send notifications, etc....
+    let schedulerEvents = new taskcluster.SchedulerEvents();
+    let route = 'route.taskcluster-github.*.*.*';
+    pullRequestListener.bind(schedulerEvents.taskGraphRunning(route));
+    pullRequestListener.bind(schedulerEvents.taskGraphBlocked(route));
+    pullRequestListener.bind(schedulerEvents.taskGraphFinished(route));
+
     pullRequestListener.on('message', function(message) {
-      worker.pullRequestHandler(message, context);
+      if (message.payload.action == 'opened') {
+        worker.pullRequestHandler(message, context);
+      } else {
+        worker.graphStateChangeHandler(message, context);
+      }
     });
 
-   await pullRequestListener.resume();
+    await pullRequestListener.resume();
 
-   } else {
+  } else {
     throw "Missing pulse credentials"
-   }
+  }
 };
 
 // If worker.js is executed start the worker
