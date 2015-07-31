@@ -1,0 +1,7 @@
+---
+  payload:
+    image: "ubuntu:latest"
+    command:
+      - "/bin/bash"
+      - "-c"
+      - "echo 'just this easy'"
