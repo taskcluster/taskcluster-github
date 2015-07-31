@@ -92,9 +92,9 @@ var launch = async function(profile) {
 
     // Route recieved messages to an appropriate handler
     pullRequestListener.on('message', function(message) {
-      if (message.payload.action == 'opened') {
+      if (message.payload.action == 'opened' || message.payload.action == 'updated') {
         worker.pullRequestHandler(message, context);
-      } else if (!message.payload.action) {
+      } else if (message.payload.routing) {
         worker.graphStateChangeHandler(message, context);
       }
     });
