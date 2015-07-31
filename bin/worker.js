@@ -90,10 +90,11 @@ var launch = async function(profile) {
     pullRequestListener.bind(schedulerEvents.taskGraphBlocked(route));
     pullRequestListener.bind(schedulerEvents.taskGraphFinished(route));
 
+    // Route recieved messages to an appropriate handler
     pullRequestListener.on('message', function(message) {
       if (message.payload.action == 'opened') {
         worker.pullRequestHandler(message, context);
-      } else {
+      } else if !message.payload.action {
         worker.graphStateChangeHandler(message, context);
       }
     });
