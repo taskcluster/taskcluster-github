@@ -94,7 +94,7 @@ var launch = async function(profile) {
     pullRequestListener.on('message', function(message) {
       if (message.payload.action == 'opened') {
         worker.pullRequestHandler(message, context);
-      } else if !message.payload.action {
+      } else if (!message.payload.action) {
         worker.graphStateChangeHandler(message, context);
       }
     });
