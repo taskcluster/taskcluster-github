@@ -63,7 +63,7 @@ var launch = async function(profile) {
 
   let pulseCredentials = cfg.get('pulse')
   if (pulseCredentials.username && pulseCredentials.password) {
-    var pullRequestListener = new taskcluster.PulseListener({
+    var webHookListener = new taskcluster.PulseListener({
       queueName:  profile,
       credentials: {
         username: pulseCredentials.username,
@@ -79,28 +79,27 @@ var launch = async function(profile) {
     let GitHubEvents = taskcluster.createClient(exchangeReference);
     let githubEvents = new GitHubEvents();
     // Listen for, and handle, WebHook triggered events: i.e. pull requests
-    await pullRequestListener.bind(githubEvents.pullRequest(
-      {organization: '*', repository: '*', action: 'opened'}));
-
+    await webHookListener.bind(githubEvents.pullRequest(
+      {organization: '*', repository: '*', action: '*'}));
+    await webHookListener.bind(githubEvents.push(
+      {organization: '*', repository: '*'}));
     // Listen for, and handle, changes in graph/task state: to reset status
     // messages, send notifications, etc....
     let schedulerEvents = new taskcluster.SchedulerEvents();
     let route = 'route.taskcluster-github.*.*.*';
-    pullRequestListener.bind(schedulerEvents.taskGraphRunning(route));
-    pullRequestListener.bind(schedulerEvents.taskGraphBlocked(route));
-    pullRequestListener.bind(schedulerEvents.taskGraphFinished(route));
+    webHookListener.bind(schedulerEvents.taskGraphRunning(route));
+    webHookListener.bind(schedulerEvents.taskGraphBlocked(route));
+    webHookListener.bind(schedulerEvents.taskGraphFinished(route));
 
     // Route recieved messages to an appropriate handler
-    pullRequestListener.on('message', function(message) {
-      if (message.payload.action == 'opened' || message.payload.action == 'updated') {
-        worker.pullRequestHandler(message, context);
-      } else if (message.payload.routing) {
+    webHookListener.on('message', function(message) {
+      if (message.payload.routing) {
         worker.graphStateChangeHandler(message, context);
+      } else {
+        worker.webHookHandler(message, context);
       }
     });
-
-    await pullRequestListener.resume();
-
+    await webHookListener.resume();
   } else {
     throw "Missing pulse credentials"
   }
