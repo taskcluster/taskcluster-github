@@ -67,8 +67,26 @@ suite('TaskCluster-Github taskclusterrc', () => {
     1);
 
   buildConfigTest(
-    'Multi Task Config',
-    configPath + 'taskclusterrc.two_tasks.yml',
+    'Push Event (Push Task + Pull Task)',
+    configPath + 'taskclusterrc.push_task_and_pull_task.yml',
     buildMessage(),
     1);
+
+  buildConfigTest(
+    'Pull Event (Push Task + Pull Task)',
+    configPath + 'taskclusterrc.push_task_and_pull_task.yml',
+    buildMessage({details: {event: 'pull_request.opened'}}),
+    1);
+
+  buildConfigTest(
+    'Push Event (Two Pull Tasks)',
+    configPath + 'taskclusterrc.two_pull_tasks.yml',
+    buildMessage(),
+    0);
+
+  buildConfigTest(
+    'Pull Event (Two Pull Tasks)',
+    configPath + 'taskclusterrc.two_pull_tasks.yml',
+    buildMessage({details: {event: 'pull_request.opened'}}),
+    2);
 });
