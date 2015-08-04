@@ -78,11 +78,18 @@ var launch = async function(profile) {
 
     let GitHubEvents = taskcluster.createClient(exchangeReference);
     let githubEvents = new GitHubEvents();
-    // Listen for, and handle, WebHook triggered events: i.e. pull requests
+
+    // Only listen for opened and updated pull request events, since those
+    // are the only cases where we should launch a job.
     await webHookListener.bind(githubEvents.pullRequest(
-      {organization: '*', repository: '*', action: '*'}));
+      {organization: '*', repository: '*', action: 'opened'}));
+    await webHookListener.bind(githubEvents.pullRequest(
+      {organization: '*', repository: '*', action: 'updated'}));
+
+    // Launch jobs for push events as well.
     await webHookListener.bind(githubEvents.push(
       {organization: '*', repository: '*'}));
+
     // Listen for, and handle, changes in graph/task state: to reset status
     // messages, send notifications, etc....
     let schedulerEvents = new taskcluster.SchedulerEvents();
