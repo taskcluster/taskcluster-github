@@ -91,12 +91,17 @@ var launch = async function(profile) {
     webHookListener.bind(schedulerEvents.taskGraphBlocked(route));
     webHookListener.bind(schedulerEvents.taskGraphFinished(route));
 
-    // Route recieved messages to an appropriate handler
+    // Route recieved messages to an appropriate handler via matching
+    // exchange names to a regular expression
+    let webHookHandlerExp = RegExp('(.*pull-request|.*push)', 'i');
+    let graphChangeHandlerExp = RegExp('exchange/taskcluster-scheduler/.*', 'i');
     webHookListener.on('message', function(message) {
-      if (message.payload.routing) {
+      if (webHookHandlerExp.test(message.exchange)) {
+        worker.webHookHandler(message, context);
+      } else if (graphChangeHandlerExp.test(message.exchange)) {
         worker.graphStateChangeHandler(message, context);
       } else {
-        worker.webHookHandler(message, context);
+        debug('Ignoring message from unsupported exchange:', message.exchange);
       }
     });
     await webHookListener.resume();
