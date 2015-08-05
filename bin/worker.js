@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var debug             = require('debug')('github:worker');
+var assert            = require('assert');
 var base              = require('taskcluster-base');
 var Promise           = require('promise');
 var exchanges         = require('../lib/exchanges');
@@ -41,59 +42,58 @@ var launch = async function(profile) {
   });
 
   let pulseCredentials = cfg.get('pulse')
-  if (pulseCredentials.username && pulseCredentials.password) {
-    var webHookListener = new taskcluster.PulseListener({
-      queueName:  profile,
-      credentials: {
-        username: pulseCredentials.username,
-        password: pulseCredentials.password
-      }
-    });
+  assert(pulseCredentials.username, 'Username must be supplied for pulse connection');
+  assert(pulseCredentials.password, 'Password must be supplied for pulse connection');
 
-    let exchangeReference = exchanges.reference({
-      exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
-      credentials:      cfg.get('pulse')
-    });
+  var webHookListener = new taskcluster.PulseListener({
+    queueName:  profile,
+    credentials: {
+      username: pulseCredentials.username,
+      password: pulseCredentials.password
+    }
+  });
 
-    let GitHubEvents = taskcluster.createClient(exchangeReference);
-    let githubEvents = new GitHubEvents();
+  let exchangeReference = exchanges.reference({
+    exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
+    credentials:      cfg.get('pulse')
+  });
 
-    // Only listen for opened and updated pull request events, since those
-    // are the only cases where we should launch a job.
-    await webHookListener.bind(githubEvents.pullRequest(
-      {organization: '*', repository: '*', action: 'opened'}));
-    await webHookListener.bind(githubEvents.pullRequest(
-      {organization: '*', repository: '*', action: 'updated'}));
+  let GitHubEvents = taskcluster.createClient(exchangeReference);
+  let githubEvents = new GitHubEvents();
 
-    // Launch jobs for push events as well.
-    await webHookListener.bind(githubEvents.push(
-      {organization: '*', repository: '*'}));
+  // Only listen for opened and updated pull request events, since those
+  // are the only cases where we should launch a job.
+  await webHookListener.bind(githubEvents.pullRequest(
+    {organization: '*', repository: '*', action: 'opened'}));
+  await webHookListener.bind(githubEvents.pullRequest(
+    {organization: '*', repository: '*', action: 'updated'}));
 
-    // Listen for, and handle, changes in graph/task state: to reset status
-    // messages, send notifications, etc....
-    let schedulerEvents = new taskcluster.SchedulerEvents();
-    let route = 'route.taskcluster-github.*.*.*';
-    webHookListener.bind(schedulerEvents.taskGraphRunning(route));
-    webHookListener.bind(schedulerEvents.taskGraphBlocked(route));
-    webHookListener.bind(schedulerEvents.taskGraphFinished(route));
+  // Launch jobs for push events as well.
+  await webHookListener.bind(githubEvents.push(
+    {organization: '*', repository: '*'}));
 
-    // Route recieved messages to an appropriate handler via matching
-    // exchange names to a regular expression
-    let webHookHandlerExp = RegExp('(.*pull-request|.*push)', 'i');
-    let graphChangeHandlerExp = RegExp('exchange/taskcluster-scheduler/.*', 'i');
-    webHookListener.on('message', function(message) {
-      if (webHookHandlerExp.test(message.exchange)) {
-        worker.webHookHandler(message, context);
-      } else if (graphChangeHandlerExp.test(message.exchange)) {
-        worker.graphStateChangeHandler(message, context);
-      } else {
-        debug('Ignoring message from unsupported exchange:', message.exchange);
-      }
-    });
-    await webHookListener.resume();
-  } else {
-    throw "Missing pulse credentials"
-  }
+  // Listen for, and handle, changes in graph/task state: to reset status
+  // messages, send notifications, etc....
+  let schedulerEvents = new taskcluster.SchedulerEvents();
+  let route = 'route.taskcluster-github.*.*.*';
+  webHookListener.bind(schedulerEvents.taskGraphRunning(route));
+  webHookListener.bind(schedulerEvents.taskGraphBlocked(route));
+  webHookListener.bind(schedulerEvents.taskGraphFinished(route));
+
+  // Route recieved messages to an appropriate handler via matching
+  // exchange names to a regular expression
+  let webHookHandlerExp = RegExp('(.*pull-request|.*push)', 'i');
+  let graphChangeHandlerExp = RegExp('exchange/taskcluster-scheduler/.*', 'i');
+  webHookListener.on('message', function(message) {
+    if (webHookHandlerExp.test(message.exchange)) {
+      worker.webHookHandler(message, context);
+    } else if (graphChangeHandlerExp.test(message.exchange)) {
+      worker.graphStateChangeHandler(message, context);
+    } else {
+      debug('Ignoring message from unsupported exchange:', message.exchange);
+    }
+  });
+  await webHookListener.resume();
 };
 
 // If worker.js is executed start the worker
