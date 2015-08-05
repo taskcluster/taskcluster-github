@@ -31,8 +31,10 @@ var launch = async function(profile) {
   var githubAPI = new GitHubAPI(cfg.get('github:config'));
   githubAPI.authenticate(cfg.get('github:credentials'));
 
+  var scheduler = new taskcluster.Scheduler(cfg.get('taskcluster'));
+
   // A context to be passed into message handlers
-  let context = {cfg, githubAPI};
+  let context = {cfg, githubAPI, scheduler};
 
   // Start monitoring the process
   base.stats.startProcessUsageReporting({
