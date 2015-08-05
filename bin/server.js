@@ -3,6 +3,7 @@ var debug             = require('debug')('github:server');
 var base              = require('taskcluster-base');
 var api               = require('../lib/api');
 var path              = require('path');
+var common            = require('../lib/common');
 var Promise           = require('promise');
 var exchanges         = require('../lib/exchanges');
 var _                 = require('lodash');
@@ -10,40 +11,17 @@ var _                 = require('lodash');
 /** Launch server */
 var launch = async function(profile, publisher) {
   debug("Launching with profile: %s", profile);
+  var cfg = common.loadConfig(profile);
 
-  // Load configuration
-  var cfg = base.config({
-    defaults:     require('../config/defaults'),
-    profile:      require('../config/' + profile),
-    envs: [
-      'pulse_username',
-      'pulse_password',
-      'taskclusterGithub_publishMetaData',
-      'taskcluster_credentials_clientId',
-      'taskcluster_credentials_accessToken',
-      'aws_accessKeyId',
-      'aws_secretAccessKey',
-      'influx_connectionString',
-      'webhook_secret'
-    ],
-    filename:     'taskcluster-github'
-  });
-
-  // Create a default stats drain, which just prints to stdout
-  let statsDrain = {
-      addPoint: (...args) => {debug("stats:", args)}
-  }
-
-  // Create InfluxDB connection for submitting statistics
-  let influxConnectionString = cfg.get('influx:connectionString')
-  if (influxConnectionString) {
-      statsDrain = new base.stats.Influx({
-        connectionString:   influxConnectionString,
-        maxDelay:           cfg.get('influx:maxDelay'),
-        maxPendingPoints:   cfg.get('influx:maxPendingPoints')
-      });
-  } else {
-      debug("Missing influx_connectionString: stats collection disabled.")
+  try {
+    var statsDrain = common.buildInfluxStatsDrain(
+      cfg.get('influx:connectionString'),
+      cfg.get('influx:maxDelay'),
+      cfg.get('influx:maxPendingPoints')
+    );
+  } catch(e) {
+    debug("Missing influx_connectionStraing: stats collection disabled.");
+    var statsDrain = common.stdoutStatsDrain;
   }
 
   // Start monitoring the process
