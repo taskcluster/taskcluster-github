@@ -17,7 +17,7 @@
     "babel":                "^5.0.9",
     "taskcluster-client":   "^0.22.0",
     "kexec":                "^1.2.0",
-    "github":               "^0.2.2",
+    "octokat":              "0.4.11",
     "yaml-js":              "0.1.1",
     "slugid":               "1.0.3",
     "request-promise":      "0.4.2"
