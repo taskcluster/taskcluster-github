@@ -8,7 +8,7 @@ var common            = require('../lib/common');
 var worker            = require('../lib/worker');
 var _                 = require('lodash');
 var taskcluster       = require('taskcluster-client');
-var GitHubAPI         = require('github');
+var Octokat           = require('octokat');
 
 /** Launch worker */
 var launch = async function(profile) {
@@ -28,8 +28,7 @@ var launch = async function(profile) {
   }
 
   // Create a single connection to the GithubAPI to pass around
-  var githubAPI = new GitHubAPI(cfg.get('github:config'));
-  githubAPI.authenticate(cfg.get('github:credentials'));
+  var githubAPI = new Octokat(cfg.get('github:credentials'));
 
   var scheduler = new taskcluster.Scheduler(cfg.get('taskcluster'));
 
