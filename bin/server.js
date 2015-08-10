@@ -7,6 +7,7 @@ var common            = require('../lib/common');
 var Promise           = require('promise');
 var exchanges         = require('../lib/exchanges');
 var _                 = require('lodash');
+var Octokat           = require('octokat');
 
 /** Launch server */
 var launch = async function(profile, publisher) {
@@ -58,11 +59,14 @@ var launch = async function(profile, publisher) {
     throw "Can't initialize pulse publisher: missing credentials"
  }
 
+  // A single connection to the GithubAPI to pass into the router context
+  var githubAPI = new Octokat(cfg.get('github:credentials'));
+
   // Create API router and publish reference if needed
   debug("Creating API router");
 
   let router = await api.setup({
-    context:          {publisher, cfg},
+    context:          {publisher, cfg, githubAPI},
     validator:        validator,
     authBaseUrl:      cfg.get('taskcluster:authBaseUrl'),
     credentials:      cfg.get('taskcluster:credentials'),
