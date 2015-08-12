@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var debug             = require('debug')('github:worker');
 var assert            = require('assert');
+var path              = require('path');
 var base              = require('taskcluster-base');
 var Promise           = require('promise');
 var exchanges         = require('../lib/exchanges');
@@ -27,13 +28,22 @@ var launch = async function(profile) {
     var statsDrain = common.stdoutStatsDrain;
   }
 
+  // For use in validation of taskclusterrc files
+  let validator = await base.validator({
+    folder:           path.join(__dirname, '..', 'schemas'),
+    constants:        require('../schemas/constants'),
+    publish:          cfg.get('taskclusterGithub:publishMetaData') === 'true',
+    schemaPrefix:     'github/v1/',
+    aws:              cfg.get('aws')
+  });
+
   // Create a single connection to the GithubAPI to pass around
   var githubAPI = new Octokat(cfg.get('github:credentials'));
 
   var scheduler = new taskcluster.Scheduler(cfg.get('taskcluster'));
 
   // A context to be passed into message handlers
-  let context = {cfg, githubAPI, scheduler};
+  let context = {cfg, githubAPI, scheduler, validator};
 
   // Start monitoring the process
   base.stats.startProcessUsageReporting({

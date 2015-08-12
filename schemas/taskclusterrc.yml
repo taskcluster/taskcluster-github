@@ -1,0 +1,23 @@
+id:                 http://schemas.taskcluster.net/github/v1/taskclusterrc.json#
+$schema:            http://json-schema.org/draft-04/schema#
+title:              "taskclusterrc format"
+description: |
+ Description of a taskclusterrc file, which may be used to generate a taskgraph and tasks.
+type:               object
+properties:
+  version:
+    description:    "taskclusterrc version"
+    enum:           [1]
+  tasks:
+    type:           array
+    default:        []
+    items:
+      title:        "Task Definition"
+      description:  |
+        A selection of user configurable fields, for creating new taskcluster task definitions.
+      type:         object
+
+additionalProperties: false
+required:
+  - version
+  - tasks
