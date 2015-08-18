@@ -35,7 +35,7 @@ properties:
       List of graph specific routes, AMQP messages will be CC'ed to these routes.
     type:           array
     default:
-      - "taskcluster-github.{{organization }}.{{repository }}.{{headSha}}"
+      - "taskcluster-github.{{ organization }}.{{ repository }}.{{ headSha }}"
   tasks:
     type:           array
     default:        []
@@ -172,11 +172,40 @@ properties:
             type:             object
             default:
               github_events:
-                - "pull_request.*"
+                - pull_request.opened
+                - pull_request.updated
               whitelist:
                 orgs:
                   - "{{ organization }}"
                 users: []
+            properties:
+              github_events:
+                title: "GitHub Events"
+                description: |
+                  A list of github events which will trigger this job.
+                type: array
+                default:
+                  - pull_request.opened
+                  - pull_request.updated
+              whitelist:
+                title: "Whitelist"
+                description: |
+                  Users and organizations which may trigger this job.
+                type: object
+                properties:
+                  orgs:
+                    title: "Orgs"
+                    description: |
+                      A list of organizations whose members may trigger this job.
+                    type: array
+                    default:
+                      - "{{ organization }}"
+                  users:
+                    title: "Users"
+                    description: |
+                      A list of users may trigger this job.
+                    type: array
+                    default: []
         additionalProperties: false
         required:
           - payload
