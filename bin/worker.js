@@ -29,13 +29,7 @@ var launch = async function(profile) {
   }
 
   // For use in validation of taskclusterrc files
-  let validator = await base.validator({
-    folder:           path.join(__dirname, '..', 'schemas'),
-    constants:        require('../schemas/constants'),
-    publish:          cfg.get('taskclusterGithub:publishMetaData') === 'true',
-    schemaPrefix:     'github/v1/',
-    aws:              cfg.get('aws')
-  });
+  let validator = await common.buildValidator(cfg);
 
   // Create a single connection to the GithubAPI to pass around
   var githubAPI = new Octokat(cfg.get('github:credentials'));

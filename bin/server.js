@@ -32,13 +32,7 @@ var launch = async function(profile, publisher) {
     process:    'server'
   });
 
-  let validator = await base.validator({
-    folder:           path.join(__dirname, '..', 'schemas'),
-    constants:        require('../schemas/constants'),
-    publish:          cfg.get('taskclusterGithub:publishMetaData') === 'true',
-    schemaPrefix:     'github/v1/',
-    aws:              cfg.get('aws')
-  });
+  let validator = await common.buildValidator(cfg);
 
   let pulseCredentials = cfg.get('pulse')
   if (publisher) {
