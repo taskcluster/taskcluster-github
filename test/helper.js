@@ -84,7 +84,7 @@ mocha.before(async () => {
   clients:  defaultClients
   });
 
-  let validator = await common.buildValidator(cfg);
+  helper.validator = await common.buildValidator(cfg);
 
   // Skip tests if no credentials are configured
   if (!helper.canRunIntegrationTests) {

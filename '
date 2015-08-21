@@ -51,16 +51,9 @@ suite('TaskCluster-Github taskclusterrc', () => {
    * Retrieve values from deeply nested objects.
    **/
   function getNestedValue(keys, obj) {
-    let arrayExp = RegExp('\\[([0-9]+)\\]');
     keys = keys.split('.');
     for (let i in keys) {
-      let arrayMatch = arrayExp.exec(keys[i]);
-      if (arrayMatch) {
-        // Here we handle array accesses of the form a.b[2]
-        obj = obj[keys[i].split('[')[0]][arrayMatch[1]];
-      } else {
-        obj = obj[keys[i]];
-      }
+      obj = obj[keys[i]];
     }
     return obj;
   };
@@ -110,20 +103,24 @@ suite('TaskCluster-Github taskclusterrc', () => {
       userInfo:   buildUserInfo(),
     },
     {
-      'metadata.owner': 'test@test.com',
-      'tasks[0].task.payload.command': ['test']
+      'metadata.owner': 'test@test.com'
     });
-
+/*
   buildConfigTest(
     'Pull Event (Push Task + Pull Task)',
     configPath + 'taskclusterrc.push_task_and_pull_task.yml',
-    {
-      payload:    buildMessage({details: {event: 'pull_request.opened'}}),
-      userInfo:   buildUserInfo(),
-    },
-    {
-      'metadata.owner': 'test@test.com',
-      'tasks[0].task.payload.command': ['test'],
-      'tasks[0].task.extra.github_events': ['pull_request.opened', 'pull_request.updated']
-    });
+    buildMessage({details: {event: 'pull_request.opened'}}),
+    {});
+
+  buildConfigTest(
+    'Push Event (Two Pull Tasks)',
+    configPath + 'taskclusterrc.two_pull_tasks.yml',
+    buildMessage(),
+    {});
+
+  buildConfigTest(
+    'Pull Event (Two Pull Tasks)',
+    configPath + 'taskclusterrc.two_pull_tasks.yml',
+    buildMessage({details: {event: 'pull_request.opened'}}),
+    {});*/
 });
