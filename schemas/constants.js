@@ -22,7 +22,9 @@ module.exports = {
   "identifier-max-length":  22,
 
   // Slugid pattern, for when-ever that is useful
-  "slugid-pattern":  "^[a-zA-Z0-9-_]{22}$",
+  // Currently allow all v4 slugs, although we only generate nice slugs
+  // See https://www.npmjs.com/package/slugid for more info
+  "slugid-pattern":  "^[A-Za-z0-9_-]{8}[Q-T][A-Za-z0-9_-][CGKOSWaeimquy26-][A-Za-z0-9_-]{10}[AQgw]$",
 
   // Message version numbers
   "message-version": {
