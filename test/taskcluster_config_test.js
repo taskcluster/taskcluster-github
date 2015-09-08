@@ -1,10 +1,10 @@
-suite('TaskCluster-Github taskclusterrc', () => {
-  var fs     = require('fs');
-  var tcrc   = require('../lib/taskclusterrc');
-  var assert = require('assert');
-  var _      = require('lodash');
-  var common = require('../lib/common');
-  var helper = require('./helper');
+suite('TaskCluster-Github Config', () => {
+  var fs         = require('fs');
+  var tcconfig   = require('../lib/taskcluster-config');
+  var assert     = require('assert');
+  var _          = require('lodash');
+  var common     = require('../lib/common');
+  var helper     = require('./helper');
 
   /**
    * Test github data, like one would see in a pulse message
@@ -16,7 +16,7 @@ suite('TaskCluster-Github taskclusterrc', () => {
       repository:   'testrepo',
       details: {
         pullNumber: 'eventData.number',
-        event: 'push',
+        event: 'pull_request.opened',
         branch: 'eventData.pull_request.base.some_branch',
         baseUser: 'eventData.pull_request.base.user.login',
         baseRepoUrl: 'eventData.pull_request.base.repo.clone_url',
@@ -68,7 +68,7 @@ suite('TaskCluster-Github taskclusterrc', () => {
   /**
    * Make sure that data merges properly when building configs
    * testName:    '', A label for the current test case
-   * configPath:  '', Path to a taskclusterrc file
+   * configPath:  '', Path to a taskclusterConfig file
    * params:      {
    *                payload:    {}, WebHook message payload
    *                userInfo:   {}, GitHub user info
@@ -78,10 +78,10 @@ suite('TaskCluster-Github taskclusterrc', () => {
    **/
   var buildConfigTest = function(testName, configPath, params, expected) {
     test(testName, async () => {
-      params.taskclusterrc = fs.readFileSync(configPath);
-      params.schema = common.SCHEMA_PREFIX_CONST + 'taskclusterrc.json#';
+      params.taskclusterConfig = fs.readFileSync(configPath);
+      params.schema = common.SCHEMA_PREFIX_CONST + 'taskcluster-github-config.json#';
       params.validator = helper.validator;
-      let config = await tcrc.processConfig(params);
+      let config = await tcconfig.processConfig(params);
       for (let key in expected) {
         assert.deepEqual(getNestedValue(key, config), expected[key]);
       }
@@ -92,7 +92,7 @@ suite('TaskCluster-Github taskclusterrc', () => {
 
   buildConfigTest(
     'Single Task Config',
-    configPath + 'taskclusterrc.single.yml',
+    configPath + 'taskcluster.single.yml',
     {
       payload:    buildMessage(),
       userInfo:   buildUserInfo(),
@@ -104,19 +104,32 @@ suite('TaskCluster-Github taskclusterrc', () => {
 
   buildConfigTest(
     'Pull Event, Single Task Config',
-    configPath + 'taskclusterrc.single.yml',
+    configPath + 'taskcluster.single.yml',
     {
-      payload:    buildMessage({details: {event: 'pull_request.synchronize'}}),
+      payload:    buildMessage({details: {event: 'push'}}),
       userInfo:   buildUserInfo(),
     },
     {
-      'tasks[0].task.extra.github_events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
+      'tasks[0].task.extra.github.events': ['push'],
       'metadata.owner': 'test@test.com'
     });
 
   buildConfigTest(
     'Push Event (Push Task + Pull Task)',
-    configPath + 'taskclusterrc.push_task_and_pull_task.yml',
+    configPath + 'taskcluster.push_task_and_pull_task.yml',
+    {
+      payload:    buildMessage({details: {event: 'push'}}),
+      userInfo:   buildUserInfo(),
+    },
+    {
+      'metadata.owner': 'test@test.com',
+      'tasks[0].task.payload.command': ['test'],
+      'tasks[0].task.extra.github.events': ['push']
+    });
+
+  buildConfigTest(
+    'Pull Event (Push Task + Pull Task)',
+    configPath + 'taskcluster.push_task_and_pull_task.yml',
     {
       payload:    buildMessage(),
       userInfo:   buildUserInfo(),
@@ -124,19 +137,6 @@ suite('TaskCluster-Github taskclusterrc', () => {
     {
       'metadata.owner': 'test@test.com',
       'tasks[0].task.payload.command': ['test'],
-      'tasks[0].task.extra.github_events': ['push']
-    });
-
-  buildConfigTest(
-    'Pull Event (Push Task + Pull Task)',
-    configPath + 'taskclusterrc.push_task_and_pull_task.yml',
-    {
-      payload:    buildMessage({details: {event: 'pull_request.opened'}}),
-      userInfo:   buildUserInfo(),
-    },
-    {
-      'metadata.owner': 'test@test.com',
-      'tasks[0].task.payload.command': ['test'],
-      'tasks[0].task.extra.github_events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
+      'tasks[0].task.extra.github.events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
     });
 });
