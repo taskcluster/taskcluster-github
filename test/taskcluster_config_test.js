@@ -15,20 +15,19 @@ suite('TaskCluster-Github Config', () => {
       organization: 'testorg',
       repository:   'testrepo',
       details: {
-        pullNumber: 'eventData.number',
-        event: 'pull_request.opened',
-        branch: 'eventData.pull_request.base.some_branch',
-        baseUser: 'eventData.pull_request.base.user.login',
-        baseRepoUrl: 'eventData.pull_request.base.repo.clone_url',
-        baseBranch: 'eventData.pull_request.base.default_branch',
-        baseSha: 'eventData.pull_request.base.sha',
-        baseRef: 'eventData.pull_request.base.ref',
-        headUser: 'eventData.pull_request.head.user.login',
-        headRepoUrl: 'eventData.pull_request.head.repo.clone_url',
-        headBranch: 'eventData.pull_request.head.default_branch',
-        headSha: 'eventData.pull_request.head.sha',
-        headRef: 'eventData.pull_request.head.ref',
-        headUserEmail: 'test@test.com'
+        'event.pullNumber': 'eventData.number',
+        'event.type': 'pull_request.opened',
+        'event.base.user.login': 'eventData.pull_request.base.user.login',
+        'event.base.repo.url': 'eventData.pull_request.base.repo.clone_url',
+        'event.base.repo.branch': 'eventData.pull_request.base.default_branch',
+        'event.base.sha': 'eventData.pull_request.base.sha',
+        'event.base.ref': 'eventData.pull_request.base.ref',
+        'event.head.user.login': 'eventData.pull_request.head.user.login',
+        'event.head.repo.url': 'eventData.pull_request.head.repo.clone_url',
+        'event.head.repo.branch': 'eventData.pull_request.head.default_branch',
+        'event.head.sha': 'eventData.pull_request.head.sha',
+        'event.head.ref': 'eventData.pull_request.head.ref',
+        'event.head.user.email': 'test@test.com'
       }
     }
     return _.merge(defaultMessage, params);
@@ -106,7 +105,7 @@ suite('TaskCluster-Github Config', () => {
     'Pull Event, Single Task Config',
     configPath + 'taskcluster.single.yml',
     {
-      payload:    buildMessage({details: {event: 'push'}}),
+      payload:    buildMessage({details: {'event.type': 'push'}}),
       userInfo:   buildUserInfo(),
     },
     {
@@ -118,7 +117,7 @@ suite('TaskCluster-Github Config', () => {
     'Push Event (Push Task + Pull Task)',
     configPath + 'taskcluster.push_task_and_pull_task.yml',
     {
-      payload:    buildMessage({details: {event: 'push'}}),
+      payload:    buildMessage({details: {'event.type': 'push'}}),
       userInfo:   buildUserInfo(),
     },
     {
