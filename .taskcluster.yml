@@ -22,8 +22,8 @@ tasks:
         - "-c"
         - "checkout-pull-request && npm install . && npm test"
     metadata:
-      name: "test"
-      description: "IamamwhoamI"
-      owner: "mphillips@mozilla.com"
+      name: "TaskCluster GitHub Tests"
+      description: "All non-integration tests"
+      owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
