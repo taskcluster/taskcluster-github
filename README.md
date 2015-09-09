@@ -12,7 +12,7 @@ See: http://docs.taskcluster.net/services/taskcluster-github/
 Listens for WebHooks and, if they are valid, forwards them to a pulse exchange.
 
 ### Worker
-Listens for WebHook triggered pulse messages and attempts to schedule TaskCluster tasks for any events related to a repository which contains a `.taskclusterrc` file.
+Listens for WebHook triggered pulse messages and attempts to schedule TaskCluster tasks for any events related to a repository which contains a `.taskcluster.yml` file.
 
 ##Contributing
 
