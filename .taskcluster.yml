@@ -7,7 +7,6 @@ metadata:
 tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
-    maxRunTime: 3600
     extra:
       github:
         env: true
@@ -16,6 +15,7 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
     payload:
+      maxRunTime: 3600
       image: "quay.io/mrrrgn/ubuntu-ci:0.0.1"
       command:
         - "/bin/bash"
