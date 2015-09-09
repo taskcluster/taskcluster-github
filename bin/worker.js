@@ -28,7 +28,7 @@ var launch = async function(profile) {
     var statsDrain = common.stdoutStatsDrain;
   }
 
-  // For use in validation of taskclusterrc files
+  // For use in validation of taskcluster github config files
   let validator = await common.buildValidator(cfg);
 
   // Create a single connection to the GithubAPI to pass around
