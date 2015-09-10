@@ -87,7 +87,7 @@ suite('TaskCluster-Github Config', () => {
     });
   };
 
-  var configPath = 'test/data/';
+  var configPath = 'test/data/configs/';
 
   buildConfigTest(
     'Single Task Config',
