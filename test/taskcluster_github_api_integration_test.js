@@ -21,7 +21,7 @@ suite("TaskCluster-GitHub-Integration", () => {
       );
 
       // Trigger a pull-request message
-      let res = await helper.jsonHttpRequest('./test/data/' + params.jsonFile)
+      let res = await helper.jsonHttpRequest('./test/data/webhooks/' + params.jsonFile)
       res.connection.destroy()
       // Wait for message and validate details
       var m = await helper.events.waitFor(params.listenFor);
