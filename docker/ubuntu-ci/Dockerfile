@@ -10,7 +10,8 @@ RUN apt-get install -y git \
     nodejs-legacy \
     npm \
     libmysqlclient-dev # for MySQL-python \
-    libpq-dev # for psycopg2
+    libpq-dev # for psycopg2 \
+    && apt-get clean
 
 RUN pip install virtualenv
 RUN pip install virtualenvwrapper
