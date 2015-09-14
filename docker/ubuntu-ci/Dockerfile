@@ -6,11 +6,13 @@ RUN apt-get install -y git \
     python-all \
     python-dev \
     python-pip \
+    python-tox \
     nodejs \
     nodejs-legacy \
     npm \
     libmysqlclient-dev # for MySQL-python \
-    libpq-dev # for psycopg2
+    libpq-dev # for psycopg2 \
+    && apt-get clean
 
 RUN pip install virtualenv
 RUN pip install virtualenvwrapper
