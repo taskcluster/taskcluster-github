@@ -55,7 +55,11 @@ suite("TaskCluster-GitHub-Integration", () => {
         organization: 'ninethings',
         repository:   'website',
       },
-      details:      {'event.head.ref': 'refs/heads/master'},
+      details:      {
+        'event.head.ref': 'refs/heads/master',
+        'event.head.repo.branch': 'master',
+        'event.base.repo.branch': 'master'
+      },
       jsonFile:     'webhook.push.json'
     });
 
