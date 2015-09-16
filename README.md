@@ -6,6 +6,8 @@ This service monitors all of the repositories associated with an organization fo
 ###Docs
 See: http://docs.taskcluster.net/services/taskcluster-github/
 
+Documentation will live at: http://docs.taskcluster.net/services/taskcluster-github
+
 ##Components
 
 ### API Server
