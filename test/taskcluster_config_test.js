@@ -34,19 +34,6 @@ suite('TaskCluster-Github Config', () => {
   };
 
   /**
-   * Test github data, relevant fields like one would receive from a call to:
-   * https://developer.github.com/v3/orgs/
-   **/
-  function buildUserInfo(params) {
-    let info = {
-        orgs: [
-          {login: 'testorg'}
-        ]
-      }
-    return _.merge(info, params);
-    };
-
-  /**
    * Retrieve values from deeply nested objects.
    **/
   function getNestedValue(keys, obj) {
@@ -70,7 +57,7 @@ suite('TaskCluster-Github Config', () => {
    * configPath:  '', Path to a taskclusterConfig file
    * params:      {
    *                payload:    {}, WebHook message payload
-   *                userInfo:   {}, GitHub user info
+   *                isCollaborator:   {}, GitHub user info
    *                validator:  {}, A taskcluster.base validator
    *              }
    * expected:    {}, keys=>values expected to exist in the compiled config
@@ -93,8 +80,8 @@ suite('TaskCluster-Github Config', () => {
     'Single Task Config',
     configPath + 'taskcluster.single.yml',
     {
-      payload:    buildMessage(),
-      userInfo:   buildUserInfo(),
+      payload:        buildMessage(),
+      isCollaborator: true,
     },
     {
       'tasks': [], // The github event doesn't match, so no tasks are created
@@ -105,8 +92,8 @@ suite('TaskCluster-Github Config', () => {
     'Pull Event, Single Task Config',
     configPath + 'taskcluster.single.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'push'}}),
-      userInfo:   buildUserInfo(),
+      payload:          buildMessage({details: {'event.type': 'push'}}),
+      isCollaborator:   true,
     },
     {
       'tasks[0].task.extra.github.events': ['push'],
@@ -117,8 +104,8 @@ suite('TaskCluster-Github Config', () => {
     'Push Event (Push Task + Pull Task)',
     configPath + 'taskcluster.push_task_and_pull_task.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'push'}}),
-      userInfo:   buildUserInfo(),
+      payload:        buildMessage({details: {'event.type': 'push'}}),
+      isCollaborator: true,
     },
     {
       'metadata.owner': 'test@test.com',
@@ -130,8 +117,8 @@ suite('TaskCluster-Github Config', () => {
     'Pull Event (Push Task + Pull Task)',
     configPath + 'taskcluster.push_task_and_pull_task.yml',
     {
-      payload:    buildMessage(),
-      userInfo:   buildUserInfo(),
+      payload:          buildMessage(),
+      isCollaborator:   true,
     },
     {
       'metadata.owner': 'test@test.com',
