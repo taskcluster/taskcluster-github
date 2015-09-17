@@ -125,4 +125,27 @@ suite('TaskCluster-Github Config', () => {
       'tasks[0].task.payload.command': ['test'],
       'tasks[0].task.extra.github.events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
     });
+
+  buildConfigTest(
+    'Non-collaborator Test (no insecure tasks)',
+    configPath + 'taskcluster.push_task_and_pull_task.yml',
+    {
+      payload:          buildMessage(),
+      isCollaborator:   false,
+    },
+    {
+      'tasks': [],
+    });
+
+  buildConfigTest(
+    'Non-collaborator Test (with insecure task)',
+    configPath + 'taskcluster.single.insecure.yml',
+    {
+      payload:          buildMessage({details: {'event.type': 'push'}}),
+      isCollaborator:   true,
+    },
+    {
+      'tasks[0].task.extra.github.events': ['push'],
+      'metadata.owner': 'test@test.com'
+    });
 });
