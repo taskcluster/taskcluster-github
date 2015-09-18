@@ -1,0 +1,24 @@
+version: 0
+metadata:
+  name: "name"
+  description: "description"
+  owner: "test@test.com"
+  source: "http://mrrrgn.com"
+tasks:
+  - provisionerId: aprovisioner
+    workerType: worker
+    extra:
+      github:
+        env: true
+        insecure: true
+        events:
+          - push
+    payload:
+      image: "ubuntu:latest"
+      command:
+        - test
+    metadata:
+      name: "name"
+      description: "description"
+      owner: "test@test.com"
+      source: "http://mrrrgn.com"
