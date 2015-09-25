@@ -17,10 +17,10 @@ tasks:
           - push
     payload:
       maxRunTime: 3600
-      image: "quay.io/mrrrgn/ubuntu-ci:0.0.2"
+      image: "quay.io/mrrrgn/ubuntu-ci:0.0.1"
       command:
         - "/bin/bash"
-        - "-c"
+        - "-lc"
         - "checkout-pull-request && npm install . && npm test"
     metadata:
       name: "TaskCluster GitHub Tests"
