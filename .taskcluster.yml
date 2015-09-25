@@ -20,7 +20,6 @@ tasks:
       image: "quay.io/mrrrgn/ubuntu-ci:0.0.2"
       command:
         - "/bin/bash"
-        - "--login"
         - "-c"
         - "checkout-pull-request && npm install . && npm test"
     metadata:
