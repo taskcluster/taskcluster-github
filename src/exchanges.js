@@ -1,10 +1,9 @@
 import base from 'taskcluster-base';
 import assert from 'assert';
-import common from './common';
 import _ from 'lodash';
 
 // Common schema prefix
-var SCHEMA_PREFIX_CONST = common.SCHEMA_PREFIX_CONST;
+var SCHEMA_PREFIX_CONST = 'http://schemas.taskcluster.net/github/v1/';
 
 /** Build common routing key construct for `exchanges.declare` */
 var commonRoutingKey = function(options) {

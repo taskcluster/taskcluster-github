@@ -1,12 +1,11 @@
 import Debug from 'debug';
 import tcconfig from './taskcluster-config';
 import github from './github';
-import common from './common';
 import utils from './utils';
 import taskcluster from 'taskcluster-client';
 import slugid from 'slugid';
 
-let debug = Debug('github:worker');
+let debug = Debug('taskcluster-github:worker');
 var worker = module.exports = {};
 
 const INSPECTOR_URL = 'https://tools.taskcluster.net/task-graph-inspector/#';
@@ -83,7 +82,7 @@ worker.webHookHandler = async function(message, context) {
       taskclusterConfig:  taskclusterConfig,
       payload:            message.payload,
       validator:          context.validator,
-      schema:             common.SCHEMA_PREFIX_CONST + 'taskcluster-github-config.json#'
+      schema:             'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#'
     });
     if (graphConfig.tasks.length) {
       let graph = await context.scheduler.createTaskGraph(slugid.nice(), graphConfig);

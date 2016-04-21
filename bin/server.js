@@ -3,7 +3,6 @@ import Debug from 'debug';
 import base from 'taskcluster-base';
 import api from '../lib/api';
 import path from 'path';
-import common from '../lib/common';
 import Promise from 'promise';
 import exchanges from '../lib/exchanges';
 import _ from 'lodash';
@@ -11,43 +10,49 @@ import Octokat from 'octokat';
 
 let debug = Debug('github:server');
 /** Launch server */
-var launch = async function(profile, publisher) {
+let launch = async function(profile, publisher) {
   debug("Launching with profile: %s", profile);
-  var cfg = common.loadConfig(profile);
+  let cfg = base.config({profile});
 
+  let statsDrain = null;
   try {
-    var statsDrain = common.buildInfluxStatsDrain(
-      cfg.get('influx:connectionString'),
-      cfg.get('influx:maxDelay'),
-      cfg.get('influx:maxPendingPoints')
-    );
+    statsDrain = new base.stats.Influx({
+      connectionString: cfg.influx.connectionString,
+      maxDelay: cfg.influx.maxDelay,
+      maxPendingPoints: cfg.influx.maxPendingPoints
+    });
   } catch(e) {
-    debug("Missing influx_connectionStraing: stats collection disabled.");
-    var statsDrain = common.stdoutStatsDrain;
+    debug("Missing influx_connectionString: stats collection disabled.");
+    statsDrain = {
+      addPoint: (...args) => {debug("stats:", args)}
+    };
   }
 
   // Start monitoring the process
   base.stats.startProcessUsageReporting({
     drain:      statsDrain,
-    component:  cfg.get('taskclusterGithub:statsComponent'),
+    component:  cfg.taskclusterGithub.statsComponent,
     process:    'server'
   });
 
-  let validator = await common.buildValidator(cfg);
+  let validator = await base.validator({
+    prefix: 'github/v1/',
+    aws: cfg.aws,
+  });
 
-  let pulseCredentials = cfg.get('pulse')
+  let pulseCredentials = cfg.pulse;
   if (publisher) {
     debug("Using a custom publisher instead of pulse")
   } else if (pulseCredentials.username && pulseCredentials.password) {
       publisher = await exchanges.setup({
         credentials:        pulseCredentials,
-        exchangePrefix:     cfg.get('taskclusterGithub:exchangePrefix'),
+        exchangePrefix:     cfg.taskclusterGithub.exchangePrefix,
         validator:          validator,
         referencePrefix:    'github/v1/exchanges.json',
-        publish:            cfg.get('taskclusterGithub:publishMetaData') === 'true',
-        aws:                cfg.get('aws'),
+        publish:            cfg.taskclusterGithub.publishMetaData,
+        aws:                cfg.aws,
         drain:              statsDrain,
-        component:          cfg.get('taskclusterGithub:statsComponent'),
+        component:          cfg.taskclusterGithub.statsComponent,
         process:            'server'
       });
  } else {
@@ -55,7 +60,7 @@ var launch = async function(profile, publisher) {
  }
 
   // A single connection to the GithubAPI to pass into the router context
-  var githubAPI = new Octokat(cfg.get('github:credentials'));
+  let githubAPI = new Octokat(cfg.github.credentials);
 
   // Create API router and publish reference if needed
   debug("Creating API router");
@@ -63,24 +68,19 @@ var launch = async function(profile, publisher) {
   let router = await api.setup({
     context:          {publisher, cfg, githubAPI},
     validator:        validator,
-    authBaseUrl:      cfg.get('taskcluster:authBaseUrl'),
-    publish:          cfg.get('taskclusterGithub:publishMetaData') === 'true',
-    baseUrl:          cfg.get('server:publicUrl') + '/v1',
+    authBaseUrl:      cfg.taskcluster.authBaseUrl,
+    publish:          cfg.taskclusterGithub.publishMetaData,
+    baseUrl:          cfg.server.publicUrl + '/v1',
     referencePrefix:  'github/v1/api.json',
-    aws:              cfg.get('aws'),
-    component:        cfg.get('taskclusterGithub:statsComponent'),
+    aws:              cfg.aws,
+    component:        cfg.taskclusterGithub.statsComponent,
     drain:            statsDrain
   });
 
   debug("Configuring app");
 
   // Create app
-  var app = base.app({
-    port:           Number(process.env.PORT || cfg.get('server:port')),
-    env:            cfg.get('server:env'),
-    forceSSL:       cfg.get('server:forceSSL'),
-    trustProxy:     cfg.get('server:trustProxy')
-  });
+  let app = base.app(cfg.server);
 
   // Mount API router
   app.use('/v1', router);
@@ -93,7 +93,7 @@ var launch = async function(profile, publisher) {
 // If server.js is executed start the server
 if (!module.parent) {
   // Find configuration profile
-  var profile = process.argv[2];
+  let profile = process.argv[2];
   if (!profile) {
     console.log("Usage: server.js [profile]");
     console.error("ERROR: No configuration profile is provided");

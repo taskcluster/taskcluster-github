@@ -3,7 +3,6 @@ suite('TaskCluster-Github Config', () => {
   var tcconfig   = require('../lib/taskcluster-config');
   var assert     = require('assert');
   var _          = require('lodash');
-  var common     = require('../lib/common');
   var helper     = require('./helper');
 
   /**
@@ -64,7 +63,7 @@ suite('TaskCluster-Github Config', () => {
   var buildConfigTest = function(testName, configPath, params, expected) {
     test(testName, async () => {
       params.taskclusterConfig = fs.readFileSync(configPath);
-      params.schema = common.SCHEMA_PREFIX_CONST + 'taskcluster-github-config.json#';
+      params.schema = 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#';
       params.validator = helper.validator;
       let config = await tcconfig.processConfig(params);
       for (let key in expected) {

@@ -90,7 +90,7 @@ api.declare({
     req.status(400).send("Request missing a body");
   }
 
-  let webhookSecret = this.cfg.get('webhook:secret');
+  let webhookSecret = this.cfg.webhook.secret;
   let xHubSignature = req.headers['x-hub-signature'];
 
   if (xHubSignature && !webhookSecret) {

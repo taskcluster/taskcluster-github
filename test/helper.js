@@ -9,35 +9,24 @@ import api from '../lib/api';
 import taskcluster from 'taskcluster-client';
 import mocha from 'mocha';
 import exchanges from '../lib/exchanges';
-import common from '../lib/common';
-var bin = {
+let bin = {
   server:         require('../bin/server'),
 };
 
 // Load configuration
-var cfg = common.loadConfig('test');
+let cfg = base.config({profile: 'test'});
 
-// Some default clients for the mockAuthServer
-var defaultClients = [
-  {
-  clientId:     'test-server',  // Hardcoded into config/test.js
-  accessToken:  'none',
-  scopes:       ['auth:credentials'],
-  expires:      new Date(3000, 0, 0, 0, 0, 0, 0)
-  }, {
-  clientId:     'test-client',
-  accessToken:  'none',
-  scopes:       ['*'],
-  expires:      new Date(3000, 0, 0, 0, 0, 0, 0)
-  }
-];
+let testClients = {
+  'test-server': ['*'],
+  'test-client': ['*'],
+};
 
 // Create and export helper object
-var helper = module.exports = {};
+let helper = module.exports = {};
 
 // Turn integration tests on or off depending on pulse credentials being set
 helper.canRunIntegrationTests = true;
-if (!cfg.get('pulse:password')) {
+if (!cfg.pulse.password) {
   helper.canRunIntegrationTests = false;
   console.log("No pulse credentials: integration tests will be skipped.");
 }
@@ -47,7 +36,7 @@ if (!cfg.get('pulse:password')) {
 helper.jsonHttpRequest = function(jsonFile, options) {
   let defaultOptions = {
       hostname: 'localhost',
-      port: cfg.get('server:port'),
+      port: cfg.server.port,
       path: '/v1/github',
       method: 'POST',
   }
@@ -78,13 +67,12 @@ var webServer = null;
 
 // Setup before tests
 mocha.before(async () => {
-  // Create mock authentication server
-  authServer = await base.testing.createMockAuthServer({
-  port:     cfg.get('taskcluster:authPort'),
-  clients:  defaultClients
-  });
+  base.testing.fakeauth.start(testClients);
 
-  helper.validator = await common.buildValidator(cfg);
+  helper.validator = await base.validator({
+    prefix: 'github/v1/',
+    aws: cfg.aws,
+  });
 
   // Skip tests if no credentials are configured
   if (!helper.canRunIntegrationTests) {
@@ -102,11 +90,11 @@ mocha.before(async () => {
     webServer = await bin.server('test')
 
     // Configure PulseTestReceiver
-    helper.events = new base.testing.PulseTestReceiver(cfg.get('pulse'), mocha);
+    helper.events = new base.testing.PulseTestReceiver(cfg.pulse, mocha);
     // Create client for binding to reference
     var exchangeReference = exchanges.reference({
-      exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
-      credentials:      cfg.get('pulse')
+      exchangePrefix:   cfg.taskclusterGithub.exchangePrefix,
+      credentials:      cfg.pulse
     });
     helper.TaskclusterGitHubEvents = taskcluster.createClient(exchangeReference);
     helper.taskclusterGithubEvents = new helper.TaskclusterGitHubEvents();
@@ -117,5 +105,5 @@ mocha.before(async () => {
 mocha.after(async () => {
   // Kill webServer
   await webServer.terminate();
-  await authServer.terminate();
+  base.testing.fakeauth.stop();
 });

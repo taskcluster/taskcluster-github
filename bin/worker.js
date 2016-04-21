@@ -16,26 +16,32 @@ let debug = Debug('github:worker');
 var launch = async function(profile) {
   debug("Launching with profile: %s", profile);
 
-  var cfg = common.loadConfig(profile);
+  var cfg = base.config({profile});
 
+  let statsDrain = null;
   try {
-    var statsDrain = common.buildInfluxStatsDrain(
-      cfg.get('influx:connectionString'),
-      cfg.get('influx:maxDelay'),
-      cfg.get('influx:maxPendingPoints')
-    );
+    statsDrain = new base.stats.Influx({
+      connectionString: cfg.influx.connectionString,
+      maxDelay: cfg.influx.maxDelay,
+      maxPendingPoints: cfg.influx.maxPendingPoints
+    });
   } catch(e) {
-    debug("Missing influx_connectionStraing: stats collection disabled.");
-    var statsDrain = common.stdoutStatsDrain;
+    debug("Missing influx_connectionString: stats collection disabled.");
+    statsDrain = {
+      addPoint: (...args) => {debug("stats:", args)}
+    };
   }
 
   // For use in validation of taskcluster github config files
-  let validator = await common.buildValidator(cfg);
+  let validator = await base.validator({
+    prefix: 'github/v1/',
+    aws: cfg.aws,
+  });
 
   // Create a single connection to the GithubAPI to pass around
-  var githubAPI = new Octokat(cfg.get('github:credentials'));
+  var githubAPI = new Octokat(cfg.github.credentials);
 
-  var scheduler = new taskcluster.Scheduler(cfg.get('taskcluster'));
+  var scheduler = new taskcluster.Scheduler(cfg.taskcluster);
 
   // A context to be passed into message handlers
   let context = {cfg, githubAPI, scheduler, validator};
@@ -43,11 +49,11 @@ var launch = async function(profile) {
   // Start monitoring the process
   base.stats.startProcessUsageReporting({
     drain:      statsDrain,
-    component:  cfg.get('taskclusterGithub:statsComponent'),
+    component:  cfg.taskclusterGithub.statsComponent,
     process:    'worker'
   });
 
-  let pulseCredentials = cfg.get('pulse')
+  let pulseCredentials = cfg.pulse
   assert(pulseCredentials.username, 'Username must be supplied for pulse connection');
   assert(pulseCredentials.password, 'Password must be supplied for pulse connection');
 
@@ -60,8 +66,8 @@ var launch = async function(profile) {
   });
 
   let exchangeReference = exchanges.reference({
-    exchangePrefix:   cfg.get('taskclusterGithub:exchangePrefix'),
-    credentials:      cfg.get('pulse')
+    exchangePrefix:   cfg.taskclusterGithub.exchangePrefix,
+    credentials:      cfg.pulse
   });
 
   let GitHubEvents = taskcluster.createClient(exchangeReference);

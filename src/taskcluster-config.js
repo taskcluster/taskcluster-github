@@ -7,7 +7,7 @@ import jparam from 'json-parameterization';
 import _ from 'lodash';
 import utils from './utils';
 
-let debug = Debug('github:worker');
+let debug = Debug('taskcluster-github');
 var taskclusterConfig = module.exports = {};
 
 function genGitHubEnvs(payload) {
@@ -87,7 +87,7 @@ taskclusterConfig.processConfig = function(params) {
     try {
       let taskclusterConfig = yaml.load(params.taskclusterConfig);
       // Validate the config file
-      let errors = params.validator.check(taskclusterConfig, params.schema);
+      let errors = params.validator(taskclusterConfig, params.schema);
       if (errors) {
         let error = new Error(`Validation failed against schema: ${params.schema}`);
         error.errors = errors;
