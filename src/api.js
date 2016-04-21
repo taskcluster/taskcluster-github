@@ -130,7 +130,7 @@ api.declare({
   // Not all webhook payloads include an e-mail for the user who triggered
   // an event.
   let headUser = msg.details['event.head.user.login'];
-  let userDetails = await this.githubAPI.users(headUser).fetch();
+  let userDetails = await this.github.users(headUser).fetch();
 
   msg.details['event.head.user.email'] = userDetails.email || headUser + '@noreply.github.com'
   msg.repository = sanitizeGitHubField(body.repository.name);

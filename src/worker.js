@@ -19,7 +19,7 @@ worker.webHookHandler = async function(message, context) {
   let taskclusterConfig = undefined;
   try {
     // Try to fetch a .taskcluster.yml file for every request
-    taskclusterConfig = await context.githubAPI.repos(
+    taskclusterConfig = await context.github.repos(
       message.payload.organization, message.payload.repository
     ).contents('.taskcluster.yml').read({
       ref: message.payload.details['event.base.repo.branch']
@@ -34,7 +34,7 @@ worker.webHookHandler = async function(message, context) {
     }
 
     if (!isCollaborator) {
-      isCollaborator = await context.githubAPI.orgs(
+      isCollaborator = await context.github.orgs(
         message.payload.organization
       ).members.contains(login);
     }
@@ -43,7 +43,7 @@ worker.webHookHandler = async function(message, context) {
       // GithubAPI's collaborator check returns an error if a user isn't
       // listed as a collaborator.
       try {
-        await context.githubAPI.repos(
+        await context.github.repos(
           message.payload.organization, message.payload.repository
         ).collaborators(login).fetch();
         // No error, the user is a collaborator
@@ -64,7 +64,7 @@ worker.webHookHandler = async function(message, context) {
     if (!isCollaborator) {
       let msg = `@${login} does not have permission to trigger tasks.`;
       await github.addCommitComment(
-        context.githubAPI,
+        context.github,
         message.payload.organization,
         message.payload.repository,
         message.payload.details['event.head.sha'],
@@ -89,7 +89,7 @@ worker.webHookHandler = async function(message, context) {
       // On pushes, leave a comment on the commit
       if (message.payload.details['event.type'] == 'push') {
         await github.addCommitComment(
-          context.githubAPI,
+          context.github,
           message.payload.organization,
           message.payload.repository,
           message.payload.details['event.head.sha'],
@@ -108,7 +108,7 @@ worker.webHookHandler = async function(message, context) {
     }
     // Warn the user know that there was a problem processing their
     // config file with a comment.
-    await github.addCommitComment(context.githubAPI,
+    await github.addCommitComment(context.github,
       message.payload.organization,
       message.payload.repository,
       message.payload.details['event.head.sha'],
@@ -130,7 +130,7 @@ worker.graphStateChangeHandler = async function(message, context) {
       context:      'TaskCluster'
     };
     let route = message.routes[0].split('.');
-    await github.updateStatus(context.githubAPI, route[1], route[2], route[3],
+    await github.updateStatus(context.github, route[1], route[2], route[3],
        statusMessage);
   } catch(e) {
     debug('Failed to update GitHub commit status: ', e);

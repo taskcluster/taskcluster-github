@@ -9,9 +9,7 @@ import api from '../lib/api';
 import taskcluster from 'taskcluster-client';
 import mocha from 'mocha';
 import exchanges from '../lib/exchanges';
-let bin = {
-  server:         require('../bin/server'),
-};
+import load from '../lib/main';
 
 // Load configuration
 let cfg = base.config({profile: 'test'});
@@ -26,8 +24,10 @@ let helper = module.exports = {};
 
 // Turn integration tests on or off depending on pulse credentials being set
 helper.canRunIntegrationTests = true;
+let mockPublisher = false;
 if (!cfg.pulse.password) {
   helper.canRunIntegrationTests = false;
+  mockPublisher = true;
   console.log("No pulse credentials: integration tests will be skipped.");
 }
 
@@ -74,21 +74,9 @@ mocha.before(async () => {
     aws: cfg.aws,
   });
 
-  // Skip tests if no credentials are configured
-  if (!helper.canRunIntegrationTests) {
-    // Start a web server with custom publishers (mocked pulse)
-    let stubbedPublisher = (data) => {
-      return Promise.resolve(data);
-    };
+  webServer = await load('server', {profile: 'test', process: 'test', mockPublisher});
 
-    webServer = await bin.server('test', {
-      pullRequest: stubbedPublisher,
-      push: stubbedPublisher,
-    });
-  } else {
-    // Start a normal webserver, with pulse publisher
-    webServer = await bin.server('test')
-
+  if (helper.canRunIntegrationTests) {
     // Configure PulseTestReceiver
     helper.events = new base.testing.PulseTestReceiver(cfg.pulse, mocha);
     // Create client for binding to reference
