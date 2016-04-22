@@ -28,42 +28,37 @@ let mockPublisher = false;
 if (!cfg.pulse.password) {
   helper.canRunIntegrationTests = false;
   mockPublisher = true;
-  console.log("No pulse credentials: integration tests will be skipped.");
+  console.log('No pulse credentials: integration tests will be skipped.');
 }
 
 // Build an http request from a json file with fields describing
 // headers and a body
-helper.jsonHttpRequest = function(jsonFile, options) {
+helper.jsonHttpRequest = function (jsonFile, options) {
   let defaultOptions = {
-      hostname: 'localhost',
-      port: cfg.server.port,
-      path: '/v1/github',
-      method: 'POST',
-  }
-  if (options === undefined) {
-      options = defaultOptions
-  } else {
-      let mergedOptions = {};
-      for (var k in defaultOptions) { mergedOptions[k] = defaultOptions[k]; }
-      for (var k in options) { mergedOptions[k] = options[k]; }
-      options = mergedOptions;
-  }
+    hostname: 'localhost',
+    port: cfg.server.port,
+    path: '/v1/github',
+    method: 'POST',
+  };
+
+  options = _.defaultsDeep(options, defaultOptions);
+
   let jsonData = JSON.parse(fs.readFileSync(jsonFile));
   options.headers = jsonData.headers;
-  return new Promise(function(accept, reject) {
-      try {
-          let req = http.request(options, accept)
-          req.write(JSON.stringify(jsonData.body))
-          req.end()
-      } catch(e) {
-          reject(e)
-      }
+  return new Promise (function (accept, reject) {
+    try {
+      let req = http.request(options, accept);
+      req.write(JSON.stringify(jsonData.body));
+      req.end();
+    } catch (e) {
+      reject(e);
+    }
   });
 };
 
 // Hold reference to authServer
-var authServer = null;
-var webServer = null;
+let authServer = null;
+let webServer = null;
 
 // Setup before tests
 mocha.before(async () => {
@@ -80,9 +75,9 @@ mocha.before(async () => {
     // Configure PulseTestReceiver
     helper.events = new base.testing.PulseTestReceiver(cfg.pulse, mocha);
     // Create client for binding to reference
-    var exchangeReference = exchanges.reference({
+    let exchangeReference = exchanges.reference({
       exchangePrefix:   cfg.taskclusterGithub.exchangePrefix,
-      credentials:      cfg.pulse
+      credentials:      cfg.pulse,
     });
     helper.TaskclusterGitHubEvents = taskcluster.createClient(exchangeReference);
     helper.taskclusterGithubEvents = new helper.TaskclusterGitHubEvents();

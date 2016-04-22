@@ -23,7 +23,7 @@ let load = base.loader({
       try {
         return new base.stats.Influx(cfg.influx);
       } catch (e) {
-        debug("Missing influx connection string: stats collection disabled.");
+        debug('Missing influx connection string: stats collection disabled.');
       }
       return new base.stats.NullDrain();
     },
@@ -91,7 +91,7 @@ let load = base.loader({
         drain,
       });
 
-      debug("Launching server.");
+      debug('Launching server.');
       let app = base.app(cfg.server);
       app.use('/v1', api);
       return app.createServer();
@@ -110,7 +110,7 @@ let load = base.loader({
       credentials: {
         username: cfg.pulse.username,
         password: cfg.pulse.password,
-      }
+      },
     }),
   },
 
@@ -118,13 +118,20 @@ let load = base.loader({
     requires: ['cfg'],
     setup: ({cfg}) => exchanges.reference({
       exchangePrefix:   cfg.taskclusterGithub.exchangePrefix,
-      credentials:      cfg.pulse
+      credentials:      cfg.pulse,
     }),
   },
 
   worker: {
-    requires: ['cfg', 'github', 'scheduler', 'validator', 'reference', 'webhooks'],
-    setup: async ({cfg, github, scheduler, validator, reference, webhooks}) => {
+    requires: ['cfg', 'github', 'drain', 'scheduler', 'validator', 'reference', 'webhooks'],
+    setup: async ({cfg, github, drain, scheduler, validator, reference, webhooks}) => {
+
+      base.stats.startProcessUsageReporting({
+        component:  cfg.taskclusterGithub.statsComponent,
+        process:    'worker',
+        drain,
+      });
+
       let context = {cfg, github, scheduler, validator};
       let GitHubEvents = taskcluster.createClient(reference);
       let githubEvents = new GitHubEvents();
@@ -149,7 +156,7 @@ let load = base.loader({
       // exchange names to a regular expression
       let webHookHandlerExp = RegExp('(.*pull-request|.*push)', 'i');
       let graphChangeHandlerExp = RegExp('exchange/taskcluster-scheduler/.*', 'i');
-      webhooks.on('message', function(message) {
+      webhooks.on('message', function (message) {
         if (webHookHandlerExp.test(message.exchange)) {
           worker.webHookHandler(message, context);
         } else if (graphChangeHandlerExp.test(message.exchange)) {

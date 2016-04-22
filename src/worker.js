@@ -6,7 +6,7 @@ import taskcluster from 'taskcluster-client';
 import slugid from 'slugid';
 
 let debug = Debug('taskcluster-github:worker');
-var worker = module.exports = {};
+let worker = module.exports = {};
 
 const INSPECTOR_URL = 'https://tools.taskcluster.net/task-graph-inspector/#';
 
@@ -22,11 +22,11 @@ worker.webHookHandler = async function(message, context) {
     taskclusterConfig = await context.github.repos(
       message.payload.organization, message.payload.repository
     ).contents('.taskcluster.yml').read({
-      ref: message.payload.details['event.base.repo.branch']
+      ref: message.payload.details['event.base.repo.branch'],
     });
 
     // Decide if a user has permissions to run tasks.
-    let login = message.payload.details['event.head.user.login']
+    let login = message.payload.details['event.head.user.login'];
     let isCollaborator = false;
 
     if (login == message.payload.organization) {
@@ -49,13 +49,13 @@ worker.webHookHandler = async function(message, context) {
         // No error, the user is a collaborator
         isCollaborator = true;
       } catch (e) {
-          if (e.status == 404) {
-            // Only a 404 error means the user isn't a collaborator
-            // anything else should just throw like normal
-            debug(e.message);
-          } else {
-            throw(e);
-          }
+        if (e.status == 404) {
+          // Only a 404 error means the user isn't a collaborator
+          // anything else should just throw like normal
+          debug(e.message);
+        } else {
+          throw e;
+        }
       }
     }
 
@@ -69,11 +69,11 @@ worker.webHookHandler = async function(message, context) {
         message.payload.repository,
         message.payload.details['event.head.sha'],
         'TaskCluster: ' + msg);
-      throw(new Error(msg));
+      throw new Error(msg);
     }
   } catch (e) {
     debug(e);
-    throw(e);
+    throw e;
   }
 
   // Now we can try processing the config and kicking off a task.
@@ -82,7 +82,7 @@ worker.webHookHandler = async function(message, context) {
       taskclusterConfig:  taskclusterConfig,
       payload:            message.payload,
       validator:          context.validator,
-      schema:             'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#'
+      schema:             'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
     });
     if (graphConfig.tasks.length) {
       let graph = await context.scheduler.createTaskGraph(slugid.nice(), graphConfig);
@@ -98,13 +98,13 @@ worker.webHookHandler = async function(message, context) {
     } else {
       debug('graphConfig compiled with zero tasks: skipping');
     }
-  } catch(e) {
+  } catch (e) {
     debug(e);
     let errorMessage = e.message;
     let errorBody = e.errors || e.body.error;
     // Let's prettify any objects
-    if (typeof(errorBody) == 'object') {
-      errorBody = JSON.stringify(errorBody, null, 4)
+    if (typeof errorBody == 'object') {
+      errorBody = JSON.stringify(errorBody, null, 4);
     }
     // Warn the user know that there was a problem processing their
     // config file with a comment.
@@ -113,7 +113,7 @@ worker.webHookHandler = async function(message, context) {
       message.payload.repository,
       message.payload.details['event.head.sha'],
       'Submitting the task to TaskCluster failed. ' + errorMessage
-      + 'Details:\n\n```js\n' +  errorBody + '\n```')
+      + 'Details:\n\n```js\n' +  errorBody + '\n```');
   }
 };
 
@@ -127,12 +127,12 @@ worker.graphStateChangeHandler = async function(message, context) {
       state:        github.StatusMap[message.payload.status.state],
       target_url:   INSPECTOR_URL + message.payload.status.taskGraphId,
       description:  'TaskGraph: ' + message.payload.status.state,
-      context:      'TaskCluster'
+      context:      'TaskCluster',
     };
     let route = message.routes[0].split('.');
     await github.updateStatus(context.github, route[1], route[2], route[3],
        statusMessage);
-  } catch(e) {
+  } catch (e) {
     debug('Failed to update GitHub commit status: ', e);
   }
 };

@@ -8,9 +8,9 @@ import _ from 'lodash';
 import utils from './utils';
 
 let debug = Debug('taskcluster-github');
-var taskclusterConfig = module.exports = {};
+let taskclusterConfig = module.exports = {};
 
-function genGitHubEnvs(payload) {
+function genGitHubEnvs (payload) {
   return {
     GITHUB_EVENT: payload.details['event.type'],
     GITHUB_BRANCH: payload.details['event.base.repo.branch'],
@@ -25,7 +25,7 @@ function genGitHubEnvs(payload) {
     GITHUB_HEAD_SHA: payload.details['event.head.sha'],
     GITHUB_HEAD_BRANCH: payload.details['event.head.repo.branch'],
     GITHUB_HEAD_REF: payload.details['event.ref'],
-    GITHUB_HEAD_USER_EMAIL: payload.details['event.head.user.email']
+    GITHUB_HEAD_USER_EMAIL: payload.details['event.head.user.email'],
   };
 };
 
@@ -33,20 +33,20 @@ function genGitHubEnvs(payload) {
  * Attach fields to a compiled taskcluster github config so that
  * it becomes a complete task graph config.
  **/
-function completeTaskGraphConfig(taskclusterConfig, payload) {
+function completeTaskGraphConfig (taskclusterConfig, payload) {
   if (payload.details['event.type'].startsWith('pull_request')) {
     taskclusterConfig.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`
+      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
     ];
-  }
-  else if (payload.details['event.type'] == 'push') {
+  } else if (payload.details['event.type'] == 'push') {
+    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
     taskclusterConfig.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:` + payload.details['event.base.repo.branch']
+      prefix + payload.details['event.base.repo.branch'],
     ];
   }
 
   taskclusterConfig.routes = [
-    `taskcluster-github.${ payload.organization }.${ payload.repository }.` + payload.details['event.head.sha']
+    `taskcluster-github.${ payload.organization }.${ payload.repository }.` + payload.details['event.head.sha'],
   ];
 
   // each task can optionally decide if it wants github specific environment
@@ -66,9 +66,9 @@ function completeTaskGraphConfig(taskclusterConfig, payload) {
 /**
  * Taskcluster Github defaults, accessible from within user configs
  **/
-var taskclusterDefaults = {
+let taskclusterDefaults = {
   'taskcluster.docker.provisionerId': 'aws-provisioner-v1',
-  'taskcluster.docker.workerType': 'github-worker'
+  'taskcluster.docker.workerType': 'github-worker',
 };
 
 /**
@@ -81,9 +81,9 @@ var taskclusterDefaults = {
  *    schema:             url,   Url to the taskcluster config schema
  *  }
  **/
-taskclusterConfig.processConfig = function(params) {
+taskclusterConfig.processConfig = function (params) {
   let payload = params.payload;
-  return new Promise(function(accept, reject) {
+  return new Promise(function (accept, reject) {
     try {
       let taskclusterConfig = yaml.load(params.taskclusterConfig);
       // Validate the config file
@@ -103,9 +103,9 @@ taskclusterConfig.processConfig = function(params) {
       // because templating may change with schema version, and parameter
       // functions are used as default values for some fields.
       let parameters = _.merge(payload.details, {
-          $fromNow: (text) => { return tc.fromNowJSON(text) },
-          organization: payload.organization,
-          repository: payload.repository
+        $fromNow: (text) => { return tc.fromNowJSON(text); },
+        organization: payload.organization,
+        repository: payload.repository,
       });
       parameters = _.merge(parameters, taskclusterDefaults);
       taskclusterConfig = jparam(taskclusterConfig, parameters);
@@ -114,19 +114,23 @@ taskclusterConfig.processConfig = function(params) {
       taskclusterConfig.tasks = taskclusterConfig.tasks.map((taskConfig) => {
         return {
           taskId: slugid.nice(),
-          task: taskConfig
+          task: taskConfig,
         };
       }).filter((taskConfig) => {
         // Filter out tasks that aren't associated with the current event
         // being handled
         let events = taskConfig.task.extra.github.events;
         let branches = taskConfig.task.extra.github.branches;
-        if (!utils.listContainsExpressions(events, [payload.details['event.type']])) return false;
-        if (branches && !utils.listContainsExpressions(branches, [payload.details['event.base.repo.branch']])) return false;
+        if (!utils.listContainsExpressions(events, [payload.details['event.type']])) {
+          return false;
+        };
+        if (branches && !utils.listContainsExpressions(branches, [payload.details['event.base.repo.branch']])) {
+          return false;
+        };
         return true;
       });
       accept(completeTaskGraphConfig(taskclusterConfig, payload));
-    } catch(e) {
+    } catch (e) {
       debug(e);
       reject(e);
     }
