@@ -1,7 +1,10 @@
 TaskCluster GitHub Service
 ==========================
+[![Build Status](https://travis-ci.org/taskcluster/taskcluster-github.svg?branch=master)](https://travis-ci.org/taskcluster/taskcluster-github)
 
 This service monitors all of the repositories associated with an organization for changes and schedules TaskCluster tasks for any repository which contains a `.taskcluster.yml` configuration file. The goal of this project is to provide project owners a method for scheduling jobs in TaskCluster which is quick and straight forward.
+
+This project is tested in both Travis and Taskcluster.
 
 ###Docs
 See: http://docs.taskcluster.net/services/taskcluster-github/
