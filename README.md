@@ -1,8 +1,6 @@
 TaskCluster GitHub Service
 ==========================
 
-# TODO: THIS ALL NEEDS UPDATING
-
 This service monitors all of the repositories associated with an organization for changes and schedules TaskCluster tasks for any repository which contains a `.taskcluster.yml` configuration file. The goal of this project is to provide project owners a method for scheduling jobs in TaskCluster which is quick and straight forward.
 
 ###Docs
@@ -20,4 +18,4 @@ Listens for WebHook triggered pulse messages and attempts to schedule TaskCluste
 
 ###Run Tests
 From the project's base run ``npm test``
-*note:* Initially, this will only run unit tests. To run integration tests add pulse credentals to ``config/test.js``
+*note:* Initially, this will only run unit tests. To run integration tests add pulse credentals to ``user-config.yml``. An example is available at ``user-config-example.yml``.
