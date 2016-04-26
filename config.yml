@@ -28,8 +28,11 @@ defaults:
       protocol: 'https'
       timeout: 5000
     credentials:
-      token: ""
+      token: !env GITHUB_OAUTH_TOKEN
       type: "oauth"
+
+  webhook:
+    secret:                       !env WEBHOOK_SECRET
 
   influx:
     # Usually provided as environment variables, must be on the form:
