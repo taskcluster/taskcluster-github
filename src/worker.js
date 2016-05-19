@@ -4,6 +4,7 @@ import github from './github';
 import utils from './utils';
 import taskcluster from 'taskcluster-client';
 import slugid from 'slugid';
+import _ from 'lodash';
 
 let debug = Debug('taskcluster-github:worker');
 let worker = module.exports = {};
@@ -24,6 +25,13 @@ worker.webHookHandler = async function(message, context) {
     ).contents('.taskcluster.yml').read({
       ref: message.payload.details['event.base.repo.branch'],
     });
+
+    // Check if this is meant to be built by tc-github at all.
+    // This is a bit of a hack, but is needed for bug 1274077 for now
+    let c = yaml.safeLoad(taskclusterConfig);
+    if (c.tasks && c.tasks.length > 0 && _.has(c.tasks[0], 'extra.github')) {
+      return;
+    }
 
     // Decide if a user has permissions to run tasks.
     let login = message.payload.details['event.head.user.login'];
