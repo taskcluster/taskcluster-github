@@ -29,7 +29,8 @@ worker.webHookHandler = async function(message, context) {
     // Check if this is meant to be built by tc-github at all.
     // This is a bit of a hack, but is needed for bug 1274077 for now
     let c = yaml.safeLoad(taskclusterConfig);
-    if (c.tasks && c.tasks.length > 0 && _.has(c.tasks[0], 'extra.github')) {
+    c.tasks = (c.tasks || []).filter((task) => _.has(task, 'extra.github'));
+    if (c.tasks.length === 0) {
       return;
     }
 
