@@ -4,6 +4,7 @@ import github from './github';
 import utils from './utils';
 import taskcluster from 'taskcluster-client';
 import slugid from 'slugid';
+import yaml from 'js-yaml';
 import _ from 'lodash';
 
 let debug = Debug('taskcluster-github:worker');
