@@ -37,6 +37,8 @@ worker.webHookHandler = async function(message, context) {
   let c = yaml.safeLoad(taskclusterConfig);
   c.tasks = (c.tasks || []).filter((task) => _.has(task, 'extra.github'));
   if (c.tasks.length === 0) {
+    debug('Skipping tasks because no task with "extra.github" exists!');
+    debug(`Repository: ${message.payload.organization}/${message.payload.repository}`);
     return;
   }
 
