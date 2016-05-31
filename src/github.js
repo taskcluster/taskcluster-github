@@ -36,7 +36,7 @@ github.updateStatus = async function (api, user, repo, sha, params) {
   } catch (e) {
     if (e.status === 404) {
       debug(`Could not post status to ${user}/${repo}@${sha}`);
-      debug(e);
+      debug(e.message);
       return;
     }
     throw e;
@@ -53,7 +53,7 @@ github.addCommitComment = async function (api, user, repo, sha, body) {
   } catch (e) {
     if (e.status === 404) {
       debug(`Could add comment to to ${user}/${repo}@${sha}`);
-      debug(e);
+      debug(e.message);
       return;
     }
     throw e;
