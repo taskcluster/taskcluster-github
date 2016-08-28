@@ -20,7 +20,7 @@ tasks:
       image: "node:5"
       command:
         - "/bin/bash"
-        - "-lc"
+        - "-lcx"
         - "git clone {{event.head.repo.url}} repo && cd repo && git checkout {{event.head.sha}} && npm install . && npm test"
     metadata:
       name: "TaskCluster GitHub Tests"
