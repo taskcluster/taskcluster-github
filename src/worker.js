@@ -116,15 +116,6 @@ worker.webHookHandler = async function(message, context) {
     });
     if (graphConfig.tasks.length) {
       let graph = await context.scheduler.createTaskGraph(slugid.nice(), graphConfig);
-      // On pushes, leave a comment on the commit
-      if (message.payload.details['event.type'] == 'push') {
-        await github.addCommitComment(
-          context.github,
-          message.payload.organization,
-          message.payload.repository,
-          message.payload.details['event.head.sha'],
-          'TaskCluster-GitHub: ' + INSPECTOR_URL + graph.status.taskGraphId);
-      }
     } else {
       debug('graphConfig compiled with zero tasks: skipping');
     }
