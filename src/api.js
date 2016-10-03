@@ -133,7 +133,7 @@ api.declare({
   let headUser = msg.details['event.head.user.login'];
   let userDetails = await this.github.users(headUser).fetch();
 
-  msg.details['event.head.user.email'] = userDetails.email || headUser + '@noreply.github.com';
+  msg.details['event.head.user.email'] = userDetails.email || headUser + '@users.noreply.github.com';
   msg.repository = sanitizeGitHubField(body.repository.name);
 
   await this.publisher[publisherKey](msg);
