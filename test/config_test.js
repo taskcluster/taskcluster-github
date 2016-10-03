@@ -33,24 +33,6 @@ suite('TaskCluster-Github Config', () => {
   };
 
   /**
-   * Retrieve values from deeply nested objects.
-   **/
-  function getNestedValue (keys, obj) {
-    let arrayExp = RegExp('\\[([0-9]+)\\]');
-    keys = keys.split('.');
-    for (let key of keys) {
-      let arrayMatch = arrayExp.exec(key);
-      if (arrayMatch) {
-        // Here we handle array accesses of the form a.b[2]
-        obj = obj[key.split('[')[0]][arrayMatch[1]];
-      } else {
-        obj = obj[key];
-      }
-    }
-    return obj;
-  };
-
-  /**
    * Make sure that data merges properly when building configs
    * testName:    '', A label for the current test case
    * configPath:  '', Path to a taskclusterConfig file
@@ -67,7 +49,7 @@ suite('TaskCluster-Github Config', () => {
       params.validator = helper.validator;
       let config = await tcconfig.processConfig(params);
       for (let key of Object.keys(expected)) {
-        assert.deepEqual(getNestedValue(key, config), expected[key]);
+        assert.deepEqual(_.get(config, key), expected[key]);
       }
     });
   };
