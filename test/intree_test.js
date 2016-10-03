@@ -1,6 +1,6 @@
-suite('TaskCluster-Github Config', () => {
+suite('intree config', () => {
   let  fs         = require('fs');
-  let  tcconfig   = require('../lib/taskcluster-config');
+  let  intree     = require('../lib/intree');
   let  assert     = require('assert');
   let  _          = require('lodash');
   let  helper     = require('./helper');
@@ -44,10 +44,10 @@ suite('TaskCluster-Github Config', () => {
    **/
   let buildConfigTest = function (testName, configPath, params, expected) {
     test(testName, async () => {
-      params.taskclusterConfig = fs.readFileSync(configPath);
+      params.config = fs.readFileSync(configPath);
       params.schema = 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#';
       params.validator = helper.validator;
-      let config = await tcconfig.processConfig(params);
+      let config = intree(params);
       for (let key of Object.keys(expected)) {
         assert.deepEqual(_.get(config, key), expected[key]);
       }

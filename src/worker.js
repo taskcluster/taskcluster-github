@@ -1,7 +1,6 @@
 import Debug from 'debug';
-import tcconfig from './taskcluster-config';
+import intree from './intree';
 import github from './github';
-import utils from './utils';
 import taskcluster from 'taskcluster-client';
 import slugid from 'slugid';
 import yaml from 'js-yaml';
@@ -108,11 +107,11 @@ worker.webHookHandler = async function(message, context) {
 
   // Now we can try processing the config and kicking off a task.
   try {
-    let graphConfig = await tcconfig.processConfig({
-      taskclusterConfig:  taskclusterConfig,
-      payload:            message.payload,
-      validator:          context.validator,
-      schema:             'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
+    let graphConfig = intree({
+      config: taskclusterConfig,
+      payload: message.payload,
+      validator: context.validator,
+      schema: 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
     });
     if (graphConfig.tasks.length) {
       let graph = await context.scheduler.createTaskGraph(slugid.nice(), graphConfig);

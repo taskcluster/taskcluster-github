@@ -1,4 +1,4 @@
-suite('TaskCluster-GitHub-Integration', () => {
+suite('integration', () => {
   let helper = require('./helper');
   let assert = require('assert');
 
