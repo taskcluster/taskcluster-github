@@ -9,7 +9,7 @@ suite('intree config', () => {
    * Test github data, like one would see in a pulse message
    * after a pull request
    **/
-  function buildMessage (params) {
+  function buildMessage(params) {
     let defaultMessage = {
       organization: 'testorg',
       repository:   'testrepo',
@@ -42,7 +42,7 @@ suite('intree config', () => {
    *              }
    * expected:    {}, keys=>values expected to exist in the compiled config
    **/
-  let buildConfigTest = function (testName, configPath, params, expected) {
+  let buildConfigTest = function(testName, configPath, params, expected) {
     test(testName, async () => {
       params.config = fs.readFileSync(configPath);
       params.schema = 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#';

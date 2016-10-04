@@ -8,7 +8,7 @@ import _ from 'lodash';
  * Attach fields to a compiled taskcluster github config so that
  * it becomes a complete task graph config.
  **/
-function completeInTreeConfig (config, payload) {
+function completeInTreeConfig(config, payload) {
   if (payload.details['event.type'].startsWith('pull_request')) {
     config.scopes = [
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
@@ -62,7 +62,7 @@ function completeInTreeConfig (config, payload) {
  *    schema:             url,   Url to the taskcluster config schema
  *  }
  **/
-module.exports = function ({config, payload, validator, schema}) {
+module.exports = function({config, payload, validator, schema}) {
   config = yaml.safeLoad(config);
   let errors = validator(config, schema);
   if (errors) {

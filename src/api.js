@@ -7,13 +7,13 @@ let SCHEMA_PREFIX_CONST = 'http://schemas.taskcluster.net/github/v1/';
 
 // Strips/replaces undesirable characters which GitHub allows in
 // repository/organization names (notably .)
-function sanitizeGitHubField (field) {
+function sanitizeGitHubField(field) {
   return field.replace(/[^a-zA-Z0-9-_\.]/gi, '').replace(/\./g, '%');
 };
 
 // Reduce a pull request WebHook's data to only fields needed to checkout a
 // revision
-function getPullRequestDetails (eventData) {
+function getPullRequestDetails(eventData) {
   return {
     'event.type': 'pull_request.' + eventData.action,
     'event.base.repo.branch': eventData.pull_request.base.label.split(':')[1],
@@ -30,7 +30,7 @@ function getPullRequestDetails (eventData) {
   };
 };
 
-function getPushDetails (eventData) {
+function getPushDetails(eventData) {
   let ref = eventData.ref;
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
@@ -153,7 +153,7 @@ api.declare({
     '',
     '**Warning** this api end-point is **not stable**.',
   ].join('\n'),
-}, function (req, res) {
+}, function(req, res) {
 
   res.status(200).json({
     alive:    true,

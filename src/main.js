@@ -158,7 +158,7 @@ let load = base.loader({
       // exchange names to a regular expression
       let webHookHandlerExp = RegExp('(.*pull-request|.*push)', 'i');
       let graphChangeHandlerExp = RegExp('exchange/taskcluster-scheduler/.*', 'i');
-      webhooks.on('message', monitor.timedHandler('message-handler', function (message) {
+      webhooks.on('message', monitor.timedHandler('message-handler', function(message) {
         if (webHookHandlerExp.test(message.exchange)) {
           worker.webHookHandler(message, context);
         } else if (graphChangeHandlerExp.test(message.exchange)) {
