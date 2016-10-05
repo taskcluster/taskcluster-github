@@ -7,7 +7,7 @@ import exchanges from './exchanges';
 import worker from './worker';
 import _ from 'lodash';
 import taskcluster from 'taskcluster-client';
-import Octokat from 'octokat';
+import Github from 'github';
 
 let debug = Debug('taskcluster-github');
 
@@ -78,7 +78,15 @@ let load = base.loader({
 
   github: {
     requires: ['cfg'],
-    setup: ({cfg}) => new Octokat(cfg.github.credentials),
+    setup: ({cfg}) => {
+      let github = new Github({
+        promise: Promise,
+      });
+      if (cfg.github.credentials.token) {
+        github.authenticate(cfg.github.credentials);
+      }
+      return github;
+    },
   },
 
   api: {
