@@ -74,7 +74,7 @@ mocha.before(async () => {
     helper.events = new base.testing.PulseTestReceiver(cfg.pulse, mocha);
     // Create client for binding to reference
     let exchangeReference = exchanges.reference({
-      exchangePrefix:   cfg.taskclusterGithub.exchangePrefix,
+      exchangePrefix:   cfg.app.exchangePrefix,
       credentials:      cfg.pulse,
     });
     helper.TaskclusterGitHubEvents = taskcluster.createClient(exchangeReference);
