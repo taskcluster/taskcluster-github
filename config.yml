@@ -2,8 +2,8 @@
 defaults:
   app:
     exchangePrefix: 'v1/'
-    jobQueue: 'tc-gh-jobs'
-    statusQueue: 'tc-gh-statuses'
+    jobQueue: null
+    statusQueue: null
 
   taskcluster:
     # TaskCluster credentials for this server, these must have scopes:
@@ -39,6 +39,9 @@ defaults:
     apiVersion: '2014-01-01'
 
 production:
+  app:
+    jobQueue: 'jobs'
+    statusQueue: 'statuses'
   server:
     publicUrl: 'https://github.taskcluster.net'
     env: 'production'

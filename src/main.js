@@ -55,25 +55,16 @@ let load = base.loader({
   },
 
   publisher: {
-    requires: ['cfg', 'monitor', 'validator', 'mockPublisher'],
-    setup: async ({cfg, monitor, validator, mockPublisher}) => {
-      if (mockPublisher) {
-        return {
-          push: data => Promise.resolve(data),
-          pullRequest: data => Promise.resolve(data),
-        };
-      } else {
-        return await exchanges.setup({
-          credentials:        cfg.pulse,
-          exchangePrefix:     cfg.app.exchangePrefix,
-          validator:          validator,
-          referencePrefix:    'github/v1/exchanges.json',
-          publish:            process.env.NODE_ENV === 'production',
-          aws:                cfg.aws,
-          monitor:            monitor.prefix('publisher'),
-        });
-      }
-    },
+    requires: ['cfg', 'monitor', 'validator'],
+    setup: async ({cfg, monitor, validator}) => exchanges.setup({
+      credentials:        cfg.pulse,
+      exchangePrefix:     cfg.app.exchangePrefix,
+      validator:          validator,
+      referencePrefix:    'github/v1/exchanges.json',
+      publish:            process.env.NODE_ENV === 'production',
+      aws:                cfg.aws,
+      monitor:            monitor.prefix('publisher'),
+    }),
   },
 
   github: {
@@ -129,25 +120,26 @@ let load = base.loader({
 
   handlers: {
     requires: ['cfg', 'github', 'monitor', 'scheduler', 'validator', 'reference'],
-    setup: async ({cfg, github, monitor, scheduler, validator, reference}) => {
-      let handlers = new Handlers({
-        credentials: cfg.pulse,
-        monitor: monitor.prefix('handlers'),
-        reference,
-        jobQueueName: cfg.app.jobQueueName,
-        statusQueueName: cfg.app.statusQueueName,
-        context: {cfg, github, scheduler, validator},
-      });
-      return handlers.setup();
-    },
+    setup: async ({cfg, github, monitor, scheduler, validator, reference}) => new Handlers({
+      credentials: cfg.pulse,
+      monitor: monitor.prefix('handlers'),
+      reference,
+      jobQueueName: cfg.app.jobQueueName,
+      statusQueueName: cfg.app.statusQueueName,
+      context: {cfg, github, scheduler, validator},
+    }),
   },
-}, ['profile', 'process', 'mockPublisher']);
+
+  worker: {
+    requires: ['handlers'],
+    setup: async ({handlers}) => handlers.setup(),
+  },
+}, ['profile', 'process']);
 
 if (!module.parent) {
   load(process.argv[2], {
     process: process.argv[2],
     profile: process.env.NODE_ENV,
-    mockPublisher: false,
   }).catch(err => {
     console.log(err.stack);
     process.exit(1);

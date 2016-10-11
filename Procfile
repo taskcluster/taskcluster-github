@@ -1,2 +1,2 @@
 web: node lib/main server
-worker: node lib/main handlers
+worker: node lib/main worker
