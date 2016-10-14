@@ -4,6 +4,7 @@ let path = require('path');
 let Promise = require('promise');
 let exchanges = require('./exchanges');
 let Handlers = require('./handlers');
+let Intree = require('./intree');
 let _ = require('lodash');
 let taskcluster = require('taskcluster-client');
 let Github = require('github');
@@ -83,6 +84,11 @@ let load = loader({
     },
   },
 
+  intree: {
+    requires: ['cfg'],
+    setup: ({cfg}) => Intree.setup(cfg),
+  },
+
   api: {
     requires: ['cfg', 'monitor', 'validator', 'github', 'publisher'],
     setup: ({cfg, monitor, validator, github, publisher}) => api.setup({
@@ -108,9 +114,9 @@ let load = loader({
     },
   },
 
-  scheduler: {
+  queue: {
     requires: ['cfg'],
-    setup: ({cfg}) => new taskcluster.Scheduler(cfg.taskcluster),
+    setup: ({cfg}) => new taskcluster.Queue(cfg.taskcluster),
   },
 
   reference: {
@@ -122,14 +128,15 @@ let load = loader({
   },
 
   handlers: {
-    requires: ['cfg', 'github', 'monitor', 'scheduler', 'validator', 'reference'],
-    setup: async ({cfg, github, monitor, scheduler, validator, reference}) => new Handlers({
+    requires: ['cfg', 'github', 'monitor', 'intree', 'queue', 'validator', 'reference'],
+    setup: async ({cfg, github, monitor, intree, queue, validator, reference}) => new Handlers({
       credentials: cfg.pulse,
       monitor: monitor.prefix('handlers'),
+      intree,
       reference,
       jobQueueName: cfg.app.jobQueueName,
       statusQueueName: cfg.app.statusQueueName,
-      context: {cfg, github, scheduler, validator},
+      context: {cfg, github, queue, validator},
     }),
   },
 

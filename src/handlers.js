@@ -1,12 +1,11 @@
 let debug = require('debug')('taskcluster-github');
-let intree = require('./intree');
 let taskcluster = require('taskcluster-client');
 let slugid = require('slugid');
 let yaml = require('js-yaml');
 let assert = require('assert');
 let _ = require('lodash');
 
-let INSPECTOR_URL = 'https://tools.taskcluster.net/task-graph-inspector/#';
+let INSPECTOR_URL = 'https://tools.taskcluster.net/push-inspector/#/';
 let STATUS_MAPPING = {
   running:  'pending',
   blocked:  'failure',
@@ -28,14 +27,16 @@ let STATUS_MAPPING = {
  * }
  */
 class Handlers {
-  constructor({credentials, monitor, reference, jobQueueName, statusQueueName, context}) {
+  constructor({credentials, monitor, reference, jobQueueName, statusQueueName, intree, context}) {
     assert(credentials.username, 'credentials.username must be provided');
     assert(credentials.password, 'credentials.password must be provided');
     assert(monitor, 'monitor is required for statistics');
     assert(monitor, 'reference must be provided');
+    assert(intree, 'intree configuration builder must be provided');
     this.credentials = credentials;
     this.monitor = monitor;
     this.reference = reference;
+    this.intree = intree;
     this.connection = null;
     this.statusListener = null;
     this.jobListener = null;
@@ -171,21 +172,21 @@ async function jobHandler(message) {
 
   // Now we can try processing the config and kicking off a task.
   try {
-    let graphConfig = intree({
+    let graphConfig = this.intree({
       config: repoconf,
       payload: message.payload,
       validator: context.validator,
       schema: 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
     });
     if (graphConfig.tasks.length) {
-      let graph = await context.scheduler.createTaskGraph(slugid.nice(), graphConfig);
+      let groupId = await createTasksInGroup(context.queue, graphConfig);
       // On pushes, leave a comment on the commit
       if (message.payload.details['event.type'] == 'push') {
         await context.github.repos.createCommitComment({
           owner: organization,
           repo: repository,
           sha,
-          body: 'TaskCluster: ' + INSPECTOR_URL + graph.status.taskGraphId + '/',
+          body: 'Push Inspector: ' + INSPECTOR_URL + groupId,
         });
       }
     } else {
@@ -277,4 +278,15 @@ async function isCollaborator({login, organization, repository, sha, context}) {
     body: 'TaskCluster: ' + msg,
   });
   return false;
+}
+
+async function createTasksInGroup(queue, graphConfig) {
+  let taskGroupId = null;
+  let created = [];
+  for (let task of graphConfig.tasks) {
+    taskGroupId = task.task.taskGroupId;
+    created.push(queue.createTask(task.taskId, task.task));
+  }
+  await Promise.all(created);
+  return taskGroupId;
 }

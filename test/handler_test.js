@@ -10,6 +10,7 @@
  * revisit later if it is a pain.
  */
 suite('handlers', () => {
+  let debug = require('debug')('test');
   let helper = require('./helper');
   let assert = require('assert');
   let testing = require('taskcluster-lib-testing');
@@ -20,18 +21,14 @@ suite('handlers', () => {
   let stubs = null;
   let Handlers = null;
   let handlers = null;
-  setup(async () => {
-    // Fake scheduler createTaskGraph "implemementation"
-    let scheduler = {
-      createTaskGraph: (...rest) => {return {status: {taskGraphId: slugid.v4()}};},
-    };
 
+  setup(async () => {
     // Stub out github operations that write and need higher permissions
     stubs = {};
     let github = await load('github', {profile: 'test', process: 'test'});
     stubs['comment'] = sinon.stub(github.repos, 'createCommitComment');
 
-    Handlers = await load('handlers', {profile: 'test', process: 'test', scheduler, github});
+    Handlers = await load('handlers', {profile: 'test', process: 'test', github});
     handlers = await Handlers.setup();
   });
 
@@ -48,9 +45,9 @@ suite('handlers', () => {
         'event.head.repo.branch': 'master',
         'event.head.user.login': user,
         'event.head.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
-        'event.head.sha': 'baac77fbb0089838ad2c57eab598efe4241e0e8f',
+        'event.head.sha': '795f050fcd34a255d50a847c1a6f40eeafb37c42',
         'event.head.ref': 'refs/heads/master',
-        'event.base.sha': '337667546fe033bd729d80e5fde00c07b98ee37a',
+        'event.base.sha': 'e53d4f89baf16cf6e8047cf59874b68879614a63',
         'event.head.user.email': 'bstack@mozilla.com',
       },
       repository: 'hooks-testing',
@@ -61,6 +58,9 @@ suite('handlers', () => {
   test('valid push (owner === owner)', async function(done) {
     await publishMessage('TaskClusterRobot');
 
+    let commentPrefix = 'Push Inspector: https://tools.taskcluster.net/push-inspector/#/';
+    let taskGroupId = null;
+
     await testing.poll(async () => {
       assert(stubs.comment.called);
     }).catch(done);
@@ -68,14 +68,28 @@ suite('handlers', () => {
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, 'baac77fbb0089838ad2c57eab598efe4241e0e8f');
-      assert(stubs.comment.args[0][0].body.startsWith(
-        'TaskCluster: https://tools.taskcluster.net/task-graph-inspector/#'));
-      assert(stubs.comment.args[0][0].body.endsWith('/'));
-      done();
+      assert.equal(stubs.comment.args[0][0].sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
+      debug('Created task group:' + stubs.comment.args[0][0].body);
+      assert(stubs.comment.args[0][0].body.startsWith(commentPrefix));
+      taskGroupId = stubs.comment.args[0][0].body.replace(commentPrefix, '').trim();
     } catch (e) {
       done(e);
+      return;
     }
+
+    if (typeof taskGroupId !== 'string') {
+      done(new Error(`${taskGroupId} is not a valid taskGroupId`));
+      return;
+    }
+    await Promise.all((await helper.queue.listTaskGroup(taskGroupId)).tasks.map(async (task) => {
+      await helper.queue.claimTask(task.status.taskId, 0, {
+        workerGroup:  'dummy-workergroup',
+        workerId:     'dummy-worker',
+      });
+      await testing.sleep(100);
+      await helper.queue.reportCompleted(task.status.taskId, 0);
+    })).catch(done);
+    done();
   });
 
   test('insufficient permissions to check membership', async function(done) {
@@ -88,7 +102,7 @@ suite('handlers', () => {
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, 'baac77fbb0089838ad2c57eab598efe4241e0e8f');
+      assert.equal(stubs.comment.args[0][0].sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
       assert(stubs.comment.args[0][0].body.startsWith(
         'Taskcluster does not have permission to check for repository collaborators'));
       done();
@@ -107,7 +121,7 @@ suite('handlers', () => {
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, 'baac77fbb0089838ad2c57eab598efe4241e0e8f');
+      assert.equal(stubs.comment.args[0][0].sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
       assert(stubs.comment.args[0][0].body.startsWith(
         'TaskCluster: @somebodywhodoesntexist does not have permission'));
       done();

@@ -21,6 +21,10 @@ defaults:
   webhook:
     secret: !env WEBHOOK_SECRET
 
+  intree:
+    provisionerId: !env PROVISIONER_ID
+    workerType: !env WORKER_TYPE
+
   server:
     publicUrl: 'https://github.taskcluster.net'
     port: !env:number PORT
@@ -42,6 +46,11 @@ production:
   app:
     jobQueue: 'jobs'
     statusQueue: 'statuses'
+
+  intree:
+    provisionerId: 'aws-provisioner-v1'
+    workerType: 'github-worker'
+
   server:
     publicUrl: 'https://github.taskcluster.net'
     env: 'production'
@@ -54,11 +63,10 @@ test:
   webhook:
     secret: 'abc123'
 
-  taskcluster:
-    credentials:
-      clientId: 'test-server'
-      accessToken: 'none'
-
   server:
     publicUrl: 'http://localhost:60415'
     port: 60415
+
+  intree:
+    provisionerId: 'dummy-provisioner'
+    workerType: 'dummy-worker'

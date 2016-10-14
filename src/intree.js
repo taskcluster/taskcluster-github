@@ -5,6 +5,8 @@ let tc = require('taskcluster-client');
 let jparam = require('json-parameterization');
 let _ = require('lodash');
 
+module.exports = {};
+
 /**
  * Attach fields to a compiled taskcluster github config so that
  * it becomes a complete task graph config.
@@ -54,8 +56,8 @@ function completeInTreeConfig(config, payload) {
 };
 
 /**
- * Merges an existing taskcluster github config with a pull request message's
- * payload to generate a full task graph config.
+ * Returns a function that merges an existing taskcluster github config with
+ * a pull request message's payload to generate a full task graph config.
  *  params {
  *    config:             '...', A yaml string
  *    payload:            {},    GitHub WebHook message payload
@@ -63,45 +65,48 @@ function completeInTreeConfig(config, payload) {
  *    schema:             url,   Url to the taskcluster config schema
  *  }
  **/
-module.exports = function({config, payload, validator, schema}) {
-  config = yaml.safeLoad(config);
-  let errors = validator(config, schema);
-  if (errors) {
-    throw new Error(errors);
-  }
-  debug(`intree config for ${payload.organization}/${payload.repository} matches valid schema.`);
+module.exports.setup = function(cfg) {
+  return function({config, payload, validator, schema}) {
+    config = yaml.safeLoad(config);
+    let errors = validator(config, schema);
+    if (errors) {
+      throw new Error(errors);
+    }
+    debug(`intree config for ${payload.organization}/${payload.repository} matches valid schema.`);
 
-  // We need to toss out the config version number; it's the only
-  // field that's not also in graph/task definitions
-  let version = config.version;
-  delete config.version;
+    // We need to toss out the config version number; it's the only
+    // field that's not also in graph/task definitions
+    let version = config.version;
+    delete config.version;
 
-  // Perform parameter substitutions. This happens after verification
-  // because templating may change with schema version, and parameter
-  // functions are used as default values for some fields.
-  config = jparam(config, _.merge(payload.details, {
-    $fromNow: (text) => tc.fromNowJSON(text),
-    organization: payload.organization,
-    repository: payload.repository,
-    'taskcluster.docker.provisionerId': 'aws-provisioner-v1',
-    'taskcluster.docker.workerType': 'github-worker',
-  }));
+    // Perform parameter substitutions. This happens after verification
+    // because templating may change with schema version, and parameter
+    // functions are used as default values for some fields.
+    config = jparam(config, _.merge(payload.details, {
+      $fromNow: (text) => tc.fromNowJSON(text),
+      organization: payload.organization,
+      repository: payload.repository,
+      'taskcluster.docker.provisionerId': cfg.intree.provisionerId,
+      'taskcluster.docker.workerType': cfg.intree.workerType,
+    }));
 
-  // Compile individual tasks, filtering any that are not intended
-  // for the current github event type
-  config.tasks = config.tasks.map((task) => {
-    return {
-      taskId: slugid.nice(),
-      task: task,
-    };
-  }).filter((task) => {
-    // Filter out tasks that aren't associated with the current event
-    // being handled
-    let events = task.task.extra.github.events;
-    let branches = task.task.extra.github.branches;
-    return _.some(events, ev => RegExp(ev).test(payload.details['event.type'])) && (!branches || branches &&
-      _.includes(branches, payload.details['event.base.repo.branch']));
-  });
-  return completeInTreeConfig(config, payload);
+    let taskGroupId = slugid.nice();
+    // Compile individual tasks, filtering any that are not intended
+    // for the current github event type. Append taskGroupId while
+    // we're at it.
+    config.tasks = config.tasks.map((task) => {
+      return {
+        taskId: slugid.nice(),
+        task: _.extend(task, {taskGroupId}),
+      };
+    }).filter((task) => {
+      // Filter out tasks that aren't associated with the current event
+      // being handled
+      let events = task.task.extra.github.events;
+      let branches = task.task.extra.github.branches;
+      return _.some(events, ev => RegExp(ev).test(payload.details['event.type'])) && (!branches || branches &&
+        _.includes(branches, payload.details['event.base.repo.branch']));
+    });
+    return completeInTreeConfig(config, payload);
+  };
 };
-

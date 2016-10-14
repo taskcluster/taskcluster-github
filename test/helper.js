@@ -5,6 +5,7 @@ let path = require('path');
 let fs = require('fs');
 let _ = require('lodash');
 let api = require('../lib/api');
+let Intree = require('../lib/intree');
 let taskcluster = require('taskcluster-client');
 let mocha = require('mocha');
 let exchanges = require('../lib/exchanges');
@@ -62,6 +63,9 @@ mocha.before(async () => {
   });
 
   webServer = await load('server', {profile: 'test', process: 'test'});
+
+  helper.intree = await load('intree', {profile: 'test', process: 'test'});
+  helper.queue = await load('queue', {profile: 'test', process: 'test'});
 
   // Configure pulse receiver
   helper.events = new testing.PulseTestReceiver(cfg.pulse, mocha);
