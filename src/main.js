@@ -116,7 +116,10 @@ let load = loader({
 
   queue: {
     requires: ['cfg'],
-    setup: ({cfg}) => new taskcluster.Queue(cfg.taskcluster),
+    setup: ({cfg}) => new taskcluster.Queue({
+      baseUrl: cfg.taskcluster.queueBaseUrl,
+      credentials: cfg.taskcluster.credentials,
+    }),
   },
 
   reference: {
