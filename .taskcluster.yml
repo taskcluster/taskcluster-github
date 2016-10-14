@@ -23,7 +23,7 @@ tasks:
           - push
     payload:
       maxRunTime: 3600
-      image: "node:5"
+      image: "node:6"
       env:
         DEBUG: "* -babel* -mocha* -nock* -express* -body-parser* -morgan -eslint* -follow-redirects"
       features:
