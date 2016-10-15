@@ -97,7 +97,7 @@ module.exports.setup = function(cfg) {
     config.tasks = config.tasks.map((task) => {
       return {
         taskId: slugid.nice(),
-        task: _.extend(task, {taskGroupId}),
+        task: _.extend(task, {taskGroupId, schedulerId: 'taskcluster-github'}),
       };
     }).filter((task) => {
       // Filter out tasks that aren't associated with the current event

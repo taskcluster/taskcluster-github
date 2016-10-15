@@ -27,6 +27,7 @@ suite('handlers', () => {
     stubs = {};
     let github = await load('github', {profile: 'test', process: 'test'});
     stubs['comment'] = sinon.stub(github.repos, 'createCommitComment');
+    stubs['status'] = sinon.stub(github.repos, 'createStatus');
 
     Handlers = await load('handlers', {profile: 'test', process: 'test', github});
     handlers = await Handlers.setup();
@@ -58,20 +59,22 @@ suite('handlers', () => {
   test('valid push (owner === owner)', async function(done) {
     await publishMessage('TaskClusterRobot');
 
-    let commentPrefix = 'Push Inspector: https://tools.taskcluster.net/push-inspector/#/';
+    let urlPrefix = 'https://tools.taskcluster.net/push-inspector/#/';
     let taskGroupId = null;
 
     await testing.poll(async () => {
-      assert(stubs.comment.called);
-    }).catch(done);
+      assert(stubs.status.calledOnce);
+    }, 20, 1000).catch(done);
     try {
-      assert(stubs.comment.calledOnce);
-      assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
-      assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
-      debug('Created task group:' + stubs.comment.args[0][0].body);
-      assert(stubs.comment.args[0][0].body.startsWith(commentPrefix));
-      taskGroupId = stubs.comment.args[0][0].body.replace(commentPrefix, '').trim();
+      assert(stubs.status.calledOnce, 'Status was never updated!');
+      let args = stubs.status.firstCall.args[0];
+      assert.equal(args.owner, 'TaskClusterRobot');
+      assert.equal(args.repo, 'hooks-testing');
+      assert.equal(args.sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
+      assert.equal(args.state, 'pending');
+      debug('Created task group: ' + args.target_url);
+      assert(args.target_url.startsWith(urlPrefix));
+      taskGroupId = args.target_url.replace(urlPrefix, '').trim();
     } catch (e) {
       done(e);
       return;
@@ -89,6 +92,23 @@ suite('handlers', () => {
       await testing.sleep(100);
       await helper.queue.reportCompleted(task.status.taskId, 0);
     })).catch(done);
+
+    await testing.poll(async () => {
+      assert(stubs.status.calledTwice);
+    }).catch(done);
+    try {
+      assert(stubs.status.calledTwice, 'Status was only updated once');
+      let args = stubs.status.secondCall.args[0];
+      assert.equal(args.owner, 'TaskClusterRobot');
+      assert.equal(args.repo, 'hooks-testing');
+      assert.equal(args.sha, '795f050fcd34a255d50a847c1a6f40eeafb37c42');
+      assert.equal(args.state, 'success');
+      assert(args.target_url.startsWith(urlPrefix));
+      taskGroupId = args.target_url.replace(urlPrefix, '').trim();
+    } catch (e) {
+      done(e);
+      return;
+    }
     done();
   });
 

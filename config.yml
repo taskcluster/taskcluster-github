@@ -4,6 +4,7 @@ defaults:
     exchangePrefix: 'v1/'
     jobQueue: null
     statusQueue: null
+    buildTableName: 'TaskclusterGithubBuilds'
 
   taskcluster:
     # TaskCluster credentials for this server, these must have scopes:
@@ -25,6 +26,9 @@ defaults:
   intree:
     provisionerId: !env PROVISIONER_ID
     workerType: !env WORKER_TYPE
+
+  azure:
+    account: !env AZURE_ACCOUNT_NAME
 
   server:
     publicUrl: 'https://github.taskcluster.net'
@@ -63,6 +67,9 @@ production:
 test:
   webhook:
     secret: 'abc123'
+
+  azure:
+    account: 'inMemory'
 
   server:
     publicUrl: 'http://localhost:60415'
