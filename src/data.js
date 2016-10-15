@@ -9,8 +9,8 @@ module.exports = {};
  */
 module.exports.Build = Entity.configure({
   version: 1,
-  partitionKey: Entity.keys.CompositeKey('organization', 'repository', 'sha'),
-  rowKey: Entity.keys.StringKey('taskGroupId'),
+  partitionKey: Entity.keys.StringKey('taskGroupId'),
+  rowKey: Entity.keys.ConstantKey('taskGroupId'),
   properties: {
     organization: Entity.types.String,
     repository: Entity.types.String,

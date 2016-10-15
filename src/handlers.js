@@ -104,9 +104,9 @@ async function statusHandler(message) {
     });
   }
 
-  let build = (await this.context.Builds.scan({
+  let build = await this.context.Builds.load({
     taskGroupId,
-  }, {limit: 1})).entries[0];
+  });
   await build.modify((b) => {
     b.status = status;
   });
@@ -223,9 +223,6 @@ async function jobHandler(message) {
           throw err;
         }
         let build = await this.Builds.load({
-          organization,
-          repository,
-          sha,
           taskGroupId,
         });
         assert.equal(build.status, 'pending', `Status for ${organization}/${repository}@${sha}
