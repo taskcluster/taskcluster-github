@@ -90,14 +90,13 @@ module.exports.setup = function(cfg) {
       'taskcluster.docker.workerType': cfg.intree.workerType,
     }));
 
-    let taskGroupId = slugid.nice();
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
     // we're at it.
     config.tasks = config.tasks.map((task) => {
       return {
         taskId: slugid.nice(),
-        task: _.extend(task, {taskGroupId, schedulerId: 'taskcluster-github'}),
+        task,
       };
     }).filter((task) => {
       // Filter out tasks that aren't associated with the current event
@@ -107,6 +106,18 @@ module.exports.setup = function(cfg) {
       return _.some(events, ev => RegExp(ev).test(payload.details['event.type'])) && (!branches || branches &&
         _.includes(branches, payload.details['event.base.repo.branch']));
     });
+
+    // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
+    // task in taskcluster.
+    if (config.tasks.length > 0) {
+      let taskGroupId = config.tasks[0].taskId;
+      config.tasks = config.tasks.map((task) => {
+        return {
+          taskId: task.taskId,
+          task: _.extend(task.task, {taskGroupId, schedulerId: 'taskcluster-github'}),
+        };
+      });
+    }
     return completeInTreeConfig(config, payload);
   };
 };

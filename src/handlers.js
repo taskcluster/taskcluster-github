@@ -196,7 +196,8 @@ async function jobHandler(message) {
       schema: 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
     });
     if (graphConfig.tasks.length) {
-      let taskGroupId = await createTasksInGroup(context.queue, graphConfig);
+      let taskGroupId = graphConfig.tasks[0].task.taskGroupId;
+      await Promise.all(graphConfig.tasks.map(t => context.queue.createTask(t.taskId, t.task)));
 
       // We used to comment on every commit, but setting the status
       // is a nicer thing to do instead. It contains all of the same
@@ -319,15 +320,4 @@ async function isCollaborator({login, organization, repository, sha, context}) {
     body: 'TaskCluster: ' + msg,
   });
   return false;
-}
-
-async function createTasksInGroup(queue, graphConfig) {
-  let taskGroupId = null;
-  let created = [];
-  for (let task of graphConfig.tasks) {
-    taskGroupId = task.task.taskGroupId;
-    created.push(queue.createTask(task.taskId, task.task));
-  }
-  await Promise.all(created);
-  return taskGroupId;
 }
