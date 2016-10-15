@@ -16,6 +16,6 @@ module.exports.Build = Entity.configure({
     repository: Entity.types.String,
     sha: Entity.types.String,
     taskGroupId: Entity.types.String,
-    status: Entity.types.String,
+    state: Entity.types.String,
   },
 });

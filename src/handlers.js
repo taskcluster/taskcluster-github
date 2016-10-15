@@ -92,14 +92,14 @@ async function statusHandler(message) {
   let taskGroupId = message.payload.taskGroupId || message.payload.status.taskGroupId;
   debug(`handling state change for task-group ${taskGroupId}`);
 
-  let status = 'success';
+  let state = 'success';
   if (message.exchange.endsWith('task-exception') || message.exchange.endsWith('task-failed')) {
-    status = 'failure';
+    state = 'failure';
   } else {
     let tasks = await this.context.queue.listTaskGroup(taskGroupId);
     tasks.tasks.map((task) => {
       if (task.status.state != 'completed') {
-        status = 'failure';
+        state = 'failure';
       }
     });
   }
@@ -108,18 +108,18 @@ async function statusHandler(message) {
     taskGroupId,
   });
   await build.modify((b) => {
-    b.status = status;
+    b.state = state;
   });
 
-  debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha}`);
+  debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha} (${state})`);
   try {
     await this.context.github.repos.createStatus({
       owner: build.organization,
       repo: build.repository,
       sha: build.sha,
-      state: status,
+      state,
       target_url: INSPECTOR_URL + taskGroupId,
-      description: 'TaskGroup: ' + status,
+      description: 'TaskGroup: ' + state,
       context: 'Taskcluster',
     });
   } catch (e) {
@@ -217,7 +217,7 @@ async function jobHandler(message) {
         repository,
         sha,
         taskGroupId,
-        status: 'pending',
+        state: 'pending',
       }).catch(async (err) => {
         if (err.code !== 'EntityAlreadyExists') {
           throw err;
@@ -225,8 +225,8 @@ async function jobHandler(message) {
         let build = await this.Builds.load({
           taskGroupId,
         });
-        assert.equal(build.status, 'pending', `Status for ${organization}/${repository}@${sha}
-          already exists but is set to ${build.status} instead of pending!`);
+        assert.equal(build.state, 'pending', `State for ${organization}/${repository}@${sha}
+          already exists but is set to ${build.state} instead of pending!`);
       });
     } else {
       debug(`intree config for ${organization}/${repository} compiled with zero tasks. Skipping.`);
