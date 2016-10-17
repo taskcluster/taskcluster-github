@@ -103,8 +103,8 @@ module.exports.setup = function(cfg) {
       // being handled
       let events = task.task.extra.github.events;
       let branches = task.task.extra.github.branches;
-      return _.some(events, ev => RegExp(ev).test(payload.details['event.type'])) && (!branches || branches &&
-        _.includes(branches, payload.details['event.base.repo.branch']));
+      return _.some(events, ev => payload.details['event.type'].startsWith(_.trimEnd(ev, '*'))) &&
+        (!branches || branches && _.includes(branches, payload.details['event.base.repo.branch']));
     });
 
     // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
