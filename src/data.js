@@ -17,5 +17,7 @@ module.exports.Build = Entity.configure({
     sha: Entity.types.String,
     taskGroupId: Entity.types.String,
     state: Entity.types.String,
+    created: Entity.types.Date,
+    updated: Entity.types.Date,
   },
 });

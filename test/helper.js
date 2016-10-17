@@ -66,6 +66,7 @@ mocha.before(async () => {
 
   helper.intree = await load('intree', {profile: 'test', process: 'test'});
   helper.queue = await load('queue', {profile: 'test', process: 'test'});
+  helper.Builds = await load('Builds', {profile: 'test', process: 'test'});
 
   // Configure pulse receiver
   helper.events = new testing.PulseTestReceiver(cfg.pulse, mocha);
@@ -78,6 +79,17 @@ mocha.before(async () => {
 
   // Configure pulse publisher
   helper.publisher = await load('publisher', {profile: 'test', process: 'test'});
+
+  helper.baseUrl = 'http://localhost:' + webServer.address().port + '/v1';
+  let reference = api.reference({baseUrl: helper.baseUrl});
+  helper.Github = taskcluster.createClient(reference);
+  helper.github = new helper.Github({
+    baseUrl: helper.baseUrl,
+    credentials: {
+      clientId: 'test-client',
+      accessToken: 'none',
+    },
+  });
 });
 
 // Cleanup after tests

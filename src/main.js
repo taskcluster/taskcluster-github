@@ -106,9 +106,9 @@ let load = loader({
   },
 
   api: {
-    requires: ['cfg', 'monitor', 'validator', 'github', 'publisher'],
-    setup: ({cfg, monitor, validator, github, publisher}) => api.setup({
-      context:          {publisher, cfg, github},
+    requires: ['cfg', 'monitor', 'validator', 'github', 'publisher', 'Builds'],
+    setup: ({cfg, monitor, validator, github, publisher, Builds}) => api.setup({
+      context:          {publisher, cfg, github, Builds},
       authBaseUrl:      cfg.taskcluster.authBaseUrl,
       publish:          process.env.NODE_ENV === 'production',
       baseUrl:          cfg.server.publicUrl + '/v1',

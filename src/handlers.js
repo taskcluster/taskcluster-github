@@ -109,6 +109,7 @@ async function statusHandler(message) {
   });
   await build.modify((b) => {
     b.state = state;
+    b.updated = new Date();
   });
 
   debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha} (${state})`);
@@ -212,12 +213,15 @@ async function jobHandler(message) {
         context: 'Taskcluster',
       });
 
+      let now = new Date();
       await context.Builds.create({
         organization,
         repository,
         sha,
         taskGroupId,
         state: 'pending',
+        created: now,
+        updated: now,
       }).catch(async (err) => {
         if (err.code !== 'EntityAlreadyExists') {
           throw err;
