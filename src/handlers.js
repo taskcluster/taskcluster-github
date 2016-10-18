@@ -231,6 +231,9 @@ async function jobHandler(message) {
         });
         assert.equal(build.state, 'pending', `State for ${organization}/${repository}@${sha}
           already exists but is set to ${build.state} instead of pending!`);
+        assert.equal(build.organization, organization);
+        assert.equal(build.repository, repository);
+        assert.equal(build.sha, sha);
       });
     } else {
       debug(`intree config for ${organization}/${repository} compiled with zero tasks. Skipping.`);
