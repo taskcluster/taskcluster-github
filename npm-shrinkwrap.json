@@ -2823,6 +2823,18 @@
             }
           }
         },
+        "taskcluster-lib-scopes": {
+          "version": "1.0.0",
+          "from": "taskcluster-lib-scopes@>=1.0.0 <2.0.0",
+          "resolved": "https://registry.npmjs.org/taskcluster-lib-scopes/-/taskcluster-lib-scopes-1.0.0.tgz",
+          "dependencies": {
+            "babel-runtime": {
+              "version": "5.8.38",
+              "from": "babel-runtime@>=5.8.25 <6.0.0",
+              "resolved": "https://registry.npmjs.org/babel-runtime/-/babel-runtime-5.8.38.tgz"
+            }
+          }
+        },
         "typed-env-config": {
           "version": "0.10.1",
           "from": "typed-env-config@>=0.10.0 <0.11.0",
@@ -3976,6 +3988,11 @@
             "mime-db": {
               "version": "1.24.0",
               "from": "mime-db@>=1.24.0 <1.25.0"
+            },
+            "mime-db": {
+              "version": "1.24.0",
+              "from": "mime-db@~1.24.0",
+              "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.24.0.tgz"
             },
             "mime-types": {
               "version": "2.1.12",
