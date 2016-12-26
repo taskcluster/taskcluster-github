@@ -27,3 +27,4 @@ In both travis and taskcluster, the env variables needed to run integration test
 
 ### Deploying
 This service will auto-deploy in Heroku once merged into master and CI runs are successful. If you need to force a deploy because we've broken CI in some way and this urgently needs to be deployed, you can do it from the [Heroku console](https://dashboard-preview.heroku.com/apps/taskcluster-github/deploy/github). Once the new version has been deployed, you can verify it is working by making a throw-away pull request into [our test project](https://github.com/TaskClusterRobot/hooks-testing). If it is tested and has the status updated by this service, it is working.
+
