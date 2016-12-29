@@ -161,27 +161,4 @@ suite('intree config', () => {
       'metadata.owner': 'test@test.com',
       scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
-
-  buildConfigTest(
-    'Release Event, Single Task Config, Branch Limited (on branch)',
-    configPath + 'taskcluster.release_branchlimited.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'release', 'event.base.repo.branch': 'master'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['release'],
-      'tasks[0].task.extra.github.branches': ['master'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
-    });
-
-  buildConfigTest(
-    'Release Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.release_branchlimited.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'release', 'event.base.repo.branch': 'foobar'}}),
-    },
-    {
-      tasks: [],
-    });
 });
