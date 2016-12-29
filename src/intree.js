@@ -23,9 +23,8 @@ function completeInTreeConfig(config, payload) {
       prefix + payload.details['event.base.repo.branch'],
     ];
   } else if (payload.details['event.type'] == 'release') {
-    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
     config.scopes = [
-      prefix + payload.details['event.base.repo.branch'] + ':release',
+      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
     ];
   }
 
