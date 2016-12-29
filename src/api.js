@@ -60,6 +60,7 @@ function getReleaseDetails(eventData) {
     'event.draft': eventData.release.draft,
     'event.tar': eventData.release.tarball_url,
     'event.zip': eventData.release.zipball_url,
+    'event.base.sha': 'temp',
   };
 }
 
