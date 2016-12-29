@@ -147,7 +147,7 @@ suite('intree config', () => {
     {
       'tasks[0].task.extra.github.events': ['release'],
       'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch:release'],
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
 
   buildConfigTest(
@@ -159,7 +159,7 @@ suite('intree config', () => {
     {
       'tasks[0].task.extra.github.events': ['release'],
       'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch:release'],
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
 
   buildConfigTest(
@@ -172,7 +172,7 @@ suite('intree config', () => {
       'tasks[0].task.extra.github.events': ['release'],
       'tasks[0].task.extra.github.branches': ['master'],
       'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:master:release'],
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
 
   buildConfigTest(
