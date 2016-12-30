@@ -19,7 +19,6 @@ suite('handlers', () => {
   let slugid = require('slugid');
 
   let stubs = null;
-  let Handlers = null;
   let handlers = null;
 
   setup(async () => {
@@ -29,39 +28,45 @@ suite('handlers', () => {
     stubs['comment'] = sinon.stub(github.repos, 'createCommitComment');
     stubs['status'] = sinon.stub(github.repos, 'createStatus');
 
-    Handlers = await load('handlers', {profile: 'test', process: 'test', github});
-    handlers = await Handlers.setup();
+    handlers = await load('handlers', {profile: 'test', process: 'test', github});
+    await handlers.setup(); // TODO: {noConnect: true}
   });
 
   teardown(async () => {
-    await Handlers.terminate();
+    await handlers.terminate();
   });
 
-  function publishMessage({user, head, base}) {
-    return helper.publisher.push({
-      organization: 'TaskClusterRobot',
-      details: {
-        'event.type': 'push',
-        'event.base.repo.branch': 'tc-gh-tests',
-        'event.head.repo.branch': 'tc-gh-tests',
-        'event.head.user.login': user,
-        'event.head.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
-        'event.head.sha': head || '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
-        'event.head.ref': 'refs/heads/tc-gh-tests',
-        'event.base.sha': base || '2bad4edf90e7d4fb4643456a4df333da348bbed4',
-        'event.head.user.email': 'bstack@mozilla.com',
+  function simulateJobMessage({user, head, base}) {
+    debug(`publishing ${{user, head, base}}`);
+    const message = {
+      payload: {
+        organization: 'TaskClusterRobot',
+        details: {
+          'event.type': 'push',
+          'event.base.repo.branch': 'tc-gh-tests',
+          'event.head.repo.branch': 'tc-gh-tests',
+          'event.head.user.login': user,
+          'event.head.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
+          'event.head.sha': head || '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
+          'event.head.ref': 'refs/heads/tc-gh-tests',
+          'event.base.sha': base || '2bad4edf90e7d4fb4643456a4df333da348bbed4',
+          'event.head.user.email': 'bstack@mozilla.com',
+        },
+        repository: 'hooks-testing',
+        version: 1,
       },
-      repository: 'hooks-testing',
-      version: 1,
-    });
+    };
+
+    handlers.jobListener.emit('message', message);
   }
 
   test('valid push (owner === owner)', async function() {
-    await publishMessage({user: 'TaskClusterRobot'});
+    simulateJobMessage({user: 'TaskClusterRobot'});
 
     let urlPrefix = 'https://tools.taskcluster.net/task-group-inspector/#/';
     let taskGroupId = null;
 
+    debug('polling');
     await testing.poll(async () => {
       assert(stubs.status.calledOnce);
     }, 20, 1000);
@@ -79,6 +84,8 @@ suite('handlers', () => {
       throw new Error(`${taskGroupId} is not a valid taskGroupId`);
       return;
     }
+
+    debug('claiming and completing tasks');
     await Promise.all((await helper.queue.listTaskGroup(taskGroupId)).tasks.map(async (task) => {
       await helper.queue.claimTask(task.status.taskId, 0, {
         workerGroup:  'dummy-workergroup',
@@ -88,6 +95,7 @@ suite('handlers', () => {
       await helper.queue.reportCompleted(task.status.taskId, 0);
     }));
 
+    debug('polling for status update');
     await testing.poll(async () => {
       assert(stubs.status.calledTwice);
     });
@@ -102,7 +110,7 @@ suite('handlers', () => {
   });
 
   test('trying to use scopes outside the assigned', async function() {
-    await publishMessage({
+    simulateJobMessage({
       user: 'TaskClusterRobot',
       head: '52f8ebc527e8af90e7d647f22aa07dfc5ad9b280',
       base: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
@@ -119,7 +127,7 @@ suite('handlers', () => {
   });
 
   test('insufficient permissions to check membership', async function() {
-    await publishMessage({user: 'imbstack'});
+    simulateJobMessage({user: 'imbstack'});
 
     await testing.poll(async () => {
       assert(stubs.comment.called);
@@ -133,7 +141,7 @@ suite('handlers', () => {
   });
 
   test('invalid push', async function() {
-    await publishMessage({user: 'somebodywhodoesntexist'});
+    simulateJobMessage({user: 'somebodywhodoesntexist'});
 
     await testing.poll(async () => {
       assert(stubs.comment.called);
