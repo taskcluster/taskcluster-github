@@ -7,7 +7,7 @@ suite('api', () => {
   let helper = require('./helper');
   let assert = require('assert');
 
-  before(async () => {
+  suiteSetup(async () => {
     await helper.Builds.create({
       organization: 'abc123',
       repository: 'def456',
