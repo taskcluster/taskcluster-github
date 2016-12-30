@@ -56,7 +56,7 @@ suite('handlers', () => {
     });
   }
 
-  test('valid push (owner === owner)', async function(done) {
+  test('valid push (owner === owner)', async function() {
     await publishMessage({user: 'TaskClusterRobot'});
 
     let urlPrefix = 'https://tools.taskcluster.net/task-group-inspector/#/';
@@ -64,24 +64,19 @@ suite('handlers', () => {
 
     await testing.poll(async () => {
       assert(stubs.status.calledOnce);
-    }, 20, 1000).catch(done);
-    try {
-      assert(stubs.status.calledOnce, 'Status was never updated!');
-      let args = stubs.status.firstCall.args[0];
-      assert.equal(args.owner, 'TaskClusterRobot');
-      assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'pending');
-      debug('Created task group: ' + args.target_url);
-      assert(args.target_url.startsWith(urlPrefix));
-      taskGroupId = args.target_url.replace(urlPrefix, '').trim();
-    } catch (e) {
-      done(e);
-      return;
-    }
+    }, 20, 1000);
+    assert(stubs.status.calledOnce, 'Status was never updated!');
+    let args = stubs.status.firstCall.args[0];
+    assert.equal(args.owner, 'TaskClusterRobot');
+    assert.equal(args.repo, 'hooks-testing');
+    assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+    assert.equal(args.state, 'pending');
+    debug('Created task group: ' + args.target_url);
+    assert(args.target_url.startsWith(urlPrefix));
+    taskGroupId = args.target_url.replace(urlPrefix, '').trim();
 
     if (typeof taskGroupId !== 'string') {
-      done(new Error(`${taskGroupId} is not a valid taskGroupId`));
+      throw new Error(`${taskGroupId} is not a valid taskGroupId`);
       return;
     }
     await Promise.all((await helper.queue.listTaskGroup(taskGroupId)).tasks.map(async (task) => {
@@ -91,28 +86,22 @@ suite('handlers', () => {
       });
       await testing.sleep(100);
       await helper.queue.reportCompleted(task.status.taskId, 0);
-    })).catch(done);
+    }));
 
     await testing.poll(async () => {
       assert(stubs.status.calledTwice);
-    }).catch(done);
-    try {
-      assert(stubs.status.calledTwice, 'Status was only updated once');
-      let args = stubs.status.secondCall.args[0];
-      assert.equal(args.owner, 'TaskClusterRobot');
-      assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'success');
-      assert(args.target_url.startsWith(urlPrefix));
-      taskGroupId = args.target_url.replace(urlPrefix, '').trim();
-    } catch (e) {
-      done(e);
-      return;
-    }
-    done();
+    });
+    assert(stubs.status.calledTwice, 'Status was only updated once');
+    args = stubs.status.secondCall.args[0];
+    assert.equal(args.owner, 'TaskClusterRobot');
+    assert.equal(args.repo, 'hooks-testing');
+    assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+    assert.equal(args.state, 'success');
+    assert(args.target_url.startsWith(urlPrefix));
+    taskGroupId = args.target_url.replace(urlPrefix, '').trim();
   });
 
-  test('trying to use scopes outside the assigned', async function(done) {
+  test('trying to use scopes outside the assigned', async function() {
     await publishMessage({
       user: 'TaskClusterRobot',
       head: '52f8ebc527e8af90e7d647f22aa07dfc5ad9b280',
@@ -121,54 +110,39 @@ suite('handlers', () => {
 
     await testing.poll(async () => {
       assert(stubs.comment.called);
-    }).catch(done);
-    try {
-      assert(stubs.comment.calledOnce);
-      assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
-      assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, '52f8ebc527e8af90e7d647f22aa07dfc5ad9b280');
-      assert(stubs.comment.args[0][0].body.indexOf('auth:statsum:taskcluster-github') !== -1);
-      done();
-    } catch (e) {
-      done(e);
-    }
+    });
+    assert(stubs.comment.calledOnce);
+    assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
+    assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
+    assert.equal(stubs.comment.args[0][0].sha, '52f8ebc527e8af90e7d647f22aa07dfc5ad9b280');
+    assert(stubs.comment.args[0][0].body.indexOf('auth:statsum:taskcluster-github') !== -1);
   });
 
-  test('insufficient permissions to check membership', async function(done) {
+  test('insufficient permissions to check membership', async function() {
     await publishMessage({user: 'imbstack'});
 
     await testing.poll(async () => {
       assert(stubs.comment.called);
-    }).catch(done);
-    try {
-      assert(stubs.comment.calledOnce);
-      assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
-      assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert(stubs.comment.args[0][0].body.startsWith(
-        'Taskcluster does not have permission to check for repository collaborators'));
-      done();
-    } catch (e) {
-      done(e);
-    }
+    });
+    assert(stubs.comment.calledOnce);
+    assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
+    assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
+    assert.equal(stubs.comment.args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+    assert(stubs.comment.args[0][0].body.startsWith(
+      'Taskcluster does not have permission to check for repository collaborators'));
   });
 
-  test('invalid push', async function(done) {
+  test('invalid push', async function() {
     await publishMessage({user: 'somebodywhodoesntexist'});
 
     await testing.poll(async () => {
       assert(stubs.comment.called);
-    }).catch(done);
-    try {
-      assert(stubs.comment.calledOnce);
-      assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
-      assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
-      assert.equal(stubs.comment.args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert(stubs.comment.args[0][0].body.startsWith(
-        'TaskCluster: @somebodywhodoesntexist does not have permission'));
-      done();
-    } catch (e) {
-      done(e);
-    }
+    });
+    assert(stubs.comment.calledOnce);
+    assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
+    assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
+    assert.equal(stubs.comment.args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+    assert(stubs.comment.args[0][0].body.startsWith(
+      'TaskCluster: @somebodywhodoesntexist does not have permission'));
   });
 });
