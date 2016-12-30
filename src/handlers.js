@@ -68,8 +68,16 @@ class Handlers {
     await this.statusListener.bind(queueEvents.taskException({schedulerId: 'taskcluster-github'}));
     await this.statusListener.bind(queueEvents.taskGroupResolved({schedulerId: 'taskcluster-github'}));
 
-    this.jobListener.on('message', this.monitor.timedHandler('joblistener', jobHandler.bind(this)));
-    this.statusListener.on('message', this.monitor.timedHandler('statuslistener', statusHandler.bind(this)));
+    const callHandler = (name, handler) => message => {
+      handler.call(this, message).catch(err => {
+        debug(`error (reported to sentry) while calling ${name} handler: ${err}`);
+        this.monitor.reportError(err);
+      });
+    };
+    this.jobListener.on('message',
+      this.monitor.timedHandler('joblistener', callHandler('job', jobHandler)));
+    this.statusListener.on('message',
+      this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler)));
 
     await this.jobListener.connect();
     await this.statusListener.connect();
