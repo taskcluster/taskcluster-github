@@ -39,11 +39,13 @@ class Handlers {
     this.statusQueueName = statusQueueName;  // Optional
     this.jobQueueName = jobQueueName;  // Optional
     this.context = context;
+
+    this.handlerComplete = null;
   }
 
   /**
    * Set up the handlers.  If {noConnect: true}, the handlers are not actually
-   * connected to a pulse connection (used for tests)
+   * connected to a pulse connection (used for tests).
    */
   async setup(options) {
     options = options || {};
@@ -83,6 +85,10 @@ class Handlers {
       handler.call(this, message).catch(err => {
         debug(`error (reported to sentry) while calling ${name} handler: ${err}`);
         this.monitor.reportError(err);
+      }).then(() => {
+        if (this.handlerComplete) {
+          this.handlerComplete();
+        }
       });
     };
     this.jobListener.on('message',

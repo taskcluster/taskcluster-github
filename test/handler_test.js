@@ -40,38 +40,37 @@ suite('handlers', () => {
 
   suite('jobHandler', function() {
     function simulateJobMessage({user, head, base}) {
-      debug(`publishing ${{user, head, base}}`);
-      const message = {
-        payload: {
-          organization: 'TaskClusterRobot',
-          details: {
-            'event.type': 'push',
-            'event.base.repo.branch': 'tc-gh-tests',
-            'event.head.repo.branch': 'tc-gh-tests',
-            'event.head.user.login': user,
-            'event.head.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
-            'event.head.sha': head || '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
-            'event.head.ref': 'refs/heads/tc-gh-tests',
-            'event.base.sha': base || '2bad4edf90e7d4fb4643456a4df333da348bbed4',
-            'event.head.user.email': 'bstack@mozilla.com',
-          },
-          repository: 'hooks-testing',
-          version: 1,
-        },
-      };
+      // set up to resolve when the handler has finished (even if it finishes with error)
+      return new Promise((resolve, reject) => {
+        handlers.handlerComplete = resolve;
 
-      handlers.jobListener.emit('message', message);
+        debug(`publishing ${JSON.stringify({user, head, base})}`);
+        const message = {
+          payload: {
+            organization: 'TaskClusterRobot',
+            details: {
+              'event.type': 'push',
+              'event.base.repo.branch': 'tc-gh-tests',
+              'event.head.repo.branch': 'tc-gh-tests',
+              'event.head.user.login': user,
+              'event.head.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
+              'event.head.sha': head || '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
+              'event.head.ref': 'refs/heads/tc-gh-tests',
+              'event.base.sha': base || '2bad4edf90e7d4fb4643456a4df333da348bbed4',
+              'event.head.user.email': 'bstack@mozilla.com',
+            },
+            repository: 'hooks-testing',
+            version: 1,
+          },
+        };
+
+        handlers.jobListener.emit('message', message);
+      });
     }
 
     test('valid push (owner === owner) creates a taskGroup', async function() {
-      simulateJobMessage({user: 'TaskClusterRobot'});
+      await simulateJobMessage({user: 'TaskClusterRobot'});
 
-      let taskGroupId = null;
-
-      debug('polling');
-      await testing.poll(async () => {
-        assert(stubs.status.calledOnce);
-      }, 20, 1000);
       assert(stubs.status.calledOnce, 'Status was never updated!');
       let args = stubs.status.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
@@ -80,7 +79,7 @@ suite('handlers', () => {
       assert.equal(args.state, 'pending');
       debug('Created task group: ' + args.target_url);
       assert(args.target_url.startsWith(URL_PREFIX));
-      taskGroupId = args.target_url.replace(URL_PREFIX, '').trim();
+      let taskGroupId = args.target_url.replace(URL_PREFIX, '').trim();
 
       if (typeof taskGroupId !== 'string') {
         throw new Error(`${taskGroupId} is not a valid taskGroupId`);
@@ -89,15 +88,12 @@ suite('handlers', () => {
     });
 
     test('trying to use scopes outside the assigned', async function() {
-      simulateJobMessage({
+      await simulateJobMessage({
         user: 'TaskClusterRobot',
         head: '52f8ebc527e8af90e7d647f22aa07dfc5ad9b280',
         base: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
       });
 
-      await testing.poll(async () => {
-        assert(stubs.comment.called);
-      });
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
@@ -106,11 +102,8 @@ suite('handlers', () => {
     });
 
     test('insufficient permissions to check membership', async function() {
-      simulateJobMessage({user: 'imbstack'});
+      await simulateJobMessage({user: 'imbstack'});
 
-      await testing.poll(async () => {
-        assert(stubs.comment.called);
-      });
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
@@ -120,11 +113,8 @@ suite('handlers', () => {
     });
 
     test('invalid push', async function() {
-      simulateJobMessage({user: 'somebodywhodoesntexist'});
+      await simulateJobMessage({user: 'somebodywhodoesntexist'});
 
-      await testing.poll(async () => {
-        assert(stubs.comment.called);
-      });
       assert(stubs.comment.calledOnce);
       assert.equal(stubs.comment.args[0][0].owner, 'TaskClusterRobot');
       assert.equal(stubs.comment.args[0][0].repo, 'hooks-testing');
@@ -154,22 +144,23 @@ suite('handlers', () => {
     }
 
     function simulateStatusMessage({taskGroupId, exchange}) {
-      debug(`publishing ${{taskGroupId, exchange}}`);
-      const message = {
-        exchange,
-        payload: {
-          status: {taskGroupId},
-        },
-      };
+      // set up to resolve when the handler has finished (even if it finishes with error)
+      return new Promise((resolve, reject) => {
+        handlers.handlerComplete = resolve;
 
-      handlers.statusListener.emit('message', message);
+        debug(`publishing ${JSON.stringify({taskGroupId, exchange})}`);
+        const message = {
+          exchange,
+          payload: {
+            status: {taskGroupId},
+          },
+        };
+
+        handlers.statusListener.emit('message', message);
+      });
     }
 
     async function assertStatusUpdate(state) {
-      debug('polling for status update');
-      await testing.poll(async () => {
-        assert(stubs.status.calledOnce);
-      });
       assert(stubs.status.calledOnce, 'Status was not updated');
       let args = stubs.status.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
@@ -188,7 +179,7 @@ suite('handlers', () => {
 
     test('task success gets a success comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
-      simulateStatusMessage({
+      await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
         exchange: 'exchange/taskcluster-queue/v1/task-completed',
       });
@@ -198,7 +189,7 @@ suite('handlers', () => {
 
     test('task failure gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
-      simulateStatusMessage({
+      await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
         exchange: 'exchange/taskcluster-queue/v1/task-failed',
       });
@@ -208,7 +199,7 @@ suite('handlers', () => {
 
     test('task exception gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
-      simulateStatusMessage({
+      await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
         exchange: 'exchange/taskcluster-queue/v1/task-exception',
       });
