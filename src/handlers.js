@@ -145,7 +145,7 @@ async function jobHandler(message) {
   let sha = message.payload.details['event.head.sha'] || await context.github.repos.getShaOfCommitRef({
     owner: organization,
     repo: repository,
-    ref: `heads/${message.payload.details['event.base.repo.branch']}`,
+    ref: `refs/tags/${message.payload.details['event.version']}`,
   });
 
   debug(`handling ${message.payload.details['event.type']} webhook for: ${organization}/${repository}@${ref}`);
