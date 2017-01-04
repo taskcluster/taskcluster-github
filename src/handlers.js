@@ -146,7 +146,7 @@ async function jobHandler(message) {
     owner: organization,
     repo: repository,
     ref: `refs/tags/${message.payload.details['event.version']}`,
-  });
+  }).sha;
 
   debug(`handling ${message.payload.details['event.type']} webhook for: ${organization}/${repository}@${ref}`);
   let repoconf = undefined;
