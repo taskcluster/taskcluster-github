@@ -18,14 +18,14 @@ function sanitizeGitHubField(field) {
 // See https://developer.github.com/v3/activity/events/types/#pullrequestevent
 function getPullRequestDetails(eventData) {
   return {
-    'event.base.ref': eventData.pull_request.base.ref,
+    'event.base.ref': 'refs/heads/' + eventData.pull_request.base.ref,
     'event.base.repo.branch': eventData.pull_request.base.ref,
     'event.base.repo.name': eventData.pull_request.base.repo.name,
     'event.base.repo.url': eventData.pull_request.base.repo.clone_url,
     'event.base.sha': eventData.pull_request.base.sha,
     'event.base.user.login': eventData.pull_request.base.user.login,
 
-    'event.head.ref': eventData.pull_request.head.ref,
+    'event.head.ref': 'refs/heads/' + eventData.pull_request.head.ref,
     'event.head.repo.branch': eventData.pull_request.head.ref,
     'event.head.repo.name': eventData.pull_request.head.repo.name,
     'event.head.repo.url': eventData.pull_request.head.repo.clone_url,
