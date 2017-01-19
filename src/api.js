@@ -46,16 +46,17 @@ function getPushDetails(eventData) {
   return {
     'event.base.ref': ref,
     'event.base.repo.branch': branch,
+    'event.base.repo.name': eventData.repository.name,
     'event.base.repo.url': eventData.repository.clone_url,
     'event.base.sha': eventData.before,
     'event.base.user.login': eventData.sender.login,
 
     'event.head.ref': ref,
     'event.head.repo.branch': branch,
-    'event.head.user.login': eventData.sender.login,
     'event.head.repo.name': eventData.repository.name,
     'event.head.repo.url': eventData.repository.clone_url,
     'event.head.sha': eventData.after,
+    'event.head.user.login': eventData.sender.login,
 
     'event.type': 'push',
   };
