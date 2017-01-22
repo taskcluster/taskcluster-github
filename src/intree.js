@@ -94,7 +94,11 @@ module.exports.setup = function(cfg) {
       'taskcluster.docker.workerType': cfg.intree.workerType,
     }));
 
+<<<<<<< HEAD
     // TO DO: remove this loop
+=======
+    // Temporary loop for debugging purposes
+>>>>>>> f9aba30d432a016660fa93efce250faf97279419
     config.tasks.forEach(task => {
       if (task.extra.github.events.some(event => event == 'release')) {
         debug('Found task for a release event in YML...');
@@ -139,7 +143,7 @@ module.exports.setup = function(cfg) {
       }
       return completeInTreeConfig(config, payload);
     } catch (e) {
-      debug('Error proocessing tasks!');
+      debug('Error processing tasks!');
       throw e;
     }
   };
