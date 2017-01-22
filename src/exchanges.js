@@ -52,11 +52,7 @@ let commonMessageBuilder = function(msg) {
   return msg;
 };
 
-<<<<<<< HEAD
 // Temporary function for debugging purposes. TO DO: remove
-=======
-// Temporary function for debugging purposes.
->>>>>>> f9aba30d432a016660fa93efce250faf97279419
 let releaseMessageBuilder = function(msg) {
   debug('Received webhook for release. Building message...');
   msg.version = 1;
