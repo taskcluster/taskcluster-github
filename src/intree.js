@@ -97,9 +97,9 @@ module.exports.setup = function(cfg) {
     // TO DO: remove this loop
     config.tasks.forEach(task => {
       if (task.extra.github.events.some(event => event == 'release')) {
-        debug('Found task for a release event in YML...');
+        debug(`Found a release event in task ${task.metadata.name}`);
       } else {
-        debug('No release tasks in this YML!');
+        debug(`No release events in task ${task.metadata.name}`);
       }
     });
 
