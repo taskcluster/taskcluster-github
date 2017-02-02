@@ -14,42 +14,55 @@ function sanitizeGitHubField(field) {
 
 // Reduce a pull request WebHook's data to only fields needed to checkout a
 // revision
+//
+// See https://developer.github.com/v3/activity/events/types/#pullrequestevent
 function getPullRequestDetails(eventData) {
   return {
-    'event.type': 'pull_request.' + eventData.action,
-    'event.base.repo.branch': eventData.pull_request.base.label.split(':')[1],
-    'event.pullNumber': eventData.number,
-    'event.base.user.login': eventData.pull_request.base.user.login,
+    'event.base.ref': 'refs/heads/' + eventData.pull_request.base.ref,
+    'event.base.repo.branch': eventData.pull_request.base.ref,
+    'event.base.repo.name': eventData.pull_request.base.repo.name,
     'event.base.repo.url': eventData.pull_request.base.repo.clone_url,
     'event.base.sha': eventData.pull_request.base.sha,
-    'event.base.ref': eventData.pull_request.base.ref,
-    'event.head.user.login': eventData.pull_request.head.user.login,
-    'event.head.user.id': eventData.pull_request.head.user.id,
+    'event.base.user.login': eventData.pull_request.base.user.login,
+
+    'event.head.ref': 'refs/heads/' + eventData.pull_request.head.ref,
+    'event.head.repo.branch': eventData.pull_request.head.ref,
+    'event.head.repo.name': eventData.pull_request.head.repo.name,
     'event.head.repo.url': eventData.pull_request.head.repo.clone_url,
-    'event.head.repo.branch': eventData.pull_request.head.label.split(':')[1],
     'event.head.sha': eventData.pull_request.head.sha,
-    'event.head.ref': eventData.pull_request.head.ref,
+    'event.head.user.login': eventData.pull_request.head.user.login,
+
+    'event.pullNumber': eventData.number,
+    'event.type': 'pull_request.' + eventData.action,
   };
 };
 
+// See https://developer.github.com/v3/activity/events/types/#pushevent
 function getPushDetails(eventData) {
   let ref = eventData.ref;
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
   let branch = ref.split('/').slice(2).join('/');
   return {
-    'event.type': 'push',
+    'event.base.ref': ref,
     'event.base.repo.branch': branch,
+    'event.base.repo.name': eventData.repository.name,
+    'event.base.repo.url': eventData.repository.clone_url,
+    'event.base.sha': eventData.before,
+    'event.base.user.login': eventData.sender.login,
+
+    'event.head.ref': ref,
     'event.head.repo.branch': branch,
-    'event.head.user.login': eventData.sender.login,
-    'event.head.user.id': eventData.sender.id,
+    'event.head.repo.name': eventData.repository.name,
     'event.head.repo.url': eventData.repository.clone_url,
     'event.head.sha': eventData.after,
-    'event.head.ref': ref,
-    'event.base.sha': eventData.before,
+    'event.head.user.login': eventData.sender.login,
+
+    'event.type': 'push',
   };
 };
 
+// See https://developer.github.com/v3/activity/events/types/#releaseevent
 function getReleaseDetails(eventData) {
   return {
     'event.type': 'release',
@@ -58,6 +71,7 @@ function getReleaseDetails(eventData) {
     'event.head.user.id': eventData.release.author.id,
     'event.version': eventData.release.tag_name,
     'event.name': eventData.release.name,
+    'event.head.repo.name': eventData.repository.name,
     'event.head.repo.url': eventData.repository.clone_url,
     'event.release.url': eventData.release.url,
     'event.prerelease': eventData.release.prerelease,
@@ -175,6 +189,7 @@ api.declare({
     } else if (eventType == 'ping') {
       return resolve(res, 200, 'Received ping event!');
     } else if (eventType == 'release') {
+      debug('Received release event webhook payload. Processing...'); // TO DO: remove this
       msg.organization = sanitizeGitHubField(body.repository.owner.login),
       msg.details = getReleaseDetails(body);
       msg.installationId = body.installation.id;
@@ -183,6 +198,7 @@ api.declare({
       return resolve(res, 400, 'No publisher available for X-GitHub-Event: ' + eventType);
     }
   } catch (e) {
+    debug('Error processing webhook payload!');
     e.webhookPayload = body;
     throw e;
   }
