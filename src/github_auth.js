@@ -28,10 +28,10 @@ module.exports = async ({cfg}) => {
       var instaToken = await github.integrations.createInstallationToken({
         installation_id: inst_id,
       });
-      debug(`Obtained installation token for installation: ${inst_id}`);
       let gh = new Github({promise: Promise});
       try {
         gh.authenticate({type: 'token', token: instaToken.token});
+        debug(`Authenticated as installation: ${inst_id}`);
       } catch (e) {
         debug('Authentication as integration failed!');
         throw e;
