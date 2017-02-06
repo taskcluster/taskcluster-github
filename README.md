@@ -1,4 +1,4 @@
-TaskCluster GitHub Service
+TaskCluster GitHub Service TESTING FOO BAR
 ==========================
 [![Build Status](https://travis-ci.org/taskcluster/taskcluster-github.svg?branch=master)](https://travis-ci.org/taskcluster/taskcluster-github)
 
