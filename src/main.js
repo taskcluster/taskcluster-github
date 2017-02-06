@@ -73,7 +73,7 @@ let load = loader({
 
   github: {
     requires: ['cfg'],
-    setup: ({cfg}) => githubAuth(cfg),
+    setup: ({cfg}) => githubAuth({cfg}),
   },
 
   intree: {
