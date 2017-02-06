@@ -1,3 +1,4 @@
+let debug = require('debug')('taskcluster-github:github-auth');
 let Github = require('github');
 let Promise = require('promise');
 let jwt = require('jsonwebtoken');
@@ -36,7 +37,6 @@ module.exports = async ({cfg}) => {
         debug('Authentication as integration failed!');
         throw e;
       }
-              
       return gh;
     },
   };

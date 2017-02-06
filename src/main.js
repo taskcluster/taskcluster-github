@@ -13,7 +13,7 @@ let validator = require('taskcluster-lib-validate');
 let loader = require('taskcluster-lib-loader');
 let docs = require('taskcluster-lib-docs');
 let App = require('taskcluster-lib-app');
-let githubAuth = require('./github_auth');
+let githubAuth = require('./github-auth');
 
 let load = loader({
   cfg: {
