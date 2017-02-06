@@ -61,7 +61,7 @@ suite('handlers', () => {
               'event.head.user.id': 190790,
             },
             repository: 'hooks-testing',
-            installationID: 5828,
+            installationId: 5828,
             version: 1,
           },
         };
