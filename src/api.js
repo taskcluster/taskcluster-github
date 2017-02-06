@@ -31,6 +31,7 @@ function getPullRequestDetails(eventData) {
     'event.head.repo.url': eventData.pull_request.head.repo.clone_url,
     'event.head.sha': eventData.pull_request.head.sha,
     'event.head.user.login': eventData.pull_request.head.user.login,
+    'event.head.user.id': eventData.pull_request.head.user.id,
 
     'event.pullNumber': eventData.number,
     'event.type': 'pull_request.' + eventData.action,
@@ -57,6 +58,7 @@ function getPushDetails(eventData) {
     'event.head.repo.url': eventData.repository.clone_url,
     'event.head.sha': eventData.after,
     'event.head.user.login': eventData.sender.login,
+    'event.head.user.id': eventData.sender.id,
 
     'event.type': 'push',
   };
