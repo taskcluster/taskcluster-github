@@ -314,8 +314,10 @@ async function jobHandler(message) {
     if (typeof errorBody == 'object') {
       errorBody = JSON.stringify(errorBody, null, 4);
     }
-    // Warn the user know that there was a problem processing their
-    // config file with a comment.
+
+    // Warn the user know that there was a problem handling their request
+    // by posting a comment; this error is then considered handled and not
+    // reported to the taskcluster team or retried
     await instGithub.repos.createCommitComment({
       owner: organization,
       repo: repository,
@@ -329,7 +331,6 @@ async function jobHandler(message) {
         '</details>',
       ].join('\n'),
     });
-    throw e;
   }
 }
 
