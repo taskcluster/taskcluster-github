@@ -398,8 +398,7 @@ async function isCollaborator({login, organization, repository, sha, instGithub}
 
   // If all of the collaborator checks fail, we should post to the commit
   // and ignore the request
-  let msg = `@${login} does not have permission to trigger tasks.`;
-  debug(`Sorry, no tasks were created because ${login} is not a collaborator on ${organization}/${repository}.`);
+  let msg = `Sorry, no tasks were created because ${login} is not a collaborator on ${organization}/${repository}.`;
   await instGithub.repos.createCommitComment({
     owner: organization,
     repo: repository,

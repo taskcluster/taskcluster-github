@@ -160,7 +160,7 @@ suite('handlers', () => {
       assert.equal(args[0][0].owner, 'TaskClusterRobot');
       assert.equal(args[0][0].repo, 'hooks-testing');
       assert.equal(args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert(args[0][0].body.indexOf('does not have permission') !== -1);
+      assert(args[0][0].body.indexOf('Sorry, no tasks were') !== -1);
     });
   });
 
