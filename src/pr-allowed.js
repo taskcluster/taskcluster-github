@@ -51,24 +51,6 @@ async function isCollaborator({login, organization, repository, sha, instGithub,
     return true;
   }
 
-  // If the user is in the org, we consider them
-  // qualified to trigger any job in that org.
-  try {
-    await instGithub.orgs.checkMembership({
-      org: organization,
-      owner: login,
-    });
-    debug(`Checking collaborator: ${login} is a member of ${organization}: True!`);
-    return true;
-  } catch (e) {
-    if (e.code == 404) {
-      // Only a 404 error means the user isn't a member
-      // anything else should just throw like normal
-    } else {
-      throw e;
-    }
-  }
-
   // GithubAPI's collaborator check returns an error if a user isn't
   // listed as a collaborator.
   try {

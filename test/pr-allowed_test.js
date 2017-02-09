@@ -72,7 +72,8 @@ suite('allowPullRequests', function() {
       }), true);
     });
 
-    test('allows the case where the login is an org member', async function() {
+    test('disallows the case where the login is an org member but not collaborator', async function() {
+      // (this is a behavior change from old behavior; the code doesn't even call the github method)
       github.inst(9999).setOrgMember({org: 'buildbot', member: 'djmitche'});
       assert.equal(await prAllowed.isCollaborator({
         login: 'djmitche',
@@ -81,7 +82,7 @@ suite('allowPullRequests', function() {
         sha: 'abcd',
         instGithub: github.inst(9999),
         debug,
-      }), true);
+      }), false);
     });
 
     test('allows the case where the login is a repo collaborator but not org member', async function() {
