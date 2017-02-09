@@ -26,6 +26,13 @@ suite('handlers', () => {
     handlers.createTasks = sinon.stub();
 
     await handlers.setup({noConnect: true});
+
+    // set up the allowPullRequests key
+    github.inst(5828).setRepoInfo({
+      owner: 'TaskClusterRobot',
+      repo: 'hooks-testing',
+      info: {default_branch: 'development'},
+    });
   });
 
   teardown(async () => {
@@ -203,6 +210,44 @@ suite('handlers', () => {
       assert.equal(args[0][0].repo, 'hooks-testing');
       assert.equal(args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
       assert(args[0][0].body.indexOf('No TaskCluster jobs started for this pull request') !== -1);
+    });
+
+    test('specifying allowPullRequests: public in the default branch allows all', async function() {
+      github.inst(5828).setTaskclusterYml({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
+        content: require('./valid-yaml.json'),
+      });
+      github.inst(5828).setTaskclusterYml({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        ref: 'development', // default branch
+        content: {allowPullRequests: 'public'},
+      });
+      await simulateJobMessage({user: 'imbstack', eventType: 'pull_request.opened'});
+
+      assert(github.inst(5828).repos.createStatus.callCount === 1, 'Status was not updated!');
+      assert(github.inst(5828).repos.createCommitComment.callCount === 0);
+    });
+
+    test('specifying allowPullRequests: collaborators in the default branch disallows public', async function() {
+      github.inst(5828).setTaskclusterYml({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
+        content: require('./valid-yaml.json'),
+      });
+      github.inst(5828).setTaskclusterYml({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        ref: 'development', // default branch
+        content: {allowPullRequests: 'collaborators'},
+      });
+      await simulateJobMessage({user: 'imbstack', eventType: 'pull_request.opened'});
+
+      assert(github.inst(5828).repos.createStatus.callCount === 0);
+      assert(github.inst(5828).repos.createCommitComment.callCount === 1);
     });
 
     test('user name not checked for pushes, so status is created', async function() {

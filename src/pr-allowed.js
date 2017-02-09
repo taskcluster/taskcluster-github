@@ -1,5 +1,48 @@
+let yaml = require('js-yaml');
+
+const DEFAULT_POLICY = 'collaborators';
+
 async function prAllowed(options) {
-  return await isCollaborator(options);
+  switch (await getRepoPolicy(options)) {
+    case 'collaborators':
+      return await isCollaborator(options);
+
+    case 'public':
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Get the repo's "policy" on pull requests, by fetching .taskcluster.yml from the default
+ * branch, parsing it, and looking at its `allowPullRequests`.
+ */
+async function getRepoPolicy({login, organization, repository, instGithub, debug}) {
+  // first, get the repository's default branch
+  let repoInfo = await instGithub.repos.get({owner: organization, repo: repository});
+  let branch = repoInfo.default_branch;
+
+  // load .taskcluster.yml from that branch
+  let taskclusterYml;
+  try {
+    let content = await instGithub.repos.getContent({
+      owner: organization,
+      repo: repository,
+      path: '.taskcluster.yml',
+      ref: branch,
+    });
+    taskclusterYml = yaml.safeLoad(new Buffer(content.content, 'base64').toString());
+  } catch (e) {
+    if (e.code === 404) {
+      return DEFAULT_POLICY;
+    }
+    throw e;
+  }
+
+  // consult its `allowPullRequests` field
+  return taskclusterYml['allowPullRequests'] || DEFAULT_POLICY;
 }
 
 async function isCollaborator({login, organization, repository, sha, instGithub, debug}) {
@@ -38,21 +81,8 @@ async function isCollaborator({login, organization, repository, sha, instGithub,
     debug(`Checking collaborator: ${login} is a collaborator on ${organization}/${repository}: True!`);
     return true;
   } catch (e) {
-    if (e.code == 404) {
-      // Only a 404 error means the user isn't a collaborator
-      // anything else should just throw like normal
-    } else if (e.code == 403) {
-      let msg = `Taskcluster does not have permission to check for repository collaborators.
-        Ensure that it is a member of a team with __write__ access to this repository!`;
-      debug(`Insufficient permissions to check for collaborators of ${organization}/${repository}. Skipping.`);
-      await instGithub.repos.createCommitComment({
-        owner: organization,
-        repo: repository,
-        sha,
-        body: msg,
-      });
-      return false;
-    } else {
+    // a 404 means the user is not a collaborator
+    if (e.code !== 404) {
       throw e;
     }
   }
@@ -60,3 +90,7 @@ async function isCollaborator({login, organization, repository, sha, instGithub,
 }
 
 module.exports = prAllowed;
+
+// for testing..
+module.exports.getRepoPolicy = getRepoPolicy;
+module.exports.isCollaborator = isCollaborator;
