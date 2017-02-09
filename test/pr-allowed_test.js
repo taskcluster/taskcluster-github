@@ -62,16 +62,6 @@ suite('allowPullRequests', function() {
   });
 
   suite('isCollaborator', function() {
-    test('allows the case where the login is the same as the owner', async function() {
-      assert.equal(await prAllowed.isCollaborator({
-        login: 'djmitche',
-        organization: 'djmitche',
-        repository: 'buildbot',
-        instGithub: github.inst(9999),
-        debug,
-      }), true);
-    });
-
     test('disallows the case where the login is an org member but not collaborator', async function() {
       // (this is a behavior change from old behavior; the code doesn't even call the github method)
       github.inst(9999).setOrgMember({org: 'buildbot', member: 'djmitche'});

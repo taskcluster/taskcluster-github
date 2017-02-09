@@ -46,11 +46,6 @@ async function getRepoPolicy({login, organization, repository, instGithub, debug
 }
 
 async function isCollaborator({login, organization, repository, sha, instGithub, debug}) {
-  if (login === organization) {
-    debug(`Checking collaborator: ${login} === ${organization}: True!`);
-    return true;
-  }
-
   // GithubAPI's collaborator check returns an error if a user isn't
   // listed as a collaborator.
   try {

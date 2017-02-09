@@ -73,7 +73,7 @@ suite('handlers', () => {
       });
     }
 
-    test('valid push (owner is member) creates a taskGroup', async function() {
+    test('valid push (owner is collaborator) creates a taskGroup', async function() {
       github.inst(5828).setTaskclusterYml({
         owner: 'TaskClusterRobot',
         repo: 'hooks-testing',
@@ -101,14 +101,19 @@ suite('handlers', () => {
       assert.equal(build.state, 'pending');
     });
 
-    test('valid pull_request (owner is member) creates a taskGroup', async function() {
+    test('valid pull_request (user is collaborator) creates a taskGroup', async function() {
+      github.inst(5828).setRepoCollaborator({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        collabuser: 'goodBuddy',
+      });
       github.inst(5828).setTaskclusterYml({
         owner: 'TaskClusterRobot',
         repo: 'hooks-testing',
         ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
         content: require('./valid-yaml.json'),
       });
-      await simulateJobMessage({user: 'TaskClusterRobot', eventType: 'pull_request.opened'});
+      await simulateJobMessage({user: 'goodBuddy', eventType: 'pull_request.opened'});
 
       assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
       assert(handlers.createTasks.calledWith({scopes: sinon.match.array, tasks: sinon.match.array}));
@@ -128,19 +133,14 @@ suite('handlers', () => {
       assert.equal(build.state, 'pending');
     });
 
-    test('valid push (collaborator but not member) creates a taskGroup', async function() {
-      github.inst(5828).setRepoCollaborator({
-        owner: 'TaskClusterRobot',
-        repo: 'hooks-testing',
-        collabuser: 'TaskClusterCollaborator',
-      });
+    test('valid push (but not collaborator) creates a taskGroup', async function() {
       github.inst(5828).setTaskclusterYml({
         owner: 'TaskClusterRobot',
         repo: 'hooks-testing',
         ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
         content: require('./valid-yaml.json'),
       });
-      await simulateJobMessage({user: 'TaskClusterCollaborator'});
+      await simulateJobMessage({user: 'TaskClusterCollaborator', eventType: 'push'});
 
       assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
       let args = github.inst(5828).repos.createStatus.firstCall.args[0];
