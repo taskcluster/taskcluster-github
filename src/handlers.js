@@ -287,12 +287,14 @@ async function jobHandler(message) {
     return;
   }
 
-  debug('Checking collaborator...');
+  if (message.payload.details['event.type'].startsWith('pull_request.')) {
+    debug('Checking pull request permission...');
 
-  // Decide if a user has permissions to run tasks.
-  let login = message.payload.details['event.head.user.login'];
-  if (! await isCollaborator({login, organization, repository, sha, instGithub, debug})) {
-    return;
+    // Decide if a user has permissions to run tasks.
+    let login = message.payload.details['event.head.user.login'];
+    if (! await isCollaborator({login, organization, repository, sha, instGithub, debug})) {
+      return;
+    }
   }
 
   let groupState = 'pending';

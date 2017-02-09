@@ -40,7 +40,7 @@ suite('handlers', () => {
         handlers.handlerComplete = resolve;
         handlers.handlerRejected = reject;
 
-        debug(`publishing ${JSON.stringify({user, head, base})}`);
+        debug(`publishing ${JSON.stringify({user, head, base, eventType})}`);
         const message = {
           payload: {
             organization: 'TaskClusterRobot',
@@ -82,7 +82,6 @@ suite('handlers', () => {
       assert.equal(args.repo, 'hooks-testing');
       assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
       assert.equal(args.state, 'pending');
-      console.log(args.description);
       assert.equal(args.description, 'TaskGroup: Pending (for push)');
       assert.equal(/Taskcluster \((.*)\)/.exec(args.context)[1], 'push');
       debug('Created task group: ' + args.target_url);
@@ -189,14 +188,14 @@ suite('handlers', () => {
       assert(args[0][0].body.indexOf('oh noes') !== -1);
     });
 
-    test('not an org member or collaborator is reported correctly', async function() {
+    test('not an org member or collaborator is reported correctly for pull requests', async function() {
       github.inst(5828).setTaskclusterYml({
         owner: 'TaskClusterRobot',
         repo: 'hooks-testing',
         ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
         content: require('./valid-yaml.json'),
       });
-      await simulateJobMessage({user: 'imbstack'});
+      await simulateJobMessage({user: 'imbstack', eventType: 'pull_request.opened'});
 
       assert(github.inst(5828).repos.createCommitComment.calledOnce);
       let args = github.inst(5828).repos.createCommitComment.args;
@@ -204,6 +203,19 @@ suite('handlers', () => {
       assert.equal(args[0][0].repo, 'hooks-testing');
       assert.equal(args[0][0].sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
       assert(args[0][0].body.indexOf('Sorry, no tasks were') !== -1);
+    });
+
+    test('user name not checked for pushes, so status is created', async function() {
+      github.inst(5828).setTaskclusterYml({
+        owner: 'TaskClusterRobot',
+        repo: 'hooks-testing',
+        ref: '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf',
+        content: require('./valid-yaml.json'),
+      });
+      await simulateJobMessage({user: 'imbstack', eventType: 'push'});
+
+      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
+      assert(github.inst(5828).repos.createCommitComment.callCount === 0);
     });
   });
 
