@@ -94,15 +94,6 @@ module.exports.setup = function(cfg) {
       'taskcluster.docker.workerType': cfg.intree.workerType,
     }));
 
-    // TO DO: remove this loop
-    config.tasks.forEach(task => {
-      if (task.extra.github.events.some(event => event == 'release')) {
-        debug(`Found a release event in task ${task.metadata.name}`);
-      } else {
-        debug(`No release events in task ${task.metadata.name}`);
-      }
-    });
-
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
     // we're at it.
@@ -126,11 +117,6 @@ module.exports.setup = function(cfg) {
       if (config.tasks.length > 0) {
         let taskGroupId = config.tasks[0].taskId;
         config.tasks = config.tasks.map((task) => {
-          // Temporary for debugging purposes
-          if (task.task.extra.github.events.some(event => event == 'release')) {
-            debug(`After filtering, found task for release. Task group id: ${taskGroupId}`);
-          }
-
           return {
             taskId: task.taskId,
             task: _.extend(task.task, {taskGroupId, schedulerId: cfg.taskcluster.schedulerId}),
