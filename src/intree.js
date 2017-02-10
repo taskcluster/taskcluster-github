@@ -104,8 +104,12 @@ module.exports.setup = function(cfg) {
           task,
         };
       }).filter((task) => {
-        // Filter out tasks that aren't associated with the current event
-        // being handled
+        // Filter out tasks that aren't associated with github at all, or with
+        // the current event being handled
+        if (!task.task.extra || !task.task.extra.github) {
+          return false;
+        }
+
         let events = task.task.extra.github.events;
         let branches = task.task.extra.github.branches;
         return _.some(events, ev => payload.details['event.type'].startsWith(_.trimEnd(ev, '*'))) &&
