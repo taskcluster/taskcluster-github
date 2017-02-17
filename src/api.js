@@ -125,7 +125,7 @@ let api = new API({
     'web hooks',
   ].join('\n'),
   schemaPrefix: 'http://schemas.taskcluster.net/github/v1/',
-  context: ['Builds', 'OwnersDirectory', 'monitor', 'publisher'],
+  context: ['Builds', 'OwnersDirectory', 'monitor', 'publisher', 'cfg'],
 });
 
 // Export API
@@ -278,6 +278,45 @@ api.declare({
       };
     }),
   });
+});
+
+api.declare({
+  name: 'badge',
+  title: 'Latest Build Status Badge',
+  description: [
+    'Checks the status of the latest build of a given branch ',
+    'and returns corresponding badge image.',
+  ].join('\n'),
+  stability: 'experimental',
+  method: 'get',
+  route: '/badge/:owner/:repo/:branch',
+}, async function(req, res) {
+  // Extract owner, repo and branch from request into variables
+  let {owner, repo, branch} = req.params;
+
+  // Look up the installation ID in Azure. If no such owner in the table, no error thrown
+  let ownerInfo = await this.OwnersDirectory.load({owner}, true);
+
+  if (ownerInfo) {
+    try {
+      let instGithub = await this.github.getInstallationGithub(ownerInfo.installationId);
+
+      let taskclusterBot = await instGithub.users.getForUser({username: 'taskcluster[bot]'});
+      // Statuses is an array of status objects, where we find the relevant status
+      let statuses = await instGithub.repos.getStatuses({owner, repo, ref: branch});
+      let status = statuses.find(statusObject => statusObject.creator.id === taskclusterBot.id);
+
+      // Then we send a corresponding image. (The path should be absolute)
+      return res.sendFile(this.cfg.server.publicUrl + '/assets/' + status.state + '.svg');
+    } catch (e) {
+      if (e.code < 500) {
+        return res.sendFile(this.cfg.server.publicUrl + '/assets/error.svg');
+      }
+      throw e;
+    }
+  } else {
+    return res.sendFile(this.cfg.server.publicUrl + '/assets/error.svg');
+  }
 });
 
 api.declare({

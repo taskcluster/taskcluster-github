@@ -7,7 +7,6 @@ defaults:
     buildTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     name: 'taskcluster-github'
-    statusContext: 'Taskcluster'
 
   taskcluster:
     # TaskCluster credentials for this server, these must have scopes:
