@@ -199,7 +199,7 @@ api.declare({
       msg.installationId = body.installation.id;
       publisherKey = 'release';
     } else if (eventType == 'integration_installation') {
-      await this.context.OwnersDirectory.create({
+      await this.OwnersDirectory.create({
         installationId: body.installation.id,
         owner: body.installation.account.login,
       });
