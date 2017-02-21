@@ -125,7 +125,7 @@ let api = new API({
     'web hooks',
   ].join('\n'),
   schemaPrefix: 'http://schemas.taskcluster.net/github/v1/',
-  context: ['Builds', 'monitor', 'publisher'],
+  context: ['Builds', 'OwnersDirectory', 'monitor', 'publisher'],
 });
 
 // Export API
@@ -295,7 +295,7 @@ api.declare({
   let {owner, repo} = req.params;
 
   // Look up the installation ID in Azure. If no such owner in the table, no error thrown
-  let ownerInfo = await this.OwnersDirectory.load({owner}, true);
+  let ownerInfo = await this.context.OwnersDirectory.load({owner}, true);
 
   if (ownerInfo) {
     let instGithub = await this.github.getInstallationGithub(ownerInfo.installationId);
