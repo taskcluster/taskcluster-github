@@ -151,7 +151,7 @@ suite('api', () => {
     });
 
     await request.get('http://localhost:60415/v1/badge/abc123/awesomeRepo/master').end((err, res) => {
-      err ? console.log(err) : assert.equal(res.headers['content-length'], 9289);
+      err ? console.log(err) : assert.equal(res.headers['content-length'], 11904);
     });
 
     await request.get('http://localhost:60415/v1/badge/abc123/unknownRepo/master').end((err, res) => {

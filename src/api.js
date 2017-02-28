@@ -297,6 +297,9 @@ api.declare({
   // Look up the installation ID in Azure. If no such owner in the table, no error thrown
   let ownerInfo = await this.OwnersDirectory.load({owner}, true);
 
+  // This has nothing to do with user input, so we should be safe
+  let fileConfig = {root : __dirname + '/../assets/'};
+
   if (ownerInfo) {
     try {
       let instGithub = await this.github.getInstallationGithub(ownerInfo.installationId);
@@ -307,15 +310,15 @@ api.declare({
       let status = statuses.find(statusObject => statusObject.creator.id === taskclusterBot.id);
 
       // Then we send a corresponding image. (The path should be absolute)
-      return res.sendFile(this.cfg.server.publicUrl + '/assets/' + status.state + '.svg');
+      return res.sendFile(status.state + '.svg', fileConfig);
     } catch (e) {
       if (e.code < 500) {
-        return res.sendFile(this.cfg.server.publicUrl + '/assets/error.svg');
+        return res.sendFile('error.svg', fileConfig);
       }
       throw e;
     }
   } else {
-    return res.sendFile(this.cfg.server.publicUrl + '/assets/error.svg');
+    return res.sendFile('error.svg', fileConfig);
   }
 });
 
