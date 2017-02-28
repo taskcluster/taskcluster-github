@@ -309,16 +309,16 @@ api.declare({
       let statuses = await instGithub.repos.getStatuses({owner, repo, ref: branch});
       let status = statuses.find(statusObject => statusObject.creator.id === taskclusterBot.id);
 
-      // Then we send a corresponding image. (The path should be absolute)
+      // Then we send a corresponding image.
       return res.sendFile(status.state + '.svg', fileConfig);
     } catch (e) {
+      return res.sendFile('error.svg', fileConfig);
       if (e.code < 500) {
-        return res.sendFile('error.svg', fileConfig);
+        throw e;
       }
-      throw e;
     }
   } else {
-    return res.sendFile('error.svg', fileConfig);
+    return res.sendFile('newrepo.svg', fileConfig);
   }
 });
 
