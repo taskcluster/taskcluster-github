@@ -17,6 +17,7 @@ defaults:
       clientId: !env TASKCLUSTER_CLIENT_ID
       accessToken: !env TASKCLUSTER_ACCESS_TOKEN
     queueBaseUrl: !env QUEUE_BASE_URL
+    botName: 'taskcluster[bot]'
 
   github:
     credentials:
@@ -93,6 +94,7 @@ staging:
 
   taskcluster:
     schedulerId: tc-gh-staging
+    botName: 'taskcluster-staging[bot]'
 
 test:
   webhook:
