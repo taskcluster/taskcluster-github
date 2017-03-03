@@ -95,7 +95,7 @@ suite('api', () => {
       sha: 'master',
       info: [{creator: {id: 12345}, state: 'success'}, {creator: {id: 55555}, state: 'success'}],
     });
-    github.inst(9090).setUser({id: 55555, email: 'noreply@github.com', user: 'taskcluster[bot]'});
+    github.inst(9090).setUser({id: 55555, email: 'noreply@github.com', user: 'magicalTCspirit'});
   });
 
   test('all builds', async function() {
