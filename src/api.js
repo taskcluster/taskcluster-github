@@ -354,13 +354,27 @@ api.declare({
     try {
       let instGithub = await this.github.getInstallationGithub(ownerInfo.installationId);
       let reposList = await instGithub.integrations.getInstallationRepositories({});
+      debug(`REPOSLIST: ${JSON.stringify(reposList)}`);
 
       // GitHub API returns an array of objects, each of wich has an array of repos
-      let installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
+      var installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
+      debug(`INSTALLED var: ${installed}`);
 
+      debug(`hasNextPage: ${instGithub.hasNextPage(reposList.meta.link)}, JSON: ${JSON.stringify(instGithub.hasNextPage(reposList.meta.link))}`);
+
+      while (installed === -1 && instGithub.hasNextPage(reposList.meta.link)) {
+        reposList = await instGithub.getNextPage(reposList.meta.link);
+        debug(`REPOSLIST next page: ${JSON.stringify(reposList)}`);
+        installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
+        debug(`INSTALLED var in the loop: ${installed}`);
+      }
+
+      debug(`INSTALLED var AFTER the loop: ${installed}`);
       return res.reply({installed: installed != -1});
     } catch (e) {
       if (e.code > 400 && e.code < 500) {
+        debug(`INSTALLED var in catch: ${installed}`);
+        debug(`Error: ${JSON.stringify(e)}`);
         return res.reply({installed: false});
       }
       throw e;
