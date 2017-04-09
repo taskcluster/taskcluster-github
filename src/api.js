@@ -358,6 +358,8 @@ api.declare({
       // GitHub API returns an array of objects, each of wich has an array of repos
       var installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
 
+      debug(`Nextpage: ${instGithub.hasNextPage(reposList.meta.link)}`);
+
       while (installed === -1 && instGithub.hasNextPage(reposList.meta.link)) {
         reposList = await instGithub.getNextPage(reposList.meta.link);
         installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
