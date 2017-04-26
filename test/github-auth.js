@@ -23,6 +23,9 @@ class FakeGithub {
     const stubs = {
       'repos.createStatus': () => {},
       'repos.createCommitComment': () => {},
+      hasNextPage: function(link) {
+        return Boolean(link);
+      },
       'orgs.checkMembership': async ({org, owner}) => {
         if (this.org_membership[org] && this.org_membership[org].has(owner)) {
           return {};
@@ -144,6 +147,8 @@ class FakeGithub {
   setRepositories(...repoNames) {
     // This function accepts 1 to n strings
     this.repositories.repositories = [...repoNames].map(repo => {return {name: repo};});
+    // Sets pagination
+    this.repositories.meta = Object.create(null);
   }
 
   setStatuses({owner, repo, sha, info}) {
