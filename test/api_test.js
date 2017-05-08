@@ -95,7 +95,7 @@ suite('api', () => {
       sha: 'master',
       info: [
         {creator: {id: 12345}, state: 'success'},
-        {creator: {id: 55555}, state: 'success', target_url: 'http://google.com'},
+        {creator: {id: 55555}, state: 'success', target_url: 'Wonderland'},
       ],
     });
     github.inst(9090).setStatuses({
@@ -178,8 +178,8 @@ suite('api', () => {
 
   test('link for clickable badges', async function() {
     // check if the function returns a correct link
-    await request.get('http://localhost:60415/v1/taskLink/abc123/awesomeRepo/master').end((err, res) => {
-      err ? console.log(err) : assert.equal(res.text.includes('<title>Google</title>'), true);
+    await request.get('http://localhost:60415/v1/taskLink/abc123/awesomeRepo/master').redirects(0).end((err, res) => {
+      err ? console.log(err) : assert.equal(res.text, 'Found. Redirecting to Wonderland');
     });
   });
 });
