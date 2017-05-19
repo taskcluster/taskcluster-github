@@ -236,4 +236,17 @@ suite('api', () => {
     assert.equal(status.description, 'Status title');
     assert.equal(status.context, 'customContext');
   });
+
+  test('pull request comment', async function() {
+    await helper.github.createComment('abc123', 'awesomeRepo', 1, {
+      body: 'Task failed here',
+    });
+
+    let comment = github.inst(9090).getComments({
+      owner: 'abc123',
+      repo: 'awesomeRepo',
+      number: 1,
+    }).pop();
+    assert.equal(comment.body, 'Task failed here');
+  });
 });

@@ -479,3 +479,44 @@ api.declare({
 
   return res.status(404).send();
 });
+
+api.declare({
+  name: 'createComment',
+  title: 'Post a comment on a given GitHub Issue or Pull Request',
+  description: [
+    'For a given Issue or Pull Request of a repository, this will write a new message.',
+  ].join('\n'),
+  stability: 'experimental',
+  method: 'post',
+  // route and input (schema) matches github API
+  // https://developer.github.com/v3/issues/comments/#create-a-comment
+  // number is a Issue or Pull request ID. Both share the same IDs set.
+  route: '/repository/:owner/:repo/issues/:number/comments',
+  input: 'create-comment.json',
+  scopes: [['github:create-comment:${owner}/${repo}']],
+}, async function(req, res) {
+  // Extract owner, repo and number from request into variables
+  let {owner, repo, number} = req.params;
+  // Extract body from POST attributes
+  let {body} = req.body;
+
+  let instGithub = await installationAuthenticate(owner, this.OwnersDirectory, this.github);
+
+  if (instGithub) {
+    try {
+      await instGithub.repos.createComment({
+        owner,
+        repo,
+        number,
+        body,
+      });
+
+      return resolve(res, 200, 'Comment created!');
+    } catch (e) {
+      debug(`Error creating status: ${JSON.stringify(e)}`);
+      return res.status(500).send();
+    }
+  }
+
+  return res.status(404).send();
+});
