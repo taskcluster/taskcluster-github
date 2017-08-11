@@ -27,6 +27,7 @@ function completeInTreeConfig(config, payload) {
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
     ];
   }
+  config.scopes.push('queue:scheduler-id:taskcluster-github');
 
   // each task can optionally decide if it wants github specific environment
   // variables added to it
