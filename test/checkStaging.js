@@ -1,5 +1,5 @@
 const Github = require('github');
-const load = require('../lib/main');
+const load = require('../src/main');
 const child_process = require('child_process');
 const fs = require('fs-extra');
 const _ = require('lodash');
