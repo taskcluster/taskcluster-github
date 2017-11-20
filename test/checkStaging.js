@@ -82,7 +82,7 @@ const pushCommit = async () => {
     await runCommand(['git', 'clone', 'git@github.com:taskcluster/taskcluster-github-testing.git', 'testing']);
     process.chdir('testing');
     fs.writeFileSync('README.md',
-        'This repository is used to support `npm run checkStaging` in taskcluster-github\n\n' +
+      'This repository is used to support `npm run checkStaging` in taskcluster-github\n\n' +
         `Last run: ${new Date()}`);
     await runCommand(['git', 'add', 'README.md']);
     await runCommand(['git', 'commit', '-m', 'checkStaging run']);
