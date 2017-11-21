@@ -96,7 +96,7 @@ class FakeGithub {
           throwError(404);
         }
       },
-      'integrations.getInstallationRepositories': async () => {
+      'apps.getInstallationRepositories': async () => {
         return this._repositories;
       },
       'repos.getStatuses': async ({owner, repo, ref}) => {
@@ -227,7 +227,7 @@ class FakeGithubAuth {
 
   async getIntegrationGithub() {
     return {
-      integrations: {
+      apps: {
         getInstallations: async () => {
           return _.map(this.installations, (install, id) => ({
             id: parseInt(id, 10),

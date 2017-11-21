@@ -384,7 +384,7 @@ api.declare({
 
   if (instGithub) {
     try {
-      let reposList = await instGithub.integrations.getInstallationRepositories({});
+      let reposList = await instGithub.apps.getInstallationRepositories({});
 
       while (true) {
         let installed = reposList.repositories.map(repo => repo.name).indexOf(repo);
