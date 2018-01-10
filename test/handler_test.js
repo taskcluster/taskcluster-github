@@ -71,6 +71,9 @@ suite('handlers', () => {
             version: 1,
           },
         };
+        if (eventType.startsWith('pull_request.')) {
+          message.payload.details['event.number'] = 36;
+        }
 
         handlers.jobListener.fakeMessage(message);
       });
