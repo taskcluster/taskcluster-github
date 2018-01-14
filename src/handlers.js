@@ -248,7 +248,7 @@ async function jobHandler(message) {
   let repository = message.payload.repository;
   let sha = message.payload.details['event.head.sha'];
   //console.log('..message passed to jobHandler', message);
-  let number = message.payload.details['event.number'];
+  let number = message.payload.details['event.pullNumber'];
   //console.log('..pr number', number);
   if (!sha) {
     debug('Trying to get commit info in job handler...');
