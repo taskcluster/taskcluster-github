@@ -125,28 +125,38 @@ class Handlers {
   }
 
   // Send an exception to Github in the form of a comment.
-  async createExceptionComment({instGithub, organization, repository, sha, error}) {
+  async createExceptionComment({instGithub, organization, repository, sha, error, number}) {
     let errorBody = error.body && error.body.error || error.message;
     // Let's prettify any objects
     if (typeof errorBody == 'object') {
       errorBody = JSON.stringify(errorBody, null, 4);
     }
+    let body = [
+      '<details>\n',
+      '<summary>Submitting the task to TaskCluster failed. Details</summary>\n\n',
+      '```js\n',
+      errorBody,
+      '```\n',
+      '</details>',
+    ].join('\n') ;
 
     // Warn the user know that there was a problem handling their request
     // by posting a comment; this error is then considered handled and not
     // reported to the taskcluster team or retried
+    if (number) {
+      await instGithub.pullRequests.createComment({
+        owner: organization,
+        repo: repository,
+        number,
+        body,
+      });
+      return;
+    }
     await instGithub.repos.createCommitComment({
       owner: organization,
       repo: repository,
       sha,
-      body: [
-        '<details>\n',
-        '<summary>Submitting the task to TaskCluster failed. Details</summary>\n\n',
-        '```js\n',
-        errorBody,
-        '```\n',
-        '</details>',
-      ].join('\n'),
+      body,
     });
   }
 }
@@ -301,7 +311,7 @@ async function jobHandler(message) {
     }
   } catch (e) {
     if (e.name === 'YAMLException') {
-      return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+      return await this.createExceptionComment({instGithub, organization, repository, sha, error: e, number});
     }
     throw e;
   }
@@ -324,7 +334,7 @@ async function jobHandler(message) {
     }
   } catch (e) {
     debug('.taskcluster.yml was not formatted correctly. Leaving comment on Github.');
-    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+    await this.createExceptionComment({instGithub, organization, repository, sha, error: e, number});
     return;
   }
 
@@ -357,10 +367,10 @@ async function jobHandler(message) {
     } catch (e) {
       if (e.name === 'YAMLException') {
         let docsLink = 'https://docs.taskcluster.net/reference/integrations/github/docs/usage#who-can-trigger-jobs';
-        await instGithub.repos.createCommitComment({
+        await instGithub.pullRequests.createComment({
           owner: organization,
           repo: repository,
-          sha,
+          number,
           body: [
             '<details>\n',
             '<summary>Error in `.taskcluster.yml` while checking',
