@@ -32,6 +32,7 @@ properties:
     pattern: {$const: github-guid-pattern}
   details:
     type:         object
+    additionalProperties: true
     description: |
       Metadata describing the push.
 additionalProperties: false

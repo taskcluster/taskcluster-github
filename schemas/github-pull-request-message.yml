@@ -36,6 +36,7 @@ properties:
     pattern: {$const: github-guid-pattern}
   details:
     type:         object
+    additionalProperties: true
     description: |
       Metadata describing the pull request.
 additionalProperties: false
