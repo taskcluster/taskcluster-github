@@ -63,7 +63,7 @@ The available events are:
   * `pull_request.synchronize` (a new commit is pushed to the branch in the PR. NOTE: There is no 'd' at the end of 'synchronize')
   * `push`                     (a push is made directly to the repo)
   * `release`                  (a new release published in any branch of the repo. NOTE: New tags are actually push events in github)
-
+  * `tag`
 
 In almost all cases, you'll only want `[push, pull_request.opened, pull_request.synchronize]`.
 
