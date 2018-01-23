@@ -48,7 +48,8 @@ function getPushDetails(eventData) {
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
   let branch = ref.split('/').slice(2).join('/');
-  return {
+  let isTagEvent = ref.split('/')[1] == 'tags';
+  let details = {
     'event.base.ref': ref,
     'event.base.repo.branch': branch,
     'event.base.repo.name': eventData.repository.name,
@@ -57,15 +58,21 @@ function getPushDetails(eventData) {
     'event.base.user.login': eventData.sender.login,
 
     'event.head.ref': ref,
-    'event.head.repo.branch': branch,
     'event.head.repo.name': eventData.repository.name,
     'event.head.repo.url': eventData.repository.clone_url,
     'event.head.sha': eventData.after,
     'event.head.user.login': eventData.sender.login,
-    'event.head.user.id': eventData.sender.id,
+    'event.head.user.id': eventData.sender.id,  
 
-    'event.type': 'push',
+    'event.type': isTagEvent? 'tag' : 'push',
   };
+  if (isTagEvent) {
+    details['event.head.tag'] = branch;
+  } else {
+    details['event.head.repo.branch'] = branch;
+  }
+  return details;
+  
 };
 
 // See https://developer.github.com/v3/activity/events/types/#releaseevent
