@@ -48,7 +48,7 @@ function getPushDetails(eventData) {
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
   let branch = ref.split('/').slice(2).join('/');
-  let isTagEvent = ref.split('/')[1] == 'tags';
+  let isTagEvent = ref.split('/')[1] === 'tags';
   let details = {
     'event.base.ref': ref,
     'event.base.repo.branch': branch,
@@ -62,7 +62,7 @@ function getPushDetails(eventData) {
     'event.head.repo.url': eventData.repository.clone_url,
     'event.head.sha': eventData.after,
     'event.head.user.login': eventData.sender.login,
-    'event.head.user.id': eventData.sender.id,  
+    'event.head.user.id': eventData.sender.id,
 
     'event.type': isTagEvent? 'tag' : 'push',
   };
