@@ -203,8 +203,10 @@ api.declare({
   }
 
   let webhookSecrets = this.cfg.webhook.secret;
-  let xHubSignature = req.headers['x-hub-signature'];
+  //console.log('................secrets ', webhookSecrets);
 
+  let xHubSignature = req.headers['x-hub-signature'];
+  //console.log('................signature ', xHubSignature);
   if (xHubSignature && !webhookSecrets) {
     return resolve(res, 400, 'Server is not setup to handle secrets');
   } else if (webhookSecrets && !xHubSignature) {
@@ -281,7 +283,6 @@ api.declare({
   debug('Beginning publishing event message on pulse.');
   await this.publisher[publisherKey](msg);
   debug('Finished Publishing event message on pulse.');
-
   res.status(204).send();
 });
 

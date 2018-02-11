@@ -36,9 +36,7 @@ helper.jsonHttpRequest = function(jsonFile, options) {
     path: '/v1/github',
     method: 'POST',
   };
-
   options = _.defaultsDeep(options, defaultOptions);
-
   let jsonData = JSON.parse(fs.readFileSync(jsonFile));
   options.headers = jsonData.headers;
   return new Promise (function(accept, reject) {
@@ -46,7 +44,9 @@ helper.jsonHttpRequest = function(jsonFile, options) {
       let req = http.request(options, accept);
       req.write(JSON.stringify(jsonData.body));
       req.end();
-    } catch (e) {
+      console.log('exiting helper');
+      console.log(accept, reject);
+    } catch (e) { 
       reject(e);
     }
   });

@@ -14,8 +14,11 @@ suite('webhook', () => {
   function statusTest(testName, jsonFile, statusCode) {
     test(testName, async () => {
       let response = await helper.jsonHttpRequest('./test/data/webhooks/' + jsonFile);
+      console.log('got response');
       assert.equal(response.statusCode, statusCode);
+      console.log('about to destroy');
       response.connection.destroy();
+      console.log('complete');
     });
   };
 
@@ -24,6 +27,7 @@ suite('webhook', () => {
   statusTest('Pull Request Closed', 'webhook.pull_request.close.json', 204);
   statusTest('Push', 'webhook.push.json', 204);
   statusTest('Release', 'webhook.release.json', 204);
+  statusTest('Tag', 'webhook.tag_push.json', 204);
 
   // Bad data: should all return 400 responses
   statusTest('Push without secret', 'webhook.push.no_secret.json', 400);
