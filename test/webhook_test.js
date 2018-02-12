@@ -14,11 +14,8 @@ suite('webhook', () => {
   function statusTest(testName, jsonFile, statusCode) {
     test(testName, async () => {
       let response = await helper.jsonHttpRequest('./test/data/webhooks/' + jsonFile);
-      console.log('got response');
       assert.equal(response.statusCode, statusCode);
-      console.log('about to destroy');
       response.connection.destroy();
-      console.log('complete');
     });
   };
 
