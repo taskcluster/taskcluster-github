@@ -211,4 +211,16 @@ suite('intree config', () => {
       'metadata.owner': 'test@test.com',
       scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
+
+  buildConfigTest(
+    'Tag Event, Single Task Config, Branch Limited (off branch)',
+    configPath + 'taskcluster.tag.branchlimited.yml',
+    {
+      payload:    buildMessage({details: {'event.type': 'tag', 'event.base.repo.branch': 'v1.0.2'}}),
+    },
+    {
+      'tasks[0].task.extra.github.events': ['tag'],
+      'metadata.owner': 'test@test.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
+    });
 });
