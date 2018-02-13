@@ -36,6 +36,10 @@ function completeInTreeConfig(config, payload) {
     config.scopes = [
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
     ];
+  } else if (payload.details['event.type'] == 'tag') {
+    config.scopes = [
+      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
+    ];
   }
 
   // each task can optionally decide if it wants github specific environment
@@ -125,7 +129,8 @@ module.exports.setup = function(cfg) {
         let events = task.task.extra.github.events;
         let branches = task.task.extra.github.branches;
         return _.some(events, ev => payload.details['event.type'].startsWith(_.trimEnd(ev, '*'))) &&
-          (!branches || branches && _.includes(branches, payload.details['event.base.repo.branch']));
+          ((!branches || branches && _.includes(branches, payload.details['event.base.repo.branch'])) ||
+            payload.details['event.type']==='tag');
       });
 
       // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
