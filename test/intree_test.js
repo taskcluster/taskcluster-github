@@ -62,7 +62,6 @@ suite('intree config', () => {
       if (shouldError) {
         throw new Error('This intree call should have failed!');
       }
-      console.log(config);
       if (count > 0) {
         assert.equal(config.tasks.length, count);
       }

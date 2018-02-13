@@ -44,8 +44,6 @@ helper.jsonHttpRequest = function(jsonFile, options) {
       let req = http.request(options, accept);
       req.write(JSON.stringify(jsonData.body));
       req.end();
-      console.log('exiting helper');
-      console.log(accept, reject);
     } catch (e) { 
       reject(e);
     }
