@@ -62,6 +62,7 @@ suite('intree config', () => {
       if (shouldError) {
         throw new Error('This intree call should have failed!');
       }
+      console.log(config);
       if (count > 0) {
         assert.equal(config.tasks.length, count);
       }
@@ -198,4 +199,16 @@ suite('intree config', () => {
     {},
     0,
     true);
+
+  buildConfigTest(
+    'Tag Event, Single Task Config',
+    configPath + 'taskcluster.tag_single.yml',
+    {
+      payload:    buildMessage({details: {'event.type': 'tag', 'event.base.repo.branch': 'v1.0.2'}}),
+    },
+    {
+      'tasks[0].task.extra.github.events': ['tag'],
+      'metadata.owner': 'test@test.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
+    });
 });
