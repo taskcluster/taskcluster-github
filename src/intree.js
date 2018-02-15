@@ -37,8 +37,9 @@ function completeInTreeConfig(config, payload) {
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
     ];
   } else if (payload.details['event.type'] == 'tag') {
+    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
     config.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
+      prefix + payload.details['event.head.tag'],
     ];
   }
 
