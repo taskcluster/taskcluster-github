@@ -144,7 +144,6 @@ suite('pulse', () => {
     eventId: '9637a980-d8fb-11e6-9830-1244ca57c95f',
     details:      {
       'event.base.ref': 'refs/tags/v1.0.2',
-      'event.base.repo.branch': 'v1.0.2',
       'event.base.repo.name': 'hooks-testing',
       'event.base.repo.url': 'https://github.com/TaskClusterRobot/hooks-testing.git',
       'event.base.sha': '0000000000000000000000000000000000000000',

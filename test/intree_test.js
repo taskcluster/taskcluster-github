@@ -203,7 +203,7 @@ suite('intree config', () => {
     'Tag Event, Single Task Config',
     configPath + 'taskcluster.tag_single.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'tag', 'event.base.repo.branch': 'v1.0.2'}}),
+      payload:    buildMessage({details: {'event.type': 'tag'}}),
     },
     {
       'tasks[0].task.extra.github.events': ['tag'],
@@ -215,7 +215,7 @@ suite('intree config', () => {
     'Tag Event, Single Task Config, Branch Limited (off branch)',
     configPath + 'taskcluster.tag.branchlimited.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'tag', 'event.base.repo.branch': 'v1.0.2'}}),
+      payload:    buildMessage({details: {'event.type': 'tag'}}),
     },
     {
       'tasks[0].task.extra.github.events': ['tag'],

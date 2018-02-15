@@ -47,11 +47,10 @@ function getPushDetails(eventData) {
   let ref = eventData.ref;
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
-  let branch = ref.split('/').slice(2).join('/');
+  let refName = ref.split('/').slice(2).join('/');
   let isTagEvent = ref.split('/')[1] === 'tags';
   let details = {
     'event.base.ref': ref,
-    'event.base.repo.branch': branch,
     'event.base.repo.name': eventData.repository.name,
     'event.base.repo.url': eventData.repository.clone_url,
     'event.base.sha': eventData.before,
@@ -67,9 +66,11 @@ function getPushDetails(eventData) {
     'event.type': isTagEvent? 'tag' : 'push',
   };
   if (isTagEvent) {
-    details['event.head.tag'] = branch;
+    details['event.head.tag'] = refName;
   } else {
-    details['event.head.repo.branch'] = branch;
+    details['event.base.repo.branch'] = refName;
+    details['event.head.repo.branch'] = refName;
+
   }
   return details;
   
@@ -203,10 +204,8 @@ api.declare({
   }
 
   let webhookSecrets = this.cfg.webhook.secret;
-  //console.log('................secrets ', webhookSecrets);
-
   let xHubSignature = req.headers['x-hub-signature'];
-  //console.log('................signature ', xHubSignature);
+
   if (xHubSignature && !webhookSecrets) {
     return resolve(res, 400, 'Server is not setup to handle secrets');
   } else if (webhookSecrets && !xHubSignature) {
