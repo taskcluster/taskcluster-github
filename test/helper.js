@@ -39,6 +39,7 @@ helper.jsonHttpRequest = function(jsonFile, options) {
   options = _.defaultsDeep(options, defaultOptions);
   let jsonData = JSON.parse(fs.readFileSync(jsonFile));
   options.headers = jsonData.headers;
+  
   return new Promise (function(accept, reject) {
     try {
       let req = http.request(options, accept);

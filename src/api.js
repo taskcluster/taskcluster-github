@@ -47,6 +47,7 @@ function getPushDetails(eventData) {
   let ref = eventData.ref;
   // parsing the ref refs/heads/<branch-name> is the most reliable way
   // to get a branch name
+  // However, tags are identified the ref refs/tags/<tag-name> 
   let refName = ref.split('/').slice(2).join('/');
   let isTagEvent = ref.split('/')[1] === 'tags';
   let details = {
