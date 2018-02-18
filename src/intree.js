@@ -65,6 +65,7 @@ function completeInTreeConfig(config, payload) {
           GITHUB_HEAD_USER: payload.details['event.head.user.login'],
           GITHUB_HEAD_SHA: payload.details['event.head.sha'],
           GITHUB_HEAD_BRANCH: payload.details['event.head.repo.branch'],
+          GITHUB_HEAD_TAG: payload.details['event.head.tag'],
           GITHUB_HEAD_REF: payload.details['event.head.ref'],
           GITHUB_HEAD_USER_EMAIL: payload.details['event.head.user.email'],
         }
