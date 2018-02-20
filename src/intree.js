@@ -130,8 +130,14 @@ module.exports.setup = function(cfg) {
 
         let events = task.task.extra.github.events;
         let branches = task.task.extra.github.branches;
+        let branch = payload.details['event.base.repo.branch'];
+        excludes = task.task.extra.github.exclude;
+        if (excludes) {
+          excludes = task.task.extra.github.exclude.branches;
+        }
         return _.some(events, ev => payload.details['event.type'].startsWith(_.trimEnd(ev, '*'))) &&
-          (!branches || branches && _.includes(branches, payload.details['event.base.repo.branch']) ||
+          (!(branches || excludes) || 
+            branches && _.includes(branches, branch) || excludes && !_.includes(excludes, branch) ||
             payload.details['event.type']==='tag');
       });
 
