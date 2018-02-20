@@ -146,6 +146,16 @@ suite('intree config', () => {
     });
 
   buildConfigTest(
+    'Push Event, Single Task Config, Branch Excluded (on branch)',
+    configPath + 'taskcluster.single.yml',
+    {
+      payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
+    },
+    {
+      tasks: [],
+    });
+
+  buildConfigTest(
     'Star Pull Config',
     configPath + 'taskcluster.star.yml',
     {
