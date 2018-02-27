@@ -12,7 +12,10 @@ tasks:
         env: true
         events:
           - push
+        branches:
+          - master
         excludeBranches:
+          - foobar
           - master
 
     payload:
