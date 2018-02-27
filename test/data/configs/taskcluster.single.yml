@@ -12,9 +12,8 @@ tasks:
         env: true
         events:
           - push
-        exclude:
-          branches:
-            - master
+        excludeBranches:
+          - master
 
     payload:
       image: "ubuntu:latest"

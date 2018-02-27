@@ -93,12 +93,11 @@ tasks:
       github:
         events:
           - push
-        exclude:
-          branches:
-            - master
+        excludeBranches:
+          - master
 ```
 
-If a branch is present in both, `task.extra.github.branches` is given preference over `task.github.exclude.branches`.
+If a branch is present in both, `task.extra.github.branches` is given preference over `task.extra.github.excludeBranches`.
 Branch filtering doesn't work for releases.
 
 ### Roles
