@@ -1,6 +1,7 @@
 let yaml = require('js-yaml');
 
 const DEFAULT_POLICY = 'collaborators';
+const DEFAULT_ERROR_POLICY = true;
 
 async function prAllowed(options) {
   switch (await getRepoPolicy(options)) {
@@ -51,7 +52,7 @@ async function getErrorPolicy({login, organization, repository, instGithub, debu
   }
 
   // consult its `allowPullRequests` field
-  return taskclusterYml['enableJobsError'] || DEFAULT_POLICY;
+  return taskclusterYml['enableJobsError'] || DEFAULT_ERROR_POLICY;
 }
 /**
  * Get the repo's "policy" on pull requests, by fetching .taskcluster.yml from the default
