@@ -7,6 +7,7 @@ let EventEmitter = require('events');
 let _ = require('lodash');
 let Promise = require('bluebird');
 let prAllowed = require('./pr-allowed');
+let jobsErrorEnabled = require('./pr-allowed');
 
 let INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
 
@@ -343,7 +344,7 @@ async function jobHandler(message) {
     // Decide if a user has permissions to run tasks.
     let login = message.payload.details['event.head.user.login'];
     try {
-      if (!await prAllowed({login, organization, repository, instGithub, debug, message})) {
+      if (!await prAllowed({login, organization, repository, instGithub, debug, message}) && await jobsErrorEnabled({login, organization, repository, instGithub, debug, message}) ) {
         let body = [
           '<details>\n',
           '<summary>No Taskcluster jobs started for this pull request</summary>\n\n',

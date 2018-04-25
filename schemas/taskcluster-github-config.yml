@@ -57,6 +57,14 @@ properties:
     enum:
       - public
       - collaborators
+  enableJobsError:
+    description: |
+        Flag for enabling "No Taskcluster jobs started for this pull request" error.  The effective policy is found in this property
+        in the `.taskcluster.yml` file in the repository's default branch. 
+    type: boolean 
+    enum:
+      - true
+      - false
   tasks:
     type:           array
     default:        []

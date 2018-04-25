@@ -1,5 +1,6 @@
 version: 0
 allowPullRequests: public
+enableJobsError: true
 metadata:
   name: "TaskCluster GitHub Tests"
   description: "All non-integration tests for taskcluster github"

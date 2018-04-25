@@ -1,6 +1,7 @@
 let yaml = require('js-yaml');
 
 const DEFAULT_POLICY = 'collaborators';
+const DEFAULT_ERROR_POLICY = true;
 
 async function prAllowed(options) {
   switch (await getRepoPolicy(options)) {
@@ -15,6 +16,44 @@ async function prAllowed(options) {
   }
 }
 
+async function jobsErrorEnabled(options) {
+  switch (await getErrorPolicy(options)) {
+    case false:
+      return false;
+
+    case true:
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+async function getErrorPolicy({login, organization, repository, instGithub, debug}) {
+  // first, get the repository's default branch
+  let repoInfo = (await instGithub.repos.get({owner: organization, repo: repository})).data;
+  let branch = repoInfo.default_branch;
+
+  // load .taskcluster.yml from that branch
+  let taskclusterYml;
+  try {
+    let content = await instGithub.repos.getContent({
+      owner: organization,
+      repo: repository,
+      path: '.taskcluster.yml',
+      ref: branch,
+    });
+    taskclusterYml = yaml.safeLoad(new Buffer(content.data.content, 'base64').toString());
+  } catch (e) {
+    if (e.code === 404) {
+      return DEFAULT_POLICY;
+    }
+    throw e;
+  }
+
+  // consult its `allowPullRequests` field
+  return taskclusterYml['enableJobsError'] || DEFAULT_ERROR_POLICY;
+}
 /**
  * Get the repo's "policy" on pull requests, by fetching .taskcluster.yml from the default
  * branch, parsing it, and looking at its `allowPullRequests`.
@@ -67,7 +106,7 @@ async function isCollaborator({login, organization, repository, sha, instGithub,
 }
 
 module.exports = prAllowed;
-
+module.exports = jobsErrorEnabled;
 // for testing..
 module.exports.getRepoPolicy = getRepoPolicy;
 module.exports.isCollaborator = isCollaborator;
