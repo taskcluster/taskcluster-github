@@ -7,22 +7,10 @@ order: 100
 projects, and to take full advantage of Taskcluster-Github features, use a
 [version 1](taskcluster-yml-v1) file.
 
-Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root
-of your project. This is a YAML file that specifies the tasks to run on
-pushes, pull requests, or releases.
+If you already use a `version 0` file, we strongly recommend you switch to `version 1`. We will support the old version for a while though.
 
-The format of the file is:
+#
 
-```yaml
-version: 0
-tasks:
-  - (task definition)
-  - ...
-```
-
-For a practical example, see the `.taskcluster.yml` [for Taskcluster-Github itself](https://github.com/taskcluster/taskcluster-github/blob/master/.taskcluster.yml).
-
-The file has a simple templating pass applied.  Each task's `extra.github` property also defines some github-specific behaviors.
 
 # Configuration in `extra.github`
 
@@ -37,98 +25,6 @@ tasks:
    extra:
      github:
        env: true
-```
-
-## Github Events
-
-You can modify a task definition so that it will only run for specific Github
-events, by setting `task.extra.github.events` to a list of event names:
-
-```yaml
-version: 0
-tasks:
- - ...
-   extra:
-     github:
-       events: [push, pull_request.opened, pull_request.synchronize]
-```
-
-
-The available events are:
-
-  * `pull_request.assigned`
-  * `pull_request.unassigned`
-  * `pull_request.labeled`
-  * `pull_request.unlabeled`
-  * `pull_request.opened`
-  * `pull_request.edited`
-  * `pull_request.closed`
-  * `pull_request.reopened`
-  * `pull_request.synchronize` (a new commit is pushed to the branch in the PR. NOTE: There is no 'd' at the end of 'synchronize')
-  * `push`                     (a push is made directly to the repo)
-  * `release`                  (a new release published in any branch of the repo.)
-  * `tag`                      (a tag is pushed to the repo)
-
-In almost all cases, you'll only want `[push, pull_request.opened, pull_request.synchronize]`.
-
-### Branch Filtering
-
-You can also modify a task definition so that it will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
-
-```yaml
-version: 0
-tasks:
-  - ...
-    extra:
-      github:
-        events:
-          - push
-        branches:
-          - master
-```
-
-You can even choose to exclude certain branches from your task run. The task will run only if it is not on one of the excluded branches. For example, the task defined below will only run for pushes **not** to the master branch:
-
-```yaml
-version: 0
-tasks:
-  - ...
-    extra:
-      github:
-        events:
-          - push
-        excludeBranches:
-          - master
-```
-
-You may not specify both an `excludeBranches` and `branches` at the same time.
-
-
-### Roles
-
-Pushes, pull requests, and releases all are given access to [scopes](/manual/design/apis/hawk/scopes) via [roles](/manual/design/apis/hawk/roles) in Taskcluster. Following are the roles assigned to each type of event:
-
-* `Push` -- `assume:repo:github.com/<organization>/<repository>:branch:<branch>`
-* `Pull Request` -- `assume:repo:github.com/<organization>/<repository>:pull-request`
-* `Release` -- `assume:repo:github.com/<organization>/<repository>:release`
-
-In the [role manager](https://tools.taskcluster.net/auth/roles/), you can set up roles however you like. To give permissions to every event in your repository, you can make a role `repo:github.com/<organization>/<repository>:*` or you can give fine-grained permissions to only releases or specific branches, etc. [Read more](/manual/design/apis/hawk/scopes) about how scopes and roles work to see what you can do. There are lots of examples in the roles inspector for other repositories that have been set up. Look for roles that begin with `repo:github.com/` to see how they work.
-
-## Who Can Trigger Jobs?
-
-Taskcluster-Github will always build pushes and releases.  For pull requests, two policies are available:
-
-* `public` -- tasks are created for all pull requests.
-* `collaborators` (the default) -- tasks are created if the user who made the pull request is a collaborator on the repository.
-  Github [defines collaborators](https://developer.github.com/v3/repos/collaborators/#list-collaborators) as "outside collaborators, organization members with access through team memberships, organization members with access through default organization permissions, and organization owners."
-
-This policy is determined by consulting the top-level `allowPullRequests` property in `.taskcluster.yml` in the latest commit to the repository's *default branch* (not on the pull request head!).
-
-For example:
-```
-version: 0
-allowPullRequests: public
-...
 ```
 
 # Token Substitution and Environment Variables
