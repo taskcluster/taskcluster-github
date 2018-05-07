@@ -61,12 +61,7 @@ The tasks defined in the YAML file are rendered using
 
 * `as_slugid` - a function which, given a label, will generate a slugid. Multiple calls with the same label for the same event will generate the same slugid, but different slugids in different events.  Use this to generate taskIds, etc.
 
-## Result
-
-After rendering, the resulting data structure should have a `tasks` property containing a list of task definitions. Each task definition should match the [task
-schema](https://docs.taskcluster.net/reference/platform/taskcluster-queue/docs/task-schema) as it will be passed nearly unchanged to `Queue.createTask`, The exception is that the provided task definition must contain a `taskId` field, which the service will remove and pass to `Queue.createTask` directly.
-
-# Task definition
+## Task definition
  
 ### Github Events
 
@@ -99,6 +94,11 @@ You can have both events and branches in your `${if}, then` statement.
 ### Provisioner ID and Worker Type
 
 You need to know which provisioner and which worker type you want to use to run your tasks. If you plan on using AWS provisioner, you can look up or create a worker type [here](https://tools.taskcluster.net/aws-provisioner/).
+
+## Result
+
+After rendering, the resulting data structure should have a `tasks` property containing a list of task definitions. Each task definition should match the [task
+schema](https://docs.taskcluster.net/reference/platform/taskcluster-queue/docs/task-schema) as it will be passed nearly unchanged to `Queue.createTask`, The exception is that the provided task definition must contain a `taskId` field, which the service will remove and pass to `Queue.createTask` directly.
 
 # Scopes and Roles
 
