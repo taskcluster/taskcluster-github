@@ -4,7 +4,7 @@ order: 20
 ---
 
 Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root
-of your project. This is a YAML file that speciifies the tasks to run and when.
+of your project. This is a YAML file that specifies the tasks to run and when.
 
 The format of the file is:
 
@@ -19,9 +19,34 @@ tasks:
 
 The core of Taskcluster-Github's operation is this: when an event occurs on Github, such as a push or a pull request, it loads `.taskcluster.yml` from the commit specified in the event, renders it with JSON-e, and then calls `Queue.createTask` for each of the specified tasks.
 
+# Policies
+
+The `policy` property defines policies for what is allowed on the repository. Policies are always read from the default branch (generally `master`) of the repository. This prevents a malicious contributor from changing the policy applied to a pull request in the pull request itself.
+
+Policies are not rendered as a part of a task.
+
+##### Pull Requests
+
+Most projects prefer to run tasks for each pull request, so that the review process can take into account the task results. But if your project requires some secret data or uses some expensive service to test a pull request, then you probably do not want to run tasks for pull requests written by arbitrary contributors, but would still like to run tasks for PRs by project collaborators.
+
+The `pullRequests` policy controls this behavior:
+
+* `public` -- tasks are created for all pull requests.
+
+* `collaborators` (the default) -- tasks are created if the user who made the pull request is a collaborator on the repository.
+Github [defines
+  collaborators](https://developer.github.com/v3/repos/collaborators/#list-collaborators) as "outside collaborators, organization members with access through team memberships, organization members with access through default organization permissions, and organization owners."
+
+Example:
+```yaml
+policy:
+  pullRequests: public
+tasks: ...
+```
+
 # JSON-e Rendering
 
-The entire YAML file is rendered using
+The tasks defined in the YAML file are rendered using
 [JSON-e](https://github.com/taskcluster/json-e). You can view it as a `template`. The following `context` variables are provided:
 
 * `tasks_for` - defines the type of event, one of `github-push`,
@@ -41,97 +66,39 @@ The entire YAML file is rendered using
 After rendering, the resulting data structure should have a `tasks` property containing a list of task definitions. Each task definition should match the [task
 schema](https://docs.taskcluster.net/reference/platform/taskcluster-queue/docs/task-schema) as it will be passed nearly unchanged to `Queue.createTask`, The exception is that the provided task definition must contain a `taskId` field, which the service will remove and pass to `Queue.createTask` directly.
 
-# Policies
-
-The `policy` property defines policies for what is allowed on the repository. Policies are always read from the default branch (generally `master`) of the repository. This prevents a malicious contributor from changing the policy applied to a pull request in the pull request itself.
-
-Taskcluster-Github will always build pushes and releases.
-
-##### Pull Requests
-
-Most projects prefer to run tasks for each pull request, so that the review process can take into account the task results. But if your project requires some secret data or uses some expensive service to test a pull request, then you probably do not want to run tasks for pull requests written by arbitrary contributors, but would still like to run tasks for PRs by project collaborators.
-
-The `pullRequests` policy controls this behavior:
-
-* `public` -- tasks are created for all pull requests.
-
-* `collaborators` (the default) -- tasks are created if the user who made the pull request is a collaborator on the repository.
-Github [defines
-  collaborators](https://developer.github.com/v3/repos/collaborators/#list-collaborators) as 
-  "outside collaborators, organization members with access through team memberships, organization members with access through default organization permissions, and organization owners."
-
-Example:
-```yaml
-policy:
-  pullRequests: public
-```
 # Task definition
  
- ##  Configuration in `extra.github`
+### Github Events
 
- ### Github Events
-
-You can modify a task definition so that it will only run for specific Github events, by setting `task.extra.github.events` to a list of event names:
+You can put a task definition inside an `${if}, then` statement so that it will only run for specific Github events:
 
 ```yaml
 version: 1
 tasks:
- - ...
-    extra:
-      github:
-        events:
-          - push, pull_request.opened
-          - pull_request.synchronize
+  - {$if: ' tasks_for == "github-push" ', then: {
+    ...
+    ...
+  }}
 ```
-
-The available events are:
-
-  * `pull_request.assigned`
-  * `pull_request.unassigned`
-  * `pull_request.labeled`
-  * `pull_request.unlabeled`
-  * `pull_request.opened`
-  * `pull_request.edited`
-  * `pull_request.closed`
-  * `pull_request.reopened`
-  * `pull_request.synchronize` (a new commit is pushed to the branch in the PR. NOTE: There is no 'd' at the end of 'synchronize')
-  * `push`                     (a push is made directly to the repo)
-  * `release`                  (a new release published in any branch of the repo.)
-  * `tag`                      (a tag is pushed to the repo)
-
-In almost all cases, you'll only want `[push, pull_request.opened, pull_request.synchronize]`.
 
 ### Branch Filtering
 
-You can also modify a task definition so that it will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
+You can also add a branch clause to your `${if}, then` statement so that the task will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
 
 ```yaml
 version: 1
 tasks:
-  - ...
-    extra:
-      github:
-        events:
-          - push
-        branches:
-          - master
+  - {$if: ' event.head.branch == "master" ', then: {
+    ...
+    ...
+  }}
 ```
 
-You can even choose to exclude certain branches from your task run. The task will run only if it is not on one of the excluded branches. For example, the task defined below will only run for pushes **not** to the master branch:
+You can have both events and branches in your `${if}, then` statement.
 
-```yaml
-version: 1
-tasks:
-  - ...
-    extra:
-      github:
-        events:
-          - push
-        excludeBranches:
-          - master
-```
+### Provisioner ID and Worker Type
 
-You may not specify both an `excludeBranches` and `branches` at the same time.
+You need to know which provisioner and which worker type you want to use to run your tasks. If you plan on using AWS provisioner, you can look up or create a worker type [here](https://tools.taskcluster.net/aws-provisioner/).
 
 # Scopes and Roles
 
@@ -150,40 +117,45 @@ Careful configuration of these roles and the related tasks can allow powerful be
 version: 1
 policy:
   pullRequests: public
-metadata:
-  name: "TaskCluster GitHub Tests"
-  description: "All non-integration tests for taskcluster github"
-  owner: ${event.head.user.email}
-  source: ${event.head.repo.url}
 tasks:
-  - provisionerId: ${taskcluster.docker.provisionerId}
-    workerType: ${taskcluster.docker.workerType}
-    created: {$eval: 'now'}
-    deadline: {$fromNow: '1 hour'}
-    payload:
-      maxRunTime: 3600
-      image: "node:8"
-      env:
-        DEBUG: "* -babel* -mocha* -nock* -express* -body-parser* -morgan -eslint* -follow-redirects"
-        QUEUE_BASE_URL: 'taskcluster/queue/v1'
-      features:
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-lc"
-        - "git clone ${event.head.repo.url} repo && cd repo && git checkout ${event.head.sha} && yarn global add node-gyp && yarn && yarn test"
-    metadata:
-      name: "TaskCluster GitHub Tests"
-      description: "All non-integration tests"
-      owner: ${event.head.user.email}
-      source: ${event.head.repo.url}
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-
+  - {$if: ' tasks_for == "github-push" || tasks_for == "github-pull-request"  && event.head.branch != "master" ', then: {
+      provisionerId: 'aws-provisioner-v1'
+      workerType: 'github-worker'
+      created: {$eval: 'now'}
+      deadline: {$fromNow: '1 hour'}
+      payload:
+        maxRunTime: 3600
+        image: "node:8"
+        features:
+          taskclusterProxy: true
+        command:
+          - "/bin/bash"
+          - "-lc"
+          - "git clone ${event.head.repo.url} repo && cd repo && git checkout ${event.head.sha} && yarn global add node-gyp && yarn && yarn test"
+      metadata:
+        name: "TaskCluster GitHub Tests"
+        description: "All non-integration tests"
+        owner: ${event.head.user.email}
+        source: ${event.head.repo.url}
+  }}
+  - {$if: ' tasks_for == "github-release" && event.head.branch == "master" ', then: {
+      provisionerId: 'aws-provisioner-v1'
+      workerType: 'github-worker'
+      created: {$eval: 'now'}
+      deadline: {$fromNow: '1 hour'}
+      payload:
+        maxRunTime: 3600
+        image: "node:8"
+        features:
+          taskclusterProxy: true
+        command:
+          - "/bin/bash"
+          - "-lc"
+          - "git clone ${event.head.repo.url} repo && cd repo && git checkout ${event.head.sha} && yarn global add node-gyp && yarn && yarn integration test && node deploy-script.js"
+      metadata:
+        name: "TaskCluster GitHub Tests and Deployment"
+        description: "All integration tests and, if success, deployment"
+        owner: ${event.head.user.email}
+        source: ${event.head.repo.url}
+  }}
 ```
