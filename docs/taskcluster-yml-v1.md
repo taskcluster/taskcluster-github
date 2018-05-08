@@ -25,7 +25,7 @@ The `policy` property defines policies for what is allowed on the repository. Po
 
 Policies are not rendered as a part of a task.
 
-##### Pull Requests
+## Pull Requests
 
 Most projects prefer to run tasks for each pull request, so that the review process can take into account the task results. But if your project requires some secret data or uses some expensive service to test a pull request, then you probably do not want to run tasks for pull requests written by arbitrary contributors, but would still like to run tasks for PRs by project collaborators.
 
@@ -46,8 +46,7 @@ tasks: ...
 
 # JSON-e Rendering
 
-The tasks defined in the YAML file are rendered using
-[JSON-e](https://github.com/taskcluster/json-e). You can view it as a `template`. The following `context` variables are provided:
+The `tasks` property in the YAML file is rendered using [JSON-e](https://github.com/taskcluster/json-e). You can view it as a *template*. The following *context* variables are provided:
 
 * `tasks_for` - defines the type of event, one of `github-push`,
   `github-pull-request` or `github-release`.
@@ -65,7 +64,7 @@ The tasks defined in the YAML file are rendered using
  
 ### Github Events
 
-You can put a task definition inside an `${if}, then` statement so that it will only run for specific Github events:
+You can put a task definition inside an `$if` - `then` statement so that it will only run for specific Github events:
 
 ```yaml
 version: 1
@@ -78,7 +77,7 @@ tasks:
 
 ### Branch Filtering
 
-You can also add a branch clause to your `${if}, then` statement so that the task will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
+You can also add a branch clause to your `$if` - `then` statement so that the task will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
 
 ```yaml
 version: 1
@@ -89,7 +88,7 @@ tasks:
       ...
 ```
 
-You can have both events and branches in your `${if}, then` statement.
+You can have both events and branches in your `$if` - `then` statement.
 
 ### Provisioner ID and Worker Type
 
