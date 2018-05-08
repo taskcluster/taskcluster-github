@@ -70,10 +70,10 @@ You can put a task definition inside an `${if}, then` statement so that it will 
 ```yaml
 version: 1
 tasks:
-  - {$if: ' tasks_for == "github-push" ', then: {
-    ...
-    ...
-  }}
+  - $if: ' tasks_for == "github-push" '
+    then:
+      ...
+      ...
 ```
 
 ### Branch Filtering
@@ -83,10 +83,10 @@ You can also add a branch clause to your `${if}, then` statement so that the tas
 ```yaml
 version: 1
 tasks:
-  - {$if: ' event.head.branch == "master" ', then: {
-    ...
-    ...
-  }}
+  - $if: ' event.head.branch == "master" '
+    then:
+      ...
+      ...
 ```
 
 You can have both events and branches in your `${if}, then` statement.
@@ -118,7 +118,8 @@ version: 1
 policy:
   pullRequests: public
 tasks:
-  - {$if: ' tasks_for == "github-push" || tasks_for == "github-pull-request"  && event.head.branch != "master" ', then: {
+  - $if: ' tasks_for == "github-push" || tasks_for == "github-pull-request"  && event.head.branch != "master" '
+    then:
       provisionerId: 'aws-provisioner-v1'
       workerType: 'github-worker'
       created: {$eval: 'now'}
@@ -137,8 +138,8 @@ tasks:
         description: "All non-integration tests"
         owner: ${event.head.user.email}
         source: ${event.head.repo.url}
-  }}
-  - {$if: ' tasks_for == "github-release" && event.head.branch == "master" ', then: {
+  - $if: ' tasks_for == "github-release" && event.head.branch == "master" '
+    then:
       provisionerId: 'aws-provisioner-v1'
       workerType: 'github-worker'
       created: {$eval: 'now'}
@@ -157,5 +158,4 @@ tasks:
         description: "All integration tests and, if success, deployment"
         owner: ${event.head.user.email}
         source: ${event.head.repo.url}
-  }}
 ```
