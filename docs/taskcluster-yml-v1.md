@@ -60,7 +60,7 @@ The `tasks` property in the YAML file is rendered using [JSON-e](https://github.
 
 * `as_slugid` - a function which, given a label, will generate a slugid. Multiple calls with the same label for the same event will generate the same slugid, but different slugids in different events.  Use this to generate taskIds, etc.
 
-## Task definition
+## Task Definition and Examples
  
 ### Github Events
 
