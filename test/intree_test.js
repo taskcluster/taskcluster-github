@@ -87,7 +87,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Single Task Config',
-    configPath + 'taskcluster.single.yml',
+    configPath + 'taskcluster.single.v0.yml',
     {
       payload:    buildMessage(),
     },
@@ -98,7 +98,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config',
-    configPath + 'taskcluster.single.yml',
+    configPath + 'taskcluster.single.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push'}}),
     },
@@ -110,7 +110,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.yml',
+    configPath + 'taskcluster.push_pull_release.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push'}}),
     },
@@ -123,7 +123,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Pull Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.yml',
+    configPath + 'taskcluster.push_pull_release.v0.yml',
     {
       payload:    buildMessage(),
     },
@@ -136,7 +136,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Limited (on branch)',
-    configPath + 'taskcluster.branchlimited.yml',
+    configPath + 'taskcluster.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
     },
@@ -149,7 +149,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.branchlimited.yml',
+    configPath + 'taskcluster.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
     },
@@ -159,7 +159,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.exclude.yml',
+    configPath + 'taskcluster.exclude.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
     },
@@ -169,7 +169,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Pull Request Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.pull_with_exclude.yml',
+    configPath + 'taskcluster.pull_with_exclude.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'pull_request.opened', 'event.base.repo.branch': 'master'}}),
     },
@@ -179,7 +179,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Exclude and Include errors',
-    configPath + 'taskcluster.exclude-error.yml',
+    configPath + 'taskcluster.exclude-error.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
     },
@@ -201,7 +201,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Release Event, Single Task Config',
-    configPath + 'taskcluster.release_single.yml',
+    configPath + 'taskcluster.release_single.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'release'}}),
     },
@@ -213,7 +213,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Release Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.yml',
+    configPath + 'taskcluster.push_pull_release.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'release'}}),
     },
@@ -225,7 +225,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'No extra or extra.github generates an empty config',
-    configPath + 'taskcluster.non-github.yml',
+    configPath + 'taskcluster.non-github.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'release'}}),
     },
@@ -234,7 +234,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Unicode branch names are not allowed',
-    configPath + 'taskcluster.single.yml',
+    configPath + 'taskcluster.single.v0.yml',
     {
       payload: buildMessage({details: {'event.base.repo.branch': '🌱', 'event.type': 'push'}}),
     },
@@ -244,7 +244,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Tag Event, Single Task Config',
-    configPath + 'taskcluster.tag_single.yml',
+    configPath + 'taskcluster.tag_single.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
     },
@@ -256,7 +256,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Tag Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.tag.branchlimited.yml',
+    configPath + 'taskcluster.tag.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
     },

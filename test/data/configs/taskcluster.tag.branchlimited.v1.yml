@@ -1,0 +1,17 @@
+version: 1
+tasks:
+  - $if: ' (tasks_for == "github-push") && branch != "master" '
+    then:
+      provisionerId: aprovisioner
+      workerType: worker
+      created: {$eval: 'now'}
+      deadline: {$fromNow: '1 hour'}
+      payload:
+        image: "ubuntu:latest"
+        command:
+          - test
+      metadata:
+        name: "name"
+        description: "description"
+        owner: "test@test.com"
+        source: "http://mrrrgn.com"
