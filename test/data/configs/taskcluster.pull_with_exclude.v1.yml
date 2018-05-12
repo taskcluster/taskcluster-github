@@ -1,0 +1,15 @@
+version: 1
+tasks:
+  - $if: ' (tasks_for == "github-pull-request" || tasks_for == "github-push") && event.head.branch != "master" '
+    then:
+      provisionerId: aprovisioner
+      workerType: worker
+      payload:
+        image: "ubuntu:latest"
+        command:
+          - test
+      metadata:
+        name: "PR Task"
+        description: "description"
+        owner: "test@test.com"
+        source: "http://mrrrgn.com"
