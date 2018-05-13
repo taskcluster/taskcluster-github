@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": ".taskcluster.yml format",
+    "description": "Description of a taskclusterrc.yml file, which may be used to generate a taskgraph\nand tasks.\n",
+    "type": "object",
+    "properties": {
+        
+        "version": {
+            "description": ".taskcluster.yml version",
+            "enum": [
+                1
+            ],
+            "type": "integer"
+        },
+        
+        "policy": {
+            "pullRequests": {
+                "description": "Policy for creating tasks for pull requests.  The effective policy is found in this property\nin the `.taskcluster.yml` file in the repository's default branch.  See the documentation for\ndetailed definition of the options.\n",
+                "type": "string",
+                "enum": [
+                    "public",
+                    "collaborators"
+                ]
+            }
+        },
+        
+        "tasks": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Task Definition",
+                "description": "Definition of a task that can be scheduled\n",
+                "type": "object",
+                "properties": {
+                    "created": {
+                        "title": "Created",
+                        "description": "Creation time of task",
+                        "type": "string",
+                        "default": "{$eval: 'now'}"
+                    },
+                    "deadline": {
+                        "title": "Deadline",
+                        "description": "Deadline of the task, `pending` and `running` runs are resolved as **failed** if not resolved by other means before the deadline",
+                        "type": "string",
+                        "default": "{$fromNow: '1 day'}"
+                    }
+                },
+                "additionalProperties": true
+            }
+        }
+    },
+    
+    "additionalProperties": false,
+    
+    "required": [
+        "version"
+    ],
+    
+    "id": "http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#"
+}
