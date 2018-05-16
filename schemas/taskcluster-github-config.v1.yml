@@ -1,16 +1,14 @@
-$schema:            http://json-schema.org/draft-06/schema#
+$schema:            http://json-schema.org/draft-07/schema#
 title:              ".taskcluster.yml format"
 description: |
  Description of a taskclusterrc.yml file v1, which may be used to generate a taskgraph
  and tasks.
 type:               object
-
 properties:
   version:
     description:    ".taskcluster.yml version"
     enum:           [1]
     type:           integer
-  
   policy:
     pullRequests:
       description: |
@@ -21,7 +19,6 @@ properties:
       enum:
         - public
         - collaborators
-  
   tasks:
     type:           array
     default:        []
