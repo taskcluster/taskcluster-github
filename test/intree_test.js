@@ -302,7 +302,7 @@ suite('intree config, v1', () => {
   let buildConfigTest = function(testName, configPath, params, expected, count=-1, shouldError=false) {
     test(testName, async () => {
       params.config = fs.readFileSync(configPath);
-      params.schema = fs.readFileSync('test/data/schemas/v1.json');
+      params.schema = 'http://schemas.taskcluster.net/queue/v1/create-task-request.json#';
       params.validator = helper.validator;
       let config;
       try {
