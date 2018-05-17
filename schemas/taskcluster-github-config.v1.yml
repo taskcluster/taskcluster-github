@@ -23,13 +23,10 @@ properties:
     type:           array
     default:        []
     items:
-        title:              "Task Definition"
+        title:              "Task definition template"
         description: |
           Definition of a task that can be scheduled
         type:               object
-        properties:
-          created:          {$eval: created}
-          deadline:         {$eval: deadline}
         additionalProperties: true
 additionalProperties: false
 required:
