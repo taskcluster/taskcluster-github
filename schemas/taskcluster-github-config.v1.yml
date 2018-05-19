@@ -1,12 +1,12 @@
 $schema:            http://json-schema.org/draft-06/schema#
 title:              ".taskcluster.yml format"
 description: |
- Description of a taskclusterrc.yml file v1, which may be used to generate a taskgraph
+ Description of a taskcluster.yml file v1, which may be used to generate a taskgraph
  and tasks.
 type:               object
 properties:
   version:
-    description:    ".taskcluster.yml version"
+    description:    "Version of the format of this file; must be 1"
     enum:           [1]
     type:           integer
   policy:
@@ -25,7 +25,7 @@ properties:
     items:
         title:              "Task definition template"
         description: |
-          Definition of a task that can be scheduled
+          Definition of a task that can be scheduled. Rendered with JSON-e
         type:               object
         additionalProperties: true
 additionalProperties: false
