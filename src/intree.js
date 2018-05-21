@@ -82,14 +82,14 @@ function completeInTreeConfig(config, payload) {
  *  params {
  *    config:             '...', A yaml string
  *    payload:            {},    GitHub WebHook message payload
- *    validator:          {}     A taskcluster.base validator instance
  *    schema:             url,   Url to the taskcluster config schema
  *  }
  **/
-module.exports.setup = function(cfg) {
-  return function({config, payload, validator, schema}) {
+module.exports.setup = async function({cfg, schemaset}) {
+  const validate = await schemaset.validator(cfg.taskcluster.rootUrl);
+  return function({config, payload, schema}) {
     config = yaml.safeLoad(config);
-    let errors = validator(config, schema);
+    let errors = validate(config, schema);
     if (errors) {
       throw new Error(errors);
     }

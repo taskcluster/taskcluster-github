@@ -1,6 +1,10 @@
-suite('webhook', () => {
-  let helper = require('./helper');
-  let assert = require('assert');
+const helper = require('./helper');
+const assert = require('assert');
+
+helper.secrets.mockSuite('webhook', ['taskcluster'], function(mock, skipping) {
+  helper.withEntities(mock, skipping);
+  helper.withFakeGithub(mock, skipping);
+  helper.withServer(mock, skipping);
 
   let github = null;
 

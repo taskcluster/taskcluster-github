@@ -1,5 +1,6 @@
 let Debug = require('debug');
 let taskcluster = require('taskcluster-client');
+let libUrls = require('taskcluster-lib-urls');
 let slugid = require('slugid');
 let yaml = require('js-yaml');
 let assert = require('assert');
@@ -15,24 +16,15 @@ let debug = Debug(debugPrefix);
 
 /**
  * Create handlers
- *
- * options:
- * {
- *   credentials:        // Pulse credentials
- *   queueName:          // Queue name (optional)
- *   reference:          // A taskcluster exchange reference for this service
- *   monitor:            // base.monitor({...})
- *   jobQueueName:       // An optional queue name for the jobs handler
- *   statusQueueName:    // An optional queue name for the status handler
- *   context:            // Things we want to make available inside handlers
- * }
  */
 class Handlers {
-  constructor({credentials, monitor, reference, jobQueueName, statusQueueName, intree, context}) {
+  constructor({rootUrl, credentials, monitor, reference, jobQueueName, statusQueueName, intree, context}) {
     debug('Constructing handlers...');
     assert(monitor, 'monitor is required for statistics');
-    assert(monitor, 'reference must be provided');
+    assert(reference, 'reference must be provided');
+    assert(rootUrl, 'rootUrl must be provided');
     assert(intree, 'intree configuration builder must be provided');
+    this.rootUrl = rootUrl;
     this.credentials = credentials;
     this.monitor = monitor;
     this.reference = reference;
@@ -67,7 +59,7 @@ class Handlers {
 
     // Listen for new jobs created via the api webhook endpoint
     let GithubEvents = taskcluster.createClient(this.reference);
-    let githubEvents = new GithubEvents();
+    let githubEvents = new GithubEvents({rootUrl: this.rootUrl});
     await this.jobListener.bind(githubEvents.pullRequest());
     await this.jobListener.bind(githubEvents.push());
     await this.jobListener.bind(githubEvents.release());
@@ -76,7 +68,7 @@ class Handlers {
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    let queueEvents = new taskcluster.QueueEvents();
+    let queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
     let schedulerId = this.context.cfg.taskcluster.schedulerId;
     await this.statusListener.bind(queueEvents.taskFailed({schedulerId}));
     await this.statusListener.bind(queueEvents.taskException({schedulerId}));
@@ -116,7 +108,7 @@ class Handlers {
   // Create a collection of tasks, centralized here to enable testing without creating tasks.
   async createTasks({scopes, tasks}) {
     let queue = new taskcluster.Queue({
-      baseUrl: this.context.cfg.taskcluster.queueBaseUrl,
+      rootUrl: this.context.cfg.taskcluster.rootUrl,
       credentials: this.context.cfg.taskcluster.credentials,
       authorizedScopes: scopes,
     });
@@ -182,7 +174,7 @@ async function statusHandler(message) {
 
   if (message.exchange.endsWith('task-group-resolved')) {
     let queue = new taskcluster.Queue({
-      baseUrl: this.context.cfg.taskcluster.queueBaseUrl,
+      rootUrl: this.context.cfg.taskcluster.rootUrl,
     });
     let params = {};
     do {
@@ -325,7 +317,7 @@ async function jobHandler(message) {
       config: repoconf,
       payload: message.payload,
       validator: context.validator,
-      schema: 'http://schemas.taskcluster.net/github/v1/taskcluster-github-config.json#',
+      schema: libUrls.schema(this.rootUrl, 'github', 'v1/taskcluster-github-config.yml'),
     });
     if (graphConfig.tasks.length === 0) {
       debug(`intree config for ${organization}/${repository} compiled with zero tasks. Skipping.`);
