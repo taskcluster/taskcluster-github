@@ -101,11 +101,11 @@ let load = loader({
 
   Builds: {
     requires: ['cfg', 'monitor'],
-    setup: async ({cfg, monitor}) => data.Build.setup({
-      tableName: cfg.app.buildTableName,
+    setup: async ({cfg, monitor}) => data.Builds.setup({
+      tableName: cfg.app.buildsTableName,
       credentials: sasCredentials({
         accountId: cfg.azure.account,
-        tableName: cfg.app.buildTableName,
+        tableName: cfg.app.buildsTableName,
         rootUrl: cfg.taskcluster.rootUrl,
         credentials: cfg.taskcluster.credentials,
       }),

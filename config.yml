@@ -3,7 +3,7 @@ defaults:
   app:
     jobQueue: null
     statusQueue: null
-    buildTableName: 'TaskclusterGithubBuilds'
+    buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     publishMetaData: !env:bool PUBLISH_METADATA
     statusContext: 'Taskcluster'
@@ -74,7 +74,7 @@ staging:
   app:
     jobQueue: 'jobs'
     statusQueue: 'statuses'
-    buildTableName: 'TaskclusterGithubBuildsStaging'
+    buildsTableName: 'TaskclusterGithubBuildsStaging'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwnersStaging'
     name: 'tc-github-staging'
     statusContext: 'Taskcluster-Staging'

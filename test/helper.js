@@ -91,7 +91,7 @@ exports.withEntities = (mock, skipping) => {
 
     if (mock) {
       const cfg = await exports.load('cfg');
-      exports.load.inject('Builds', data.Build.setup({
+      exports.load.inject('Builds', data.Builds.setup({
         tableName: 'Builds',
         credentials: 'inMemory',
       }));
