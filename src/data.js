@@ -1,6 +1,4 @@
-let Entity = require('azure-entities');
-
-module.exports = {};
+const Entity = require('azure-entities');
 
 /**
  * Entity for tracking which task-groups are associated

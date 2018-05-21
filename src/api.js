@@ -1,11 +1,11 @@
-let Debug = require('debug');
-let crypto = require('crypto');
-let APIBuilder = require('taskcluster-lib-api');
-let _ = require('lodash');
-let Entity = require('azure-entities');
+const Debug = require('debug');
+const crypto = require('crypto');
+const APIBuilder = require('taskcluster-lib-api');
+const _ = require('lodash');
+const Entity = require('azure-entities');
 
-let debugPrefix = 'taskcluster-github:api';
-let debug = Debug(debugPrefix);
+const debugPrefix = 'taskcluster-github:api';
+const debug = Debug(debugPrefix);
 
 // Strips/replaces undesirable characters which GitHub allows in
 // repository/organization names (notably .)

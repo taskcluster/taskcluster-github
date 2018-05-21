@@ -1,9 +1,9 @@
-let debug = require('debug')('taskcluster-github:intree');
-let yaml = require('js-yaml');
-let slugid = require('slugid');
-let tc = require('taskcluster-client');
-let jparam = require('json-parameterization');
-let _ = require('lodash');
+const debug = require('debug')('taskcluster-github:intree');
+const yaml = require('js-yaml');
+const slugid = require('slugid');
+const tc = require('taskcluster-client');
+const jparam = require('json-parameterization');
+const _ = require('lodash');
 
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;

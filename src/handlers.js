@@ -1,18 +1,15 @@
-let Debug = require('debug');
-let taskcluster = require('taskcluster-client');
-let libUrls = require('taskcluster-lib-urls');
-let slugid = require('slugid');
-let yaml = require('js-yaml');
-let assert = require('assert');
-let EventEmitter = require('events');
-let _ = require('lodash');
-let Promise = require('bluebird');
-let prAllowed = require('./pr-allowed');
+const Debug = require('debug');
+const taskcluster = require('taskcluster-client');
+const libUrls = require('taskcluster-lib-urls');
+const yaml = require('js-yaml');
+const assert = require('assert');
+const _ = require('lodash');
+const prAllowed = require('./pr-allowed');
 
-let INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
+const INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
 
-let debugPrefix = 'taskcluster-github:handlers';
-let debug = Debug(debugPrefix);
+const debugPrefix = 'taskcluster-github:handlers';
+const debug = Debug(debugPrefix);
 
 /**
  * Create handlers
