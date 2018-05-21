@@ -8,7 +8,7 @@ suite('allowPullRequests', function() {
 
   let github = null;
 
-  setup(async () => {
+  setup(async function() {
     github = await helper.load('github');
   });
 

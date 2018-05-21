@@ -8,7 +8,7 @@ helper.secrets.mockSuite('webhook', ['taskcluster'], function(mock, skipping) {
 
   let github = null;
 
-  setup(async () => {
+  setup(async function() {
     github = await helper.load('github');
     github.inst(5808).setUser({id: 14795478, email: 'someuser@github.com'});
     github.inst(5808).setUser({id: 18102552, email: 'anotheruser@github.com'});
@@ -16,7 +16,7 @@ helper.secrets.mockSuite('webhook', ['taskcluster'], function(mock, skipping) {
 
   // Check the status code returned from a request containing some test data
   function statusTest(testName, jsonFile, statusCode) {
-    test(testName, async () => {
+    test(testName, async function() {
       let response = await helper.jsonHttpRequest('./test/data/webhooks/' + jsonFile);
       assert.equal(response.statusCode, statusCode);
       response.connection.destroy();

@@ -4,7 +4,7 @@ const _ = require('lodash');
 const helper = require('./helper');
 const libUrls = require('taskcluster-lib-urls');
 
-suite('intree config', () => {
+suite('intree config', function() {
   let intree;
 
   suiteSetup(async function() {
@@ -59,7 +59,7 @@ suite('intree config', () => {
    * shouldError: if you want intree to throw an exception, set this to true
    **/
   let buildConfigTest = function(testName, configPath, params, expected, count=-1, shouldError=false) {
-    test(testName, async () => {
+    test(testName, async function() {
       params.config = fs.readFileSync(configPath);
       params.schema = libUrls.schema(libUrls.testRootUrl(), 'github', 'v1/taskcluster-github-config.yml');
       let config;

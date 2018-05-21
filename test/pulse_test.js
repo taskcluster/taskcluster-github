@@ -12,7 +12,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
   let github = null;
   let publisher = null;
 
-  setup(async () => {
+  setup(async function() {
     await helper.load('cfg');
     helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
 
@@ -35,7 +35,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
    *  jsonFile:     'data file'
    **/
   function pulseTest(params) {
-    test(params.testName, async () => {
+    test(params.testName, async function() {
       let published = [];
       let fakePublish = event => {
         published.push(event);

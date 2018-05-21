@@ -16,7 +16,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
 
   let github = null;
   let handlers = null;
-  setup(async () => {
+  setup(async function() {
     helper.load.save();
 
     helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
@@ -35,7 +35,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
     });
   });
 
-  teardown(async () => {
+  teardown(async function() {
     await handlers.terminate();
     helper.load.restore();
   });
