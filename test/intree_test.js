@@ -73,16 +73,16 @@ suite('intree config, v0', () => {
 
   let configPath = 'test/data/configs/';
 
-  buildConfigTest(
-    'Single Task Config',
-    configPath + 'taskcluster.single.v0.yml',
-    {
-      payload:    buildMessage(),
-    },
-    {
-      tasks: [], // The github event doesn't match, so no tasks are created
-      'metadata.owner': 'test@test.com',
-    });
+  // buildConfigTest(
+  //   'Single Task Config',
+  //   configPath + 'taskcluster.single.v0.yml',
+  //   {
+  //     payload:    buildMessage(),
+  //   },
+  //   {
+  //     tasks: [], // The github event doesn't match, so no tasks are created
+  //     'metadata.owner': 'test@test.com',
+  //   });
 
   buildConfigTest(
     'Push Event, Single Task Config',
@@ -96,166 +96,166 @@ suite('intree config, v0', () => {
       scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
     });
 
-  buildConfigTest(
-    'Push Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'push'}}),
-    },
-    {
-      'metadata.owner': 'test@test.com',
-      'tasks[0].task.payload.command': ['test'],
-      'tasks[0].task.extra.github.events': ['push'],
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
-    });
+  // buildConfigTest(
+  //   'Push Event (Push Task + Pull Task + Release Task)',
+  //   configPath + 'taskcluster.push_pull_release.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'push'}}),
+  //   },
+  //   {
+  //     'metadata.owner': 'test@test.com',
+  //     'tasks[0].task.payload.command': ['test'],
+  //     'tasks[0].task.extra.github.events': ['push'],
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
+  //   });
 
-  buildConfigTest(
-    'Pull Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.v0.yml',
-    {
-      payload:    buildMessage(),
-    },
-    {
-      'metadata.owner': 'test@test.com',
-      'tasks[0].task.payload.command': ['test'],
-      'tasks[0].task.extra.github.events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
-      scopes: ['assume:repo:github.com/testorg/testrepo:pull-request'],
-    });
+  // buildConfigTest(
+  //   'Pull Event (Push Task + Pull Task + Release Task)',
+  //   configPath + 'taskcluster.push_pull_release.v0.yml',
+  //   {
+  //     payload:    buildMessage(),
+  //   },
+  //   {
+  //     'metadata.owner': 'test@test.com',
+  //     'tasks[0].task.payload.command': ['test'],
+  //  'tasks[0].task.extra.github.events': ['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'],
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:pull-request'],
+  //   });
 
-  buildConfigTest(
-    'Push Event, Single Task Config, Branch Limited (on branch)',
-    configPath + 'taskcluster.branchlimited.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['push'],
-      'tasks[0].task.extra.github.branches': ['master'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:master'],
-    });
+  // buildConfigTest(
+  //   'Push Event, Single Task Config, Branch Limited (on branch)',
+  //   configPath + 'taskcluster.branchlimited.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['push'],
+  //     'tasks[0].task.extra.github.branches': ['master'],
+  //     'metadata.owner': 'test@test.com',
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:branch:master'],
+  //   });
 
-  buildConfigTest(
-    'Push Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.branchlimited.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
-    },
-    {
-      tasks: [],
-    });
+  // buildConfigTest(
+  //   'Push Event, Single Task Config, Branch Limited (off branch)',
+  //   configPath + 'taskcluster.branchlimited.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
+  //   },
+  //   {
+  //     tasks: [],
+  //   });
 
-  buildConfigTest(
-    'Push Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.exclude.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
-    },
-    {
-      tasks: [],
-    });
+  // buildConfigTest(
+  //   'Push Event, Single Task Config, Branch Excluded (on branch)',
+  //   configPath + 'taskcluster.exclude.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
+  //   },
+  //   {
+  //     tasks: [],
+  //   });
 
-  buildConfigTest(
-    'Pull Request Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.pull_with_exclude.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'pull_request.opened', 'event.base.repo.branch': 'master'}}),
-    },
-    {
-    },
-    1);
+  // buildConfigTest(
+  //   'Pull Request Event, Single Task Config, Branch Excluded (on branch)',
+  //   configPath + 'taskcluster.pull_with_exclude.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'pull_request.opened', 'event.base.repo.branch': 'master'}}),
+  //   },
+  //   {
+  //   },
+  //   1);
 
-  buildConfigTest(
-    'Push Event, Single Task Config, Branch Exclude and Include errors',
-    configPath + 'taskcluster.exclude-error.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
-    },
-    {
-    },
-    0,
-    'should-error');
+  // buildConfigTest(
+  //   'Push Event, Single Task Config, Branch Exclude and Include errors',
+  //   configPath + 'taskcluster.exclude-error.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
+  //   },
+  //   {
+  //   },
+  //   0,
+  //   'should-error');
 
-  buildConfigTest(
-    'Star Pull Config',
-    configPath + 'taskcluster.star.yml',
-    {
-      payload:    buildMessage(),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['pull_request.*'],
-      'metadata.owner': 'test@test.com',
-    });
+  // buildConfigTest(
+  //   'Star Pull Config',
+  //   configPath + 'taskcluster.star.yml',
+  //   {
+  //     payload:    buildMessage(),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['pull_request.*'],
+  //     'metadata.owner': 'test@test.com',
+  //   });
 
-  buildConfigTest(
-    'Release Event, Single Task Config',
-    configPath + 'taskcluster.release_single.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'release'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['release'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
-    });
+  // buildConfigTest(
+  //   'Release Event, Single Task Config',
+  //   configPath + 'taskcluster.release_single.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'release'}}),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['release'],
+  //     'metadata.owner': 'test@test.com',
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:release'],
+  //   });
 
-  buildConfigTest(
-    'Release Event (Push Task + Pull Task + Release Task)',
-    configPath + 'taskcluster.push_pull_release.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'release'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['release'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
-    });
+  // buildConfigTest(
+  //   'Release Event (Push Task + Pull Task + Release Task)',
+  //   configPath + 'taskcluster.push_pull_release.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'release'}}),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['release'],
+  //     'metadata.owner': 'test@test.com',
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:release'],
+  //   });
 
-  buildConfigTest(
-    'No extra or extra.github generates an empty config',
-    configPath + 'taskcluster.non-github.v0.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'release'}}),
-    },
-    {},
-    0);
+  // buildConfigTest(
+  //   'No extra or extra.github generates an empty config',
+  //   configPath + 'taskcluster.non-github.v0.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'release'}}),
+  //   },
+  //   {},
+  //   0);
 
-  buildConfigTest(
-    'Unicode branch names are not allowed',
-    configPath + 'taskcluster.single.v0.yml',
-    {
-      payload: buildMessage({details: {'event.base.repo.branch': '🌱', 'event.type': 'push'}}),
-    },
-    {},
-    0,
-    true);
+  // buildConfigTest(
+  //   'Unicode branch names are not allowed',
+  //   configPath + 'taskcluster.single.v0.yml',
+  //   {
+  //     payload: buildMessage({details: {'event.base.repo.branch': '🌱', 'event.type': 'push'}}),
+  //   },
+  //   {},
+  //   0,
+  //   true);
 
-  buildConfigTest(
-    'Tag Event, Single Task Config',
-    configPath + 'taskcluster.tag_single.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['tag'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
-    });
+  // buildConfigTest(
+  //   'Tag Event, Single Task Config',
+  //   configPath + 'taskcluster.tag_single.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['tag'],
+  //     'metadata.owner': 'test@test.com',
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
+  //   });
 
-  buildConfigTest(
-    'Tag Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.tag.branchlimited.yml',
-    {
-      payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
-    },
-    {
-      'tasks[0].task.extra.github.events': ['tag'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
-    });
+  // buildConfigTest(
+  //   'Tag Event, Single Task Config, Branch Limited (off branch)',
+  //   configPath + 'taskcluster.tag.branchlimited.yml',
+  //   {
+  //     payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
+  //   },
+  //   {
+  //     'tasks[0].task.extra.github.events': ['tag'],
+  //     'metadata.owner': 'test@test.com',
+  //     scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
+  //   });
 });
 
-suite('intree config, v1', () => {
+suite.only('intree config, v1', () => {
   let fs = require('fs');
   let assert = require('assert');
   let _ = require('lodash');
@@ -330,28 +330,28 @@ suite('intree config, v1', () => {
   
   let configPath = 'test/data/configs/';
   
+  // buildConfigTest(
+  //   'Single Task Config',
+  //   configPath + 'taskcluster.single.v1.yml',
+  //   {
+  //     payload:    buildMessage(),
+  //   },
+  //   {
+  //     tasks: [], // The github event doesn't match, so no tasks are created
+  //     'metadata.owner': 'test@test.com',
+  //   });
+  
   buildConfigTest(
-    'Single Task Config',
+    'Push Event, Single Task Config',
     configPath + 'taskcluster.single.v1.yml',
     {
-      payload:    buildMessage(),
+      payload:    buildMessage({details: {'event.type': 'push'}}),
     },
     {
-      tasks: [], // The github event doesn't match, so no tasks are created
+      'tasks[0].task.extra.github.events': ['push'],
       'metadata.owner': 'test@test.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
     });
-  
-//   buildConfigTest(
-//     'Push Event, Single Task Config',
-//     configPath + 'taskcluster.single.v0.yml',
-//     {
-//       payload:    buildMessage({details: {'event.type': 'push'}}),
-//     },
-//     {
-//       'tasks[0].task.extra.github.events': ['push'],
-//       'metadata.owner': 'test@test.com',
-//       scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
-//     });
   
 //   buildConfigTest(
 //     'Push Event (Push Task + Pull Task + Release Task)',

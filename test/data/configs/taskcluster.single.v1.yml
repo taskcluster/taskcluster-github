@@ -4,6 +4,8 @@ tasks:
     then:
       provisionerId: aprovisioner
       workerType: worker
+      created: {$eval: 'now'}
+      deadline: {$fromNow: '1 hour'}
       payload:
         image: "ubuntu:latest"
         command:
@@ -11,5 +13,5 @@ tasks:
       metadata:
         name: "name"
         description: "description"
-        owner: "test@test.com"
-        source: "http://mrrrgn.com"
+        owner: ${event.head.user.email}
+        source: ${event.head.repo.url}

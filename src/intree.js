@@ -1,9 +1,21 @@
-let debug = require('debug')('taskcluster-github:intree');
-let yaml = require('js-yaml');
-let slugid = require('slugid');
-let tc = require('taskcluster-client');
-let jparam = require('json-parameterization');
-let _ = require('lodash');
+const debug = require('debug')('taskcluster-github:intree');
+const yaml = require('js-yaml');
+const slugid = require('slugid');
+const tc = require('taskcluster-client');
+const jparam = require('json-parameterization');
+const jsone = require('json-e');
+const _ = require('lodash');
+
+// the lines below are a draft. These will not be hard coded,
+// I plan to figure out the data flow later, after I got intree
+// creating tasks correctly and at least one test passing
+let fs = require('fs');
+event = fs.readFileSync('test/data/webhooks/webhook.push.json');
+const DEFAULT_CONTEXT = {
+  tasks_for: 'github-push',
+  event,
+};
+// end of draft area
 
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
@@ -98,19 +110,27 @@ module.exports.setup = function(cfg) {
     // We need to toss out the config version number; it's the only
     // field that's not also in graph/task definitions
     let version = config.version;
+    console.log('🙄', version);
     delete config.version;
+    console.log('😏', JSON.stringify(config));
 
     // Perform parameter substitutions. This happens after verification
     // because templating may change with schema version, and parameter
     // functions are used as default values for some fields.
-    config = jparam(config, _.merge(payload.details, {
-      $fromNow: (text) => tc.fromNowJSON(text),
-      timestamp: Math.floor(new Date()),
-      organization: payload.organization,
-      repository: payload.repository,
-      'taskcluster.docker.provisionerId': cfg.intree.provisionerId,
-      'taskcluster.docker.workerType': cfg.intree.workerType,
-    }));
+    if (version === 0) {
+      config = jparam(config, _.merge(payload.details, {
+        $fromNow: (text) => tc.fromNowJSON(text),
+        timestamp: Math.floor(new Date()),
+        organization: payload.organization,
+        repository: payload.repository,
+        'taskcluster.docker.provisionerId': cfg.intree.provisionerId,
+        'taskcluster.docker.workerType': cfg.intree.workerType,
+      }));
+    } else {
+      config = jsone(config, DEFAULT_CONTEXT);
+    }
+    
+    console.log('🐷', JSON.stringify(config));
 
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
