@@ -1,0 +1,26 @@
+version: 1
+tasks:
+  - provisionerId: aprovisioner
+    workerType: worker
+    payload:
+      image: "ubuntu:latest"
+      command:
+        - test
+    metadata:
+      name: "name"
+      description: "description"
+      owner: "test@test.com"
+      source: "http://mrrrgn.com"
+  - $if: ' tasks_for == "mercurial-push" '
+    then:
+      provisionerId: aprovisioner
+      workerType: worker
+      payload:
+        image: "ubuntu:latest"
+        command:
+          - test
+      metadata:
+        name: "name"
+        description: "description"
+        owner: "test@test.com"
+        source: "http://mrrrgn.com"

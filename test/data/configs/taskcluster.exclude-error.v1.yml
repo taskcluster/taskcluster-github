@@ -1,0 +1,15 @@
+version: 1
+tasks:
+  - $if: ' tasks_for == "github-push" && event.head.branch == "master" && event.head.branch != "master" && event.head.branch != "foobar"'
+    then:
+      provisionerId: aprovisioner
+      workerType: worker
+      payload:
+        image: "ubuntu:latest"
+        command:
+          - test
+      metadata:
+        name: "name"
+        description: "description"
+        owner: "test@test.com"
+        source: "http://mrrrgn.com"
