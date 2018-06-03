@@ -9,12 +9,53 @@ const _ = require('lodash');
 // the lines below are a draft. These will not be hard coded,
 // I plan to figure out the data flow later, after I got intree
 // creating tasks correctly and at least one test passing
-let fs = require('fs');
-event = fs.readFileSync('test/data/webhooks/webhook.push.json');
+event = {
+  type: 'Event',
+  public: true,
+  payload: {
+    ref: 'refs/heads/master',
+    head: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
+    before:'762941318ee16e59dabbacb1b4049eec22f0d303',
+    size: 1,
+    distinct_size: 1,
+    commits: [{
+      sha: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
+      message: 'New line at end of file.',
+      author: {
+        name: 'octocat',
+        email: 'octocat@github.com',
+      },
+      url: 'https://github.com/octocat/Hello-World/commit/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
+      distinct: true,
+    }],
+  },
+  repo: {
+    id: 3,
+    name: 'octocat/Hello-World',
+    url: 'https://api.github.com/repos/octocat/Hello-World',
+  },
+  actor: {
+    id: 1,
+    login: 'octocat',
+    gravatar_id: '',
+    avatar_url: 'https://github.com/images/error/octocat_happy.gif',
+    url: 'https://api.github.com/users/octocat',
+  },
+  org: {
+    id: 1,
+    login: 'github',
+    gravatar_id: '',
+    url: 'https://api.github.com/orgs/github',
+    avatar_url: 'https://github.com/images/error/octocat_happy.gif',
+  },
+  created_at: '2011-09-06T17:26:27Z',
+  id: '12345',
+};
 const DEFAULT_CONTEXT = {
   tasks_for: 'github-push',
   event,
 };
+console.log('👒', DEFAULT_CONTEXT);
 // end of draft area
 
 // Assert that only scope-valid characters are in branches

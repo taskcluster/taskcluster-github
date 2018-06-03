@@ -13,5 +13,5 @@ tasks:
       metadata:
         name: "name"
         description: "description"
-        owner: ${event.head.user.email}
-        source: ${event.head.repo.url}
+        owner: ${event.actor.login}
+        source: ${event.repo.url}
