@@ -88,7 +88,9 @@ suite('intree config, v0', () => {
     'Push Event, Single Task Config',
     configPath + 'taskcluster.single.v0.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'push'}}),
+      payload:    buildMessage({
+        details: {'event.type': 'push'},
+      }),
     },
     {
       'tasks[0].task.extra.github.events': ['push'],
@@ -345,7 +347,10 @@ suite.only('intree config, v1', () => {
     'Push Event, Single Task Config',
     configPath + 'taskcluster.single.v1.yml',
     {
-      payload:    buildMessage({details: {'event.type': 'push'}}),
+      payload:    buildMessage({
+        details: {'event.type': 'push'},
+        body: require('./data/events/push.event.json'),
+      }),
     },
     {
       'tasks[0].task.extra.github.events': ['push'],

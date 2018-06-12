@@ -6,55 +6,7 @@ const jparam = require('json-parameterization');
 const jsone = require('json-e');
 const _ = require('lodash');
 
-// the lines below are a draft. These will not be hard coded,
-// I plan to figure out the data flow later, after I got intree
-// creating tasks correctly and at least one test passing
-event = {
-  type: 'Event',
-  public: true,
-  payload: {
-    ref: 'refs/heads/master',
-    head: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
-    before:'762941318ee16e59dabbacb1b4049eec22f0d303',
-    size: 1,
-    distinct_size: 1,
-    commits: [{
-      sha: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
-      message: 'New line at end of file.',
-      author: {
-        name: 'octocat',
-        email: 'octocat@github.com',
-      },
-      url: 'https://github.com/octocat/Hello-World/commit/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
-      distinct: true,
-    }],
-  },
-  repo: {
-    id: 3,
-    name: 'octocat/Hello-World',
-    url: 'https://api.github.com/repos/octocat/Hello-World',
-  },
-  actor: {
-    id: 1,
-    login: 'octocat',
-    gravatar_id: '',
-    avatar_url: 'https://github.com/images/error/octocat_happy.gif',
-    url: 'https://api.github.com/users/octocat',
-  },
-  org: {
-    id: 1,
-    login: 'github',
-    gravatar_id: '',
-    url: 'https://api.github.com/orgs/github',
-    avatar_url: 'https://github.com/images/error/octocat_happy.gif',
-  },
-  created_at: '2011-09-06T17:26:27Z',
-  id: '12345',
-};
-const DEFAULT_CONTEXT = {
-  tasks_for: 'github-push',
-  event,
-};
+const DEFAULT_CONTEXT = require('../test/data/context');
 console.log('👒', DEFAULT_CONTEXT);
 // end of draft area
 
@@ -158,7 +110,7 @@ module.exports.setup = function(cfg) {
     // Perform parameter substitutions. This happens after verification
     // because templating may change with schema version, and parameter
     // functions are used as default values for some fields.
-    if (version === 0) {
+    if (version === 0) { // TODO: version 0 stuff to make a separate module
       config = jparam(config, _.merge(payload.details, {
         $fromNow: (text) => tc.fromNowJSON(text),
         timestamp: Math.floor(new Date()),
@@ -168,6 +120,7 @@ module.exports.setup = function(cfg) {
         'taskcluster.docker.workerType': cfg.intree.workerType,
       }));
     } else {
+      console.log("CONTEXT:", DEFAULT_CONTEXT);
       config = jsone(config, DEFAULT_CONTEXT);
     }
     

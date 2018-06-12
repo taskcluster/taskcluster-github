@@ -239,6 +239,7 @@ api.declare({
     } else if (eventType == 'push') {
       msg.organization = sanitizeGitHubField(body.repository.owner.name),
       msg.details = getPushDetails(body);
+      msg.body = body;
       msg.installationId = body.installation.id;
       publisherKey = 'push';
     } else if (eventType == 'ping') {
