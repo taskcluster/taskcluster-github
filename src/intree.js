@@ -6,10 +6,6 @@ const jparam = require('json-parameterization');
 const jsone = require('json-e');
 const _ = require('lodash');
 
-const DEFAULT_CONTEXT = require('../test/data/context');
-console.log('👒', DEFAULT_CONTEXT);
-// end of draft area
-
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
 
@@ -120,69 +116,83 @@ module.exports.setup = function(cfg) {
         'taskcluster.docker.workerType': cfg.intree.workerType,
       }));
     } else {
-      console.log("CONTEXT:", DEFAULT_CONTEXT);
-      config = jsone(config, DEFAULT_CONTEXT);
+      config = jsone(config, {
+        tasks_for: payload.tasks_for,
+        event: payload.body,
+      });
     }
-    
-    console.log('🐷', JSON.stringify(config));
 
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
     // we're at it.
     try {
-      config.tasks = config.tasks.map((task) => {
-        return {
-          taskId: slugid.nice(),
-          task,
-        };
-      }).filter((task) => {
+      if (version === 0) {
+        config.tasks = config.tasks.map((task) => {
+          return {
+            taskId: slugid.nice(),
+            task,
+          };
+        }).filter((task) => {
         // Filter out tasks that aren't associated with github at all, or with
         // the current event being handled
-        if (!task.task.extra || !task.task.extra.github) {
-          return false;
-        }
-
-        let event = payload.details['event.type'];
-        let events = task.task.extra.github.events;
-        let branch = payload.details['event.base.repo.branch'];
-        let includeBranches = task.task.extra.github.branches;
-        let excludeBranches = task.task.extra.github.excludeBranches;
-
-        if (includeBranches && excludeBranches) {
-          throw new Error('Cannot specify both `branches` and `excludeBranches` in the same task!');
-        }
-
-        return _.some(events, ev => {
-          if (!event.startsWith(_.trimEnd(ev, '*'))) {
+          if (!task.task.extra || !task.task.extra.github) {
             return false;
           }
 
-          if (event !== 'push') {
-            return true;
+          let event = payload.details['event.type'];
+          let events = task.task.extra.github.events;
+          let branch = payload.details['event.base.repo.branch'];
+          let includeBranches = task.task.extra.github.branches;
+          let excludeBranches = task.task.extra.github.excludeBranches;
+
+          if (includeBranches && excludeBranches) {
+            throw new Error('Cannot specify both `branches` and `excludeBranches` in the same task!');
           }
 
-          if (includeBranches) {
-            return _.includes(includeBranches, branch);
-          } else if (excludeBranches) {
-            return !_.includes(excludeBranches, branch);
-          } else {
-            return true;
-          }
+          return _.some(events, ev => {
+            if (!event.startsWith(_.trimEnd(ev, '*'))) {
+              return false;
+            }
+
+            if (event !== 'push') {
+              return true;
+            }
+
+            if (includeBranches) {
+              return _.includes(includeBranches, branch);
+            } else if (excludeBranches) {
+              return !_.includes(excludeBranches, branch);
+            } else {
+              return true;
+            }
+          });
         });
-      });
+
+        if (config.tasks.length > 0) {
+          let taskGroupId = config.tasks[0].taskId;
+          config.tasks = config.tasks.map((task) => {
+            return {
+              taskId: task.taskId,
+              task: _.extend(task, {taskGroupId, schedulerId: cfg.taskcluster.schedulerId}),
+            };
+          });
+        }
+
+        return completeInTreeConfig(config, payload);
+      } else {
+        if (config.tasks.length > 0) {
+          config.tasks = config.tasks.map((task) => {
+            return {
+              taskId: 'banana',
+              task: _.extend(task, {schedulerId: cfg.taskcluster.schedulerId}),
+            };
+          });
+        }
+        return config;
+      }
 
       // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
       // task in taskcluster.
-      if (config.tasks.length > 0) {
-        let taskGroupId = config.tasks[0].taskId;
-        config.tasks = config.tasks.map((task) => {
-          return {
-            taskId: task.taskId,
-            task: _.extend(task.task, {taskGroupId, schedulerId: cfg.taskcluster.schedulerId}),
-          };
-        });
-      }
-      return completeInTreeConfig(config, payload);
     } catch (e) {
       debug('Error processing tasks!');
       throw e;

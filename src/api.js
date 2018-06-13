@@ -240,6 +240,7 @@ api.declare({
       msg.organization = sanitizeGitHubField(body.repository.owner.name),
       msg.details = getPushDetails(body);
       msg.body = body;
+      msg.tasks_for = `github-${eventType}`;
       msg.installationId = body.installation.id;
       publisherKey = 'push';
     } else if (eventType == 'ping') {

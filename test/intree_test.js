@@ -325,6 +325,7 @@ suite.only('intree config, v1', () => {
         assert.equal(config.tasks.length, count);
       }
       for (let key of Object.keys(expected)) {
+        console.log('🐷', JSON.stringify(config, null, 2));
         assert.deepEqual(_.get(config, key), expected[key]);
       }
     });
@@ -350,12 +351,11 @@ suite.only('intree config, v1', () => {
       payload:    buildMessage({
         details: {'event.type': 'push'},
         body: require('./data/events/push.event.json'),
+        tasks_for: 'github-push',
       }),
     },
     {
-      'tasks[0].task.extra.github.events': ['push'],
-      'metadata.owner': 'test@test.com',
-      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
+      'tasks[0].task.metadata.owner': 'noreply@github.com',
     });
   
 //   buildConfigTest(
