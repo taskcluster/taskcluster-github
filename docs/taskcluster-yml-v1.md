@@ -4,7 +4,7 @@ order: 20
 ---
 
 Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root
-of your project. This is a YAML file that speciifies the tasks to run and when.
+of your project. This is a YAML file that specifies the tasks to run and when.
 
 The format of the file is:
 
@@ -51,6 +51,28 @@ schema](https://docs.taskcluster.net/reference/platform/taskcluster-queue/docs/t
 as it will be passed nearly unchanged to `Queue.createTask`, The exception is
 that the provided task definition must contain a `taskId` field, which the
 service will remove and pass to `Queue.createTask` directly.
+
+The result looks like this:
+
+```javascript
+{
+    "tasks": [
+        {
+            "taskId": "fOF8Cqj0QPKbvczC2dnXiQ", // probably generated with as_slugid(..)
+            "provisionerId": "..",
+            "workerType": "..",
+            "payload": {
+                // ..
+            },
+            // ...
+        },
+        // ...
+    ]
+}
+```
+
+Taskcluster-Github will set the `schedulerId` of each task, as is required for
+proper status tracking of the resulting task.
 
 # Policies
 
