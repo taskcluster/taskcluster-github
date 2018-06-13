@@ -6,8 +6,7 @@
         "X-GitHub-Event": "push",
         "X-GitHub-Delivery": "9637a980-d8fb-11e6-9830-1244ca57c95f",
         "content-type": "application/json",
-        "X-Hub-Signature": "sha1=ceb38686a1f85978be5cfdcfeccdd3585c16e2bc",
-        "Content-Length": 6705
+        "X-Hub-Signature": "sha1=ceb38686a1f85978be5cfdcfeccdd3585c16e2bc"
     },
     "body": {
         "ref": "refs/heads/master",

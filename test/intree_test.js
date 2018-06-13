@@ -257,7 +257,7 @@ suite('intree config, v0', () => {
   //   });
 });
 
-suite.only('intree config, v1', () => {
+suite('intree config, v1', () => {
   let fs = require('fs');
   let assert = require('assert');
   let _ = require('lodash');
