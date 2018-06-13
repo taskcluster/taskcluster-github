@@ -1,6 +1,6 @@
 version: 1
 tasks:
-  - $if: ' tasks_for == "github-push" && event.ref == "refs/heads/master" '
+  - $if: ' tasks_for == "github-push" '
     then:
       provisionerId: aprovisioner
       workerType: worker

@@ -1,6 +1,6 @@
 version: 1
 tasks:
-  - $if: ' (tasks_for == "github-pull-request" || tasks_for == "github-push") && event.head.branch != "master" '
+  - $if: ' (tasks_for == "github-pull-request" || tasks_for == "github-push") && event.pull_request.head.ref != "master" '
     then:
       provisionerId: aprovisioner
       workerType: worker

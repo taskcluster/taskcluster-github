@@ -1,6 +1,6 @@
 version: 1
 tasks:
-  - $if: ' tasks_for == "github-push" && event.head.branch != "foobar" '
+  - $if: ' tasks_for == "github-push" && event.ref != "refs/heads/foobar" '
     then:
       provisionerId: aprovisioner
       workerType: worker

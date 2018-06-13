@@ -72,7 +72,6 @@ function getPushDetails(eventData) {
   } else {
     details['event.base.repo.branch'] = refName;
     details['event.head.repo.branch'] = refName;
-
   }
   return details;
   
