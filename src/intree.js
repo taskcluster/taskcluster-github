@@ -4,6 +4,7 @@ const slugid = require('slugid');
 const tc = require('taskcluster-client');
 const jparam = require('json-parameterization');
 const _ = require('lodash');
+const jsone = require('json-e');
 
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
@@ -103,72 +104,101 @@ module.exports.setup = async function({cfg, schemaset}) {
     // Perform parameter substitutions. This happens after verification
     // because templating may change with schema version, and parameter
     // functions are used as default values for some fields.
-    config = jparam(config, _.merge(payload.details, {
-      $fromNow: (text) => tc.fromNowJSON(text),
-      timestamp: Math.floor(new Date()),
-      organization: payload.organization,
-      repository: payload.repository,
-      'taskcluster.docker.provisionerId': cfg.intree.provisionerId,
-      'taskcluster.docker.workerType': cfg.intree.workerType,
-    }));
+    if (version === 0) { // TODO: version 0 stuff to make a separate module
+      config = jparam(config, _.merge(payload.details, {
+        $fromNow: (text) => tc.fromNowJSON(text),
+        timestamp: Math.floor(new Date()),
+        organization: payload.organization,
+        repository: payload.repository,
+        'taskcluster.docker.provisionerId': cfg.intree.provisionerId,
+        'taskcluster.docker.workerType': cfg.intree.workerType,
+      }));
+    } else {
+      if (!branchTest.test(payload.branch || '')) {
+        throw new Error('Cannot have unicode in branch names!');
+      }
+      if (!branchTest.test(payload.branch || '')) {
+        throw new Error('Cannot have unicode in branch names!');
+      }
+
+      config = jsone(config, {
+        tasks_for: payload.tasks_for,
+        event: payload.body,
+        branch: payload.branch,
+      });
+    }
 
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
     // we're at it.
     try {
-      config.tasks = config.tasks.map((task) => {
-        return {
-          taskId: slugid.nice(),
-          task,
-        };
-      }).filter((task) => {
-        // Filter out tasks that aren't associated with github at all, or with
-        // the current event being handled
-        if (!task.task.extra || !task.task.extra.github) {
-          return false;
-        }
-
-        let event = payload.details['event.type'];
-        let events = task.task.extra.github.events;
-        let branch = payload.details['event.base.repo.branch'];
-        let includeBranches = task.task.extra.github.branches;
-        let excludeBranches = task.task.extra.github.excludeBranches;
-
-        if (includeBranches && excludeBranches) {
-          throw new Error('Cannot specify both `branches` and `excludeBranches` in the same task!');
-        }
-
-        return _.some(events, ev => {
-          if (!event.startsWith(_.trimEnd(ev, '*'))) {
-            return false;
-          }
-
-          if (event !== 'push') {
-            return true;
-          }
-
-          if (includeBranches) {
-            return _.includes(includeBranches, branch);
-          } else if (excludeBranches) {
-            return !_.includes(excludeBranches, branch);
-          } else {
-            return true;
-          }
-        });
-      });
-
-      // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
-      // task in taskcluster.
-      if (config.tasks.length > 0) {
-        let taskGroupId = config.tasks[0].taskId;
+      if (version === 0) {
         config.tasks = config.tasks.map((task) => {
           return {
-            taskId: task.taskId,
-            task: _.extend(task.task, {taskGroupId, schedulerId: cfg.taskcluster.schedulerId}),
+            taskId: slugid.nice(),
+            task,
           };
+        }).filter((task) => {
+          // Filter out tasks that aren't associated with github at all, or with
+          // the current event being handled
+          if (!task.task.extra || !task.task.extra.github) {
+            return false;
+          }
+  
+          let event = payload.details['event.type'];
+          let events = task.task.extra.github.events;
+          let branch = payload.details['event.base.repo.branch'];
+          let includeBranches = task.task.extra.github.branches;
+          let excludeBranches = task.task.extra.github.excludeBranches;
+  
+          if (includeBranches && excludeBranches) {
+            throw new Error('Cannot specify both `branches` and `excludeBranches` in the same task!');
+          }
+  
+          return _.some(events, ev => { // TODO
+            if (!event.startsWith(_.trimEnd(ev, '*'))) {
+              return false;
+            }
+  
+            if (event !== 'push') {
+              return true;
+            }
+  
+            if (includeBranches) {
+              return _.includes(includeBranches, branch);
+            } else if (excludeBranches) {
+              return !_.includes(excludeBranches, branch);
+            } else {
+              return true;
+            }
+          });
         });
+  
+        // Add common taskGroupId and schedulerId. taskGroupId is always the taskId of the first
+        // task in taskcluster.
+        if (config.tasks.length > 0) {
+          let taskGroupId = config.tasks[0].taskId;
+          config.tasks = config.tasks.map((task) => {
+            return {
+              taskId: task.taskId,
+              task: _.extend(task.task, {taskGroupId, schedulerId: cfg.taskcluster.schedulerId}),
+            };
+          });
+        }
+        return completeInTreeConfig(config, payload);
+      } else {
+        
+        if (config.tasks.length > 0) {
+          config.tasks = config.tasks.map((task) => {
+            return {
+              taskId: 'banana',
+              task: _.extend(task, {schedulerId: cfg.taskcluster.schedulerId}),
+            };
+          });
+        }
+        return config;
+
       }
-      return completeInTreeConfig(config, payload);
     } catch (e) {
       debug('Error processing tasks!');
       throw e;

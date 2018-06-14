@@ -3,8 +3,9 @@ const assert = require('assert');
 const _ = require('lodash');
 const helper = require('./helper');
 const libUrls = require('taskcluster-lib-urls');
+const jsone = require('json-e');
 
-suite('intree config', function() {
+suite('intree config, v0', function() {
   let intree;
 
   suiteSetup(async function() {
@@ -179,7 +180,7 @@ suite('intree config', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Exclude and Include errors',
-    configPath + 'taskcluster.exclude-error.v0.yml',
+    configPath + 'taskcluster.exclude-error.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
     },
@@ -264,5 +265,247 @@ suite('intree config', function() {
       'tasks[0].task.extra.github.events': ['tag'],
       'metadata.owner': 'test@test.com',
       scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
+    });
+});
+
+suite('intree config, v1', () => {
+  let intree;
+  let fs = require('fs');
+  let assert = require('assert');
+  let _ = require('lodash');
+
+  suiteSetup(async function() {
+    helper.load.save();
+    await helper.load('cfg');
+    helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
+    intree = await helper.load('intree');
+  });
+
+  suiteTeardown(function() {
+    helper.load.restore();
+  });
+  
+  /**
+     * Test github data, like one would see in a pulse message
+     * after a pull request
+     **/
+  function buildMessage(params) {
+    let defaultMessage = {
+      organization: 'testorg',
+      repository:   'testrepo',
+      details: {
+        'event.pullNumber': 'eventData.number',
+        'event.type': 'pull_request.opened',
+        'event.base.user.login': 'eventData.pull_request.base.user.login',
+        'event.base.repo.name': 'eventData.pull_request.base.repo.name',
+        'event.base.repo.url': 'eventData.pull_request.base.repo.clone_url',
+        'event.base.repo.branch': 'default_branch',
+        'event.base.sha': 'eventData.pull_request.base.sha',
+        'event.base.ref': 'eventData.pull_request.base.ref',
+        'event.head.user.login': 'eventData.pull_request.head.user.login',
+        'event.head.repo.name': 'eventData.pull_request.head.repo.name',
+        'event.head.repo.url': 'eventData.pull_request.head.repo.clone_url',
+        'event.head.repo.branch': 'eventData.pull_request.head.default_branch',
+        'event.head.sha': 'eventData.pull_request.head.sha',
+        'event.head.ref': 'eventData.pull_request.head.ref',
+        'event.head.user.email': 'test@test.com',
+      },
+    };
+    return _.merge(defaultMessage, params);
+  };
+  
+  /**
+     * Make sure that data merges properly when building configs
+     * testName:    '', A label for the current test case
+     * configPath:  '', Path to a taskclusterConfig file
+     * params:      {
+     *                payload:    {}, WebHook message payload
+     *                validator:  {}, A taskcluster.base validator
+     *              }
+     * count:       number of tasks to expect
+     * expected:    {}, keys=>values expected to exist in the compiled config
+     * shouldError: if you want intree to throw an exception, set this to true
+     **/
+  let buildConfigTest = function(testName, configPath, params, expected, count=-1, shouldError=false) {
+    test(testName, async () => {
+      params.config = fs.readFileSync(configPath);
+      params.schema = libUrls.schema(libUrls.testRootUrl(), 'github', 'v1/taskcluster-github-config.v1.yml');
+      params.validator = helper.validator;
+      let config;
+      try {
+        config = intree(params);
+      } catch (e) {
+        if (shouldError) {
+          return;
+        }
+        throw e;
+      }
+      if (shouldError) {
+        throw new Error('This intree call should have failed!');
+      }
+      if (count > 0) {
+        assert.equal(config.tasks.length, count);
+      }
+      for (let key of Object.keys(expected)) {
+        assert.deepEqual(_.get(config, key), expected[key]);
+      }
+    });
+  };
+  
+  let configPath = 'test/data/configs/';
+  
+  buildConfigTest(
+    'Push Event, Single Task Config',
+    configPath + 'taskcluster.single.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'push'},
+        body: require('./data/webhooks/webhook.push.json').body,
+        tasks_for: 'github-push',
+        branch: 'master',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': '', // private email
+      'tasks[0].task.metadata.source': 'https://github.com/TaskClusterRobot/hooks-testing',
+    });
+  
+  buildConfigTest(
+    'Push Event (Push Task + Pull Task + Release Task)',
+    configPath + 'taskcluster.push_pull_release.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'push'},
+        body: require('./data/webhooks/webhook.push.json').body,
+        tasks_for: 'github-push',
+        branch: 'master',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+    });
+  
+  buildConfigTest(
+    'Pull Event (Push Task + Pull Task + Release Task)',
+    configPath + 'taskcluster.push_pull_release.v1.yml',
+    {
+      payload:    buildMessage({
+        body: require('./data/webhooks/webhook.pull_request.open.json').body,
+        tasks_for: 'github-pull-request',
+        branch: 'owlishDeveloper-patch-2',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+    });
+  
+  buildConfigTest(
+    'Push Event, Single Task Config, Branch Limited (on branch)',
+    configPath + 'taskcluster.branchlimited.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'push', 'event.base.repo.branch': 'master'},
+        body: require('./data/webhooks/webhook.push.json').body,
+        tasks_for: 'github-push',
+        branch: 'master',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+    });
+  
+  buildConfigTest(
+    'Push Event, Single Task Config, Branch Limited (off branch)',
+    configPath + 'taskcluster.branchlimited.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
+        body: require('./data/webhooks/webhook.push.json').body,
+        tasks_for: 'github-push',
+        branch: 'foobar',
+      }),
+    },
+    {
+      tasks: [],
+    });
+  
+  buildConfigTest(
+    'Push Event, Single Task Config, Branch Excluded (on branch)',
+    configPath + 'taskcluster.exclude.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
+        body: require('./data/webhooks/webhook.push.json').body,
+        tasks_for: 'github-push',
+        branch: 'foobar',
+      }),
+    },
+    {
+      tasks: [],
+    });
+  
+  buildConfigTest(
+    'Release Event, Single Task Config',
+    configPath + 'taskcluster.release_single.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'release'},
+        body: require('./data/webhooks/webhook.release.json').body,
+        tasks_for: 'github-release',
+        branch: 'master',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+    });
+  
+  buildConfigTest(
+    'Release Event (Push Task + Pull Task + Release Task)',
+    configPath + 'taskcluster.push_pull_release.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'release'},
+        body: require('./data/webhooks/webhook.release.json').body,
+        tasks_for: 'github-release',
+        branch: 'master',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+    });
+  
+  buildConfigTest(
+    'Unicode branch names are not allowed',
+    configPath + 'taskcluster.single.v1.yml',
+    {
+      payload: buildMessage({
+        details: {'event.base.repo.branch': '🌱', 'event.type': 'push'},
+        body: require('./data/webhooks/webhook.push.unicode.json').body,
+        tasks_for: 'github-push',
+        branch: '🌱',
+      }),
+    },
+    {},
+    0,
+    true);
+  
+  buildConfigTest(
+    'Tag Event, Single Task Config',
+    configPath + 'taskcluster.tag_single.v1.yml',
+    {
+      payload:    buildMessage({
+        details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'},
+        body: require('./data/webhooks/webhook.tag_push.json').body,
+        tasks_for: 'github-push',
+      }),
+    },
+    {
+      'tasks[0].task.metadata.owner': 'test@test.com',
+      'tasks[0].task.metadata.source': 'http://mrrrgn.com',
     });
 });
