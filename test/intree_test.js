@@ -1,4 +1,4 @@
-suite('intree config, v0', () => {
+suite.only('intree config, v0', () => {
   let fs = require('fs');
   let assert = require('assert');
   let _ = require('lodash');
@@ -126,7 +126,7 @@ suite('intree config, v0', () => {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Limited (on branch)',
-    configPath + 'taskcluster.branchlimited.yml',
+    configPath + 'taskcluster.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'master'}}),
     },
@@ -139,7 +139,7 @@ suite('intree config, v0', () => {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.branchlimited.yml',
+    configPath + 'taskcluster.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
     },
@@ -234,7 +234,7 @@ suite('intree config, v0', () => {
 
   buildConfigTest(
     'Tag Event, Single Task Config',
-    configPath + 'taskcluster.tag_single.yml',
+    configPath + 'taskcluster.tag_single.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
     },
@@ -246,7 +246,7 @@ suite('intree config, v0', () => {
 
   buildConfigTest(
     'Tag Event, Single Task Config, Branch Limited (off branch)',
-    configPath + 'taskcluster.tag.branchlimited.yml',
+    configPath + 'taskcluster.tag.branchlimited.v0.yml',
     {
       payload:    buildMessage({details: {'event.type': 'tag', 'event.head.tag': 'v1.0.2'}}),
     },
@@ -257,7 +257,7 @@ suite('intree config, v0', () => {
     });
 });
 
-suite.only('intree config, v1', () => {
+suite('intree config, v1', () => {
   let fs = require('fs');
   let assert = require('assert');
   let _ = require('lodash');
@@ -340,6 +340,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push'},
         body: require('./data/events/push.event.json'),
         tasks_for: 'github-push',
+        branch: 'master',
       }),
     },
     {
@@ -355,6 +356,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push'},
         body: require('./data/events/push.event.json'),
         tasks_for: 'github-push',
+        branch: 'master',
       }),
     },
     {
@@ -369,6 +371,7 @@ suite.only('intree config, v1', () => {
       payload:    buildMessage({
         body: require('./data/events/pull.open.json'),
         tasks_for: 'github-pull-request',
+        branch: 'owlishDeveloper-patch-2',
       }),
     },
     {
@@ -384,6 +387,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push', 'event.base.repo.branch': 'master'},
         body: require('./data/events/push.event.json'),
         tasks_for: 'github-push',
+        branch: 'master',
       }),
     },
     {
@@ -399,6 +403,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
         body: require('./data/events/push.event.offbranch.json'),
         tasks_for: 'github-push',
+        branch: 'foobar',
       }),
     },
     {
@@ -413,6 +418,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
         body: require('./data/events/push.event.offbranch.json'),
         tasks_for: 'github-push',
+        branch: 'foobar',
       }),
     },
     {
@@ -427,6 +433,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'pull_request.opened', 'event.base.repo.branch': 'master'},
         body: require('./data/events/pull.open.json'),
         tasks_for: 'github-pull-request',
+        branch: 'master',
       }),
     },
     {},
@@ -440,6 +447,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'push', 'event.base.repo.branch': 'master'},
         body: require('./data/events/push.event.json'),
         tasks_for: 'github-push',
+        branch: 'master',
       }),
     },
     {},
@@ -454,6 +462,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'release'},
         body: require('./data/events/release.event.json'),
         tasks_for: 'github-release',
+        branch: 'master',
       }),
     },
     {
@@ -469,6 +478,7 @@ suite.only('intree config, v1', () => {
         details: {'event.type': 'release'},
         body: require('./data/events/release.event.json'),
         tasks_for: 'github-release',
+        branch: 'master',
       }),
     },
     {
@@ -484,6 +494,7 @@ suite.only('intree config, v1', () => {
         details: {'event.base.repo.branch': '🌱', 'event.type': 'push'},
         body: require('./data/events/push.event.unicode.json'),
         tasks_for: 'github-push',
+        branch: '🌱',
       }),
     },
     {},

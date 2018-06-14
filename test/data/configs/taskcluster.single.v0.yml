@@ -12,7 +12,6 @@ tasks:
         env: true
         events:
           - push
-
     payload:
       image: "ubuntu:latest"
       command:

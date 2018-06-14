@@ -229,27 +229,39 @@ api.declare({
   debug('Received ' + eventType + ' event webhook payload. Processing...');
 
   try {
+    msg.body = body;
+
     if (eventType == 'pull_request') {
       msg.organization = sanitizeGitHubField(body.repository.owner.login),
       msg.action = body.action;
       msg.details = getPullRequestDetails(body);
       msg.installationId = body.installation.id;
       publisherKey = 'pullRequest';
+
+      msg.tasks_for = 'github-pull-request';
+      msg.branch = body.pull_request.head.ref;
+    
     } else if (eventType == 'push') {
       msg.organization = sanitizeGitHubField(body.repository.owner.name),
       msg.details = getPushDetails(body);
-      msg.body = body;
-      msg.tasks_for = `github-${eventType}`;
-      msg.branch = body.ref.split('/').slice(2).join('/');
       msg.installationId = body.installation.id;
       publisherKey = 'push';
+
+      msg.tasks_for = 'github-push';
+      msg.branch = body.ref.split('/').slice(2).join('/');
+    
     } else if (eventType == 'ping') {
       return resolve(res, 200, 'Received ping event!');
+    
     } else if (eventType == 'release') {
       msg.organization = sanitizeGitHubField(body.repository.owner.login),
       msg.details = getReleaseDetails(body);
       msg.installationId = body.installation.id;
       publisherKey = 'release';
+
+      msg.tasks_for = 'github-push';
+      msg.branch = body.release.target_commitish;
+    
     } else if (eventType == 'integration_installation') {
       // Creates a new entity or overwrites an existing one
       await this.OwnersDirectory.create({
@@ -257,6 +269,7 @@ api.declare({
         owner: body.installation.account.login,
       }, true);
       return resolve(res, 200, 'Created table row!');
+    
     } else {
       return resolve(res, 400, 'No publisher available for X-GitHub-Event: ' + eventType);
     }

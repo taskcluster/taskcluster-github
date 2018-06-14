@@ -34,6 +34,18 @@ properties:
     type:         object
     description: |
       Metadata describing the release.
+  body:
+    type: object
+    description: |
+      The raw body of github event (for version 1)
+  tasks_for:
+    type: string
+    description: |
+      The type of the event (for version 1)
+  branch:
+    type: string
+    description: |
+      The head ref of the event (for version 1)
 additionalProperties: false
 required:
   - version
@@ -41,3 +53,6 @@ required:
   - repository
   - installationId
   - eventId
+  - body
+  - tasks_for
+  - branch

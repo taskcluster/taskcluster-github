@@ -114,6 +114,13 @@ module.exports.setup = function(cfg) {
         'taskcluster.docker.workerType': cfg.intree.workerType,
       }));
     } else {
+      if (!branchTest.test(payload.branch || '')) {
+        throw new Error('Cannot have unicode in branch names!');
+      }
+      if (!branchTest.test(payload.branch || '')) {
+        throw new Error('Cannot have unicode in branch names!');
+      }
+
       config = jsone(config, {
         tasks_for: payload.tasks_for,
         event: payload.body,
@@ -178,12 +185,6 @@ module.exports.setup = function(cfg) {
 
         return completeInTreeConfig(config, payload);
       } else if (version === 1) {
-        if (!branchTest.test(payload.details['event.base.repo.branch'] || '')) {
-          throw new Error('Cannot have unicode in branch names!');
-        }
-        if (!branchTest.test(payload.details['event.head.repo.branch'] || '')) {
-          throw new Error('Cannot have unicode in branch names!');
-        }
 
         if (config.tasks.length > 0) {
           config.tasks = config.tasks.map((task) => {
