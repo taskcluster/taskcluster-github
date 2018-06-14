@@ -99,9 +99,7 @@ module.exports.setup = function(cfg) {
     // We need to toss out the config version number; it's the only
     // field that's not also in graph/task definitions
     let version = config.version;
-    console.log('🙄', version);
     delete config.version;
-    console.log('😏', JSON.stringify(config));
 
     // Perform parameter substitutions. This happens after verification
     // because templating may change with schema version, and parameter
@@ -179,7 +177,14 @@ module.exports.setup = function(cfg) {
         }
 
         return completeInTreeConfig(config, payload);
-      } else {
+      } else if (version === 1) {
+        if (!branchTest.test(payload.details['event.base.repo.branch'] || '')) {
+          throw new Error('Cannot have unicode in branch names!');
+        }
+        if (!branchTest.test(payload.details['event.head.repo.branch'] || '')) {
+          throw new Error('Cannot have unicode in branch names!');
+        }
+
         if (config.tasks.length > 0) {
           config.tasks = config.tasks.map((task) => {
             return {

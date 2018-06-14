@@ -42,6 +42,10 @@ properties:
     type: string
     description: |
       The type of the event (for version 1)
+  branch:
+    type: string
+    description: |
+      The head ref of the event (for version 1)
 additionalProperties: false
 required:
   - version
@@ -51,3 +55,4 @@ required:
   - eventId
   - body
   - tasks_for
+  - branch

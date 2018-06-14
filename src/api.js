@@ -240,6 +240,7 @@ api.declare({
       msg.details = getPushDetails(body);
       msg.body = body;
       msg.tasks_for = `github-${eventType}`;
+      msg.branch = body.ref.split('/').slice(2).join('/');
       msg.installationId = body.installation.id;
       publisherKey = 'push';
     } else if (eventType == 'ping') {
