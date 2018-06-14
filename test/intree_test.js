@@ -160,7 +160,7 @@ suite('intree config, v0', function() {
 
   buildConfigTest(
     'Push Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.exclude.v0.yml',
+    configPath + 'taskcluster.exclude.yml',
     {
       payload:    buildMessage({details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'}}),
     },
@@ -170,7 +170,7 @@ suite('intree config, v0', function() {
 
   buildConfigTest(
     'Pull Request Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.pull_with_exclude.v0.yml',
+    configPath + 'taskcluster.pull_with_exclude.yml',
     {
       payload:    buildMessage({details: {'event.type': 'pull_request.opened', 'event.base.repo.branch': 'master'}}),
     },
@@ -420,21 +420,6 @@ suite('intree config, v1', () => {
   buildConfigTest(
     'Push Event, Single Task Config, Branch Limited (off branch)',
     configPath + 'taskcluster.branchlimited.v1.yml',
-    {
-      payload:    buildMessage({
-        details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
-        body: require('./data/webhooks/webhook.push.json').body,
-        tasks_for: 'github-push',
-        branch: 'foobar',
-      }),
-    },
-    {
-      tasks: [],
-    });
-  
-  buildConfigTest(
-    'Push Event, Single Task Config, Branch Excluded (on branch)',
-    configPath + 'taskcluster.exclude.v1.yml',
     {
       payload:    buildMessage({
         details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
