@@ -8,6 +8,15 @@ const jsone = require('json-e');
 
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
+let slugids = {};
+let as_slugid = (label) => {
+  let rv;
+  if (rv = slugids[label]) {
+    return rv;
+  } else {
+    return slugids[label] = slugid.nice();
+  }
+};
 
 module.exports = {};
 
@@ -151,11 +160,11 @@ module.exports.setup = async function({cfg, schemaset}) {
       if (!branchTest.test(payload.branch || '')) {
         throw new Error('Cannot have unicode in branch names!');
       }
-
       config = jsone(config, {
         tasks_for: payload.tasks_for,
         event: payload.body,
         branch: payload.branch,
+        as_slugid,
       });
     }
 
@@ -221,8 +230,9 @@ module.exports.setup = async function({cfg, schemaset}) {
         
         if (config.tasks.length > 0) {
           config.tasks = config.tasks.map((task) => {
+            if (!task.taskId) { throw Error('The taskId is absent.'); }
             return {
-              taskId: 'banana',
+              taskId: task.taskId,
               task: _.extend(task, {schedulerId: cfg.taskcluster.schedulerId}),
             };
           });

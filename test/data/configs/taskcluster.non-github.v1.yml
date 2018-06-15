@@ -1,6 +1,7 @@
 version: 1
 tasks:
-  - provisionerId: aprovisioner
+  - taskId: {$eval: as_slugid('😉')}
+    provisionerId: aprovisioner
     workerType: worker
     created: {$eval: 'now'}
     deadline: {$fromNow: '1 hour'}
@@ -15,6 +16,7 @@ tasks:
       source: "http://mrrrgn.com"
   - $if: ' tasks_for == "mercurial-push" '
     then:
+      taskId: {$eval: as_slugid('mercurial')}
       provisionerId: aprovisioner
       workerType: worker
       created: {$eval: 'now'}

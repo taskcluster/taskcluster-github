@@ -2,6 +2,7 @@ version: 1
 tasks:
   - $if: ' tasks_for == "github-push" '
     then:
+      taskId: {$eval: as_slugid('😄')}
       provisionerId: aprovisioner
       workerType: worker
       created: {$eval: 'now'}
@@ -23,6 +24,7 @@ tasks:
   
   - $if: ' tasks_for == "github-pull-request" '
     then:
+      taskId: {$eval: as_slugid('pull')}
       provisionerId: aprovisioner2
       workerType: worker2
       created: {$eval: 'now'}
@@ -39,6 +41,7 @@ tasks:
   
   - $if: ' tasks_for == "github-release" '
     then:
+      taskId: {$eval: as_slugid('release')}
       provisionerId: aprovisioner3
       workerType: worker3
       created: {$eval: 'now'}

@@ -2,6 +2,7 @@ version: 1
 tasks:
   - $if: ' tasks_for == "github-release" '
     then:
+      taskId: {$eval: as_slugid('🤓')}
       provisionerId: aprovisioner
       workerType: worker
       created: {$eval: 'now'}
