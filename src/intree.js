@@ -96,18 +96,17 @@ function createScopes(config, payload) {
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
     ];
   } else if (payload.tasks_for === 'github-push') {
-    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
-    config.scopes = [
-      prefix + payload.details['event.base.repo.branch'],
-    ];
-
     if (payload.body.ref.split('/')[1] === 'tags') {
       let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
       config.scopes = [
         prefix + payload.details['event.head.tag'],
       ];
+    } else {
+      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
+      config.scopes = [
+        prefix + payload.details['event.base.repo.branch'],
+      ];
     }
-    
   } else if (payload.tasks_for === 'github-release') {
     config.scopes = [
       `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
@@ -130,6 +129,15 @@ module.exports.setup = async function({cfg, schemaset}) {
   const validate = await schemaset.validator(cfg.taskcluster.rootUrl);
   return function({config, payload, schema}) {
     config = yaml.safeLoad(config);
+    let slugids = {};
+    let as_slugid = (label) => {
+      let rv;
+      if (rv = slugids[label]) {
+        return rv;
+      } else {
+        return slugids[label] = slugid.nice();
+      }
+    };
     let errors = validate(config, schema);
     if (errors) {
       throw new Error(errors);
