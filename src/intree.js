@@ -8,15 +8,6 @@ const jsone = require('json-e');
 
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
-let slugids = {};
-let as_slugid = (label) => {
-  let rv;
-  if (rv = slugids[label]) {
-    return rv;
-  } else {
-    return slugids[label] = slugid.nice();
-  }
-};
 
 module.exports = {};
 
@@ -126,6 +117,15 @@ function createScopes(config, payload) {
  *  }
  **/
 module.exports.setup = async function({cfg, schemaset}) {
+  let slugids = {};
+  let as_slugid = (label) => {
+    let rv;
+    if (rv = slugids[label]) {
+      return rv;
+    } else {
+      return slugids[label] = slugid.nice();
+    }
+  };
   const validate = await schemaset.validator(cfg.taskcluster.rootUrl);
   return function({config, payload, schema}) {
     config = yaml.safeLoad(config);
