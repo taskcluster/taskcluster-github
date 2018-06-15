@@ -427,7 +427,7 @@ suite('intree config, v1', () => {
     {
       payload:    buildMessage({
         details: {'event.type': 'push', 'event.base.repo.branch': 'foobar'},
-        body: require('./data/webhooks/webhook.push.json').body,
+        body: require('./data/webhooks/webhook.push.offbranch.json').body,
         tasks_for: 'github-push',
         branch: 'foobar',
       }),

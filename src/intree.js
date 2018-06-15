@@ -171,7 +171,6 @@ module.exports.setup = async function({cfg, schemaset}) {
       config = jsone(config, {
         tasks_for: payload.tasks_for,
         event: payload.body,
-        branch: payload.branch,
         as_slugid,
       });
     }
