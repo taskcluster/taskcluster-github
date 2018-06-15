@@ -368,6 +368,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': '', // private email
       'tasks[0].task.metadata.source': 'https://github.com/TaskClusterRobot/hooks-testing',
+      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
     });
   
   buildConfigTest(
@@ -384,6 +385,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:branch:default_branch'],
     });
   
   buildConfigTest(
@@ -399,6 +401,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:pull-request'],
     });
   
   buildConfigTest(
@@ -415,6 +418,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:branch:master'],
     });
   
   buildConfigTest(
@@ -446,6 +450,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
   
   buildConfigTest(
@@ -462,6 +467,7 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:release'],
     });
   
   buildConfigTest(
@@ -492,5 +498,6 @@ suite('intree config, v1', () => {
     {
       'tasks[0].task.metadata.owner': 'test@test.com',
       'tasks[0].task.metadata.source': 'http://mrrrgn.com',
+      scopes: ['assume:repo:github.com/testorg/testrepo:tag:v1.0.2'],
     });
 });

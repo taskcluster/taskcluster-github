@@ -78,6 +78,37 @@ function completeInTreeConfig(config, payload) {
 };
 
 /**
+ * Get scopes and attach them to the task.
+ * v1 function
+ */
+function createScopes(config, payload) {
+  if (payload.tasks_for === 'github-pull-request') {
+    config.scopes = [
+      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
+    ];
+  } else if (payload.tasks_for === 'github-push') {
+    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
+    config.scopes = [
+      prefix + payload.details['event.base.repo.branch'],
+    ];
+
+    if (payload.body.ref.split('/')[1] === 'tags') {
+      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
+      config.scopes = [
+        prefix + payload.details['event.head.tag'],
+      ];
+    }
+    
+  } else if (payload.tasks_for === 'github-release') {
+    config.scopes = [
+      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
+    ];
+  }
+
+  return config;
+}
+
+/**
  * Returns a function that merges an existing taskcluster github config with
  * a pull request message's payload to generate a full task graph config.
  *  params {
@@ -196,8 +227,7 @@ module.exports.setup = async function({cfg, schemaset}) {
             };
           });
         }
-        return config;
-
+        return createScopes(config, payload);
       }
     } catch (e) {
       debug('Error processing tasks!');
