@@ -3,8 +3,7 @@ title: .taskcluster.yml version 1
 order: 20
 ---
 
-Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root
-of your project. This is a YAML file that specifies the tasks to run and when.
+Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root of your project. This is a YAML file that specifies the tasks to run and when.
 
 The format of the file is:
 
@@ -98,6 +97,27 @@ You need to know which provisioner and which worker type you want to use to run 
 
 After rendering, the resulting data structure should have a `tasks` property containing a list of task definitions. Each task definition should match the [task
 schema](https://docs.taskcluster.net/reference/platform/taskcluster-queue/docs/task-schema) as it will be passed nearly unchanged to `Queue.createTask`, The exception is that the provided task definition must contain a `taskId` field, which the service will remove and pass to `Queue.createTask` directly.
+
+The result looks like this:
+
+```
+{
+    "tasks": [
+        {
+            "taskId": "fOF8Cqj0QPKbvczC2dnXiQ", // probably generated with as_slugid(..)
+            "provisionerId": "..",
+            "workerType": "..",
+            "payload": {
+                // ..
+            },
+            // ...
+        },
+        // ...
+    ]
+}
+```
+
+Taskcluster-Github will set the schedulerId of each task, as is required for proper status tracking of the resulting task.
 
 # Scopes and Roles
 
