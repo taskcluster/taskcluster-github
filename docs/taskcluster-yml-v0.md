@@ -3,7 +3,13 @@ title: .taskcluster.yml version 0
 order: 100
 ---
 
-**NOTE**: version-0 `.taskcluster.yml` files are deprecated. For any new projects, and to take full advantage of Taskcluster-Github features, use a [version 1](taskcluster-yml-v1) file.
+**NOTE**: version-0 `.taskcluster.yml` files are deprecated. For any new
+projects, and to take full advantage of Taskcluster-Github features, use a
+[version 1](taskcluster-yml-v1) file.
+
+Your main interface to Taskcluster-Github is via `.taskcluster.yml` in the root
+of your project. This is a YAML file that specifies the tasks to run on
+pushes, pull requests, or releases.
 
 If you already use a `version 0` file, we strongly recommend you switch to `version 1`. We will support the old version for a while though.
 
