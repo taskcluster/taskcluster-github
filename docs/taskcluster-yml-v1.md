@@ -59,6 +59,8 @@ The `tasks` property in the YAML file is rendered using [JSON-e](https://github.
 
 * `as_slugid` - a function which, given a label, will generate a slugid. Multiple calls with the same label for the same event will generate the same slugid, but different slugids in different events.  Use this to generate taskIds, etc.
 
+Although the Github documentation does not make it clear, each ref that is updated in a `git push` operation triggers a distinct event.
+
 ## Task Definition and Examples
  
 ### Github Events
@@ -74,6 +76,8 @@ tasks:
       ...
 ```
 
+NOTE: A well-designed template should produce `tasks: []` for any unrecognized `task_for` values; this allows later expansion of this service to handle more events.
+
 ### Branch Filtering
 
 You can also add a branch clause to your `$if` - `then` statement so that the task will only run for events on certain branches. For example, the task defined below will only run for pushes to the master branch:
@@ -81,13 +85,33 @@ You can also add a branch clause to your `$if` - `then` statement so that the ta
 ```yaml
 version: 1
 tasks:
-  - $if: ' event.head.branch == "master" '
+  - $if: 'tasks_for == "github-push"'
     then:
-      ...
-      ...
+      $if: 'event.ref == "refs/heads/master"'
+      then:
+        ...
+        ...
 ```
 
-You can have both events and branches in your `$if` - `then` statement.
+Note that it is wise to always check `tasks_for` first in a conditional like this.
+Other event types do not have `event.ref`, which would lead to a template error if not for the `tasks_for` check.
+
+NOTE: Once JSON-e supports [short-circuit boolean operators](https://github.com/taskcluster/json-e/issues/244), these conditionals can be collapsed into one.
+
+### Tags
+
+Tag pushes can be identified as follows:
+
+```yaml
+version: 1
+tasks:
+  - $if: 'tasks_for == "github-push"'
+    then:
+      $if: 'event.ref[:10] == "refs/tags/"'
+      then:
+        ...
+        ...
+```
 
 ### Provisioner ID and Worker Type
 
@@ -139,6 +163,7 @@ policy:
 tasks:
   - $if: ' tasks_for == "github-push" || tasks_for == "github-pull-request"  && event.head.branch != "master" '
     then:
+      taskId: "${as_slugid('push')}"
       provisionerId: 'aws-provisioner-v1'
       workerType: 'github-worker'
       created: {$eval: 'now'}
@@ -159,6 +184,7 @@ tasks:
         source: ${event.head.repo.url}
   - $if: ' tasks_for == "github-release" && event.head.branch == "master" '
     then:
+      taskId: "${as_slugid('release')}"
       provisionerId: 'aws-provisioner-v1'
       workerType: 'github-worker'
       created: {$eval: 'now'}
