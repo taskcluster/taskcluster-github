@@ -139,17 +139,14 @@ module.exports.setup = async function({cfg, schemaset}) {
         return slugids[label] = slugid.nice();
       }
     };
-    let version = config.version;
     
-    let errors;
-    if (version == 0) {
-      errors = validate(config, schema);
-    } else {
-      errors = validate(config, schema.replace(/\.ya?ml$/, '.v1.yaml'));
-    }
+    const version = config.version;
+    
+    const errors = validate(config, schema[version]);
     if (errors) {
       throw new Error(errors);
     }
+    
     debug(`intree config for ${payload.organization}/${payload.repository} matches valid schema.`);
 
     // We need to toss out the config version number; it's the only
