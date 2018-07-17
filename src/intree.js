@@ -34,14 +34,14 @@ module.exports.setup = async function({cfg, schemaset}) {
     // Perform parameter substitutions. This happens after verification
     // because templating may change with schema version, and parameter
     // functions are used as default values for some fields.
-    const yml = TcYaml.instantiate(version);
-    config = yml.substituteParameters(config, cfg, payload);
+    const tcyaml = TcYaml.instantiate(version);
+    config = tcyaml.substituteParameters(config, cfg, payload);
 
     // Compile individual tasks, filtering any that are not intended
     // for the current github event type. Append taskGroupId while
     // we're at it.
     try {
-      return yml.compileTasks(config, cfg, payload);
+      return tcyaml.compileTasks(config, cfg, payload);
     } catch (e) {
       debug('Error processing tasks!');
       throw e;
