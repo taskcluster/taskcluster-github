@@ -7,102 +7,6 @@ const tc = require('taskcluster-client');
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
 
-/**
- * Get scopes and attach them to the task.
- * v1 function
- */
-function createScopes(config, payload) {
-  if (payload.tasks_for === 'github-pull-request') {
-    config.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
-    ];
-  } else if (payload.tasks_for === 'github-push') {
-    if (payload.body.ref.split('/')[1] === 'tags') {
-      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
-      config.scopes = [
-        prefix + payload.details['event.head.tag'],
-      ];
-    } else {
-      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
-      config.scopes = [
-        prefix + payload.details['event.base.repo.branch'],
-      ];
-    }
-  } else if (payload.tasks_for === 'github-release') {
-    config.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
-    ];
-  }
-
-  return config;
-}
-
-/**
- * Attach fields to a compiled taskcluster github config so that
- * it becomes a complete task graph config.
- **/
-function completeInTreeConfig(config, payload) {
-  config.scopes = [];
-  if (!branchTest.test(payload.details['event.base.repo.branch'] || '')) {
-    throw new Error('Cannot have unicode in branch names!');
-  }
-  if (!branchTest.test(payload.details['event.head.repo.branch'] || '')) {
-    throw new Error('Cannot have unicode in branch names!');
-  }
-
-  if (payload.details['event.type'].startsWith('pull_request')) {
-    config.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
-    ];
-  } else if (payload.details['event.type'] == 'push') {
-    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
-    config.scopes = [
-      prefix + payload.details['event.base.repo.branch'],
-    ];
-  } else if (payload.details['event.type'] == 'release') {
-    config.scopes = [
-      `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
-    ];
-  } else if (payload.details['event.type'] == 'tag') {
-    let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
-    config.scopes = [
-      prefix + payload.details['event.head.tag'],
-    ];
-  }
-
-  // each task can optionally decide if it wants github specific environment
-  // variables added to it
-  let stringify = x => x ? `${x}` : x;
-  config.tasks = config.tasks.map((task) => {
-    if (task.task.extra.github.env) {
-      task.task.payload.env = _.merge(
-        task.task.payload.env || {}, {
-          GITHUB_EVENT: payload.details['event.type'],
-          GITHUB_BRANCH: payload.details['event.base.repo.branch'],
-          GITHUB_PULL_REQUEST: stringify(payload.details['event.pullNumber']),
-          GITHUB_PULL_TITLE: stringify(payload.details['event.title']),
-          GITHUB_BASE_REPO_NAME: payload.details['event.base.repo.name'],
-          GITHUB_BASE_REPO_URL: payload.details['event.base.repo.url'],
-          GITHUB_BASE_USER: payload.details['event.base.user.login'],
-          GITHUB_BASE_SHA: payload.details['event.base.sha'],
-          GITHUB_BASE_BRANCH: payload.details['event.base.repo.branch'],
-          GITHUB_BASE_REF: payload.details['event.base.ref'],
-          GITHUB_HEAD_REPO_NAME: payload.details['event.head.repo.name'],
-          GITHUB_HEAD_REPO_URL: payload.details['event.head.repo.url'],
-          GITHUB_HEAD_USER: payload.details['event.head.user.login'],
-          GITHUB_HEAD_SHA: payload.details['event.head.sha'],
-          GITHUB_HEAD_BRANCH: payload.details['event.head.repo.branch'],
-          GITHUB_HEAD_TAG: payload.details['event.head.tag'],
-          GITHUB_HEAD_REF: payload.details['event.head.ref'],
-          GITHUB_HEAD_USER_EMAIL: payload.details['event.head.user.email'],
-        }
-      );
-    }
-    return task;
-  });
-  return config;
-};
-
 class Tcyaml {
   static instantiate(version) {
     if (version === 0) {
@@ -118,6 +22,72 @@ class VersionZero extends Tcyaml {
     super();
     this.version = 0;
   }
+
+  /**
+ * Attach fields to a compiled taskcluster github config so that
+ * it becomes a complete task graph config.
+ **/
+  completeInTreeConfig(config, payload) {
+    config.scopes = [];
+    if (!branchTest.test(payload.details['event.base.repo.branch'] || '')) {
+      throw new Error('Cannot have unicode in branch names!');
+    }
+    if (!branchTest.test(payload.details['event.head.repo.branch'] || '')) {
+      throw new Error('Cannot have unicode in branch names!');
+    }
+
+    if (payload.details['event.type'].startsWith('pull_request')) {
+      config.scopes = [
+        `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
+      ];
+    } else if (payload.details['event.type'] == 'push') {
+      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
+      config.scopes = [
+        prefix + payload.details['event.base.repo.branch'],
+      ];
+    } else if (payload.details['event.type'] == 'release') {
+      config.scopes = [
+        `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
+      ];
+    } else if (payload.details['event.type'] == 'tag') {
+      let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
+      config.scopes = [
+        prefix + payload.details['event.head.tag'],
+      ];
+    }
+
+    // each task can optionally decide if it wants github specific environment
+    // variables added to it
+    let stringify = x => x ? `${x}` : x;
+    config.tasks = config.tasks.map((task) => {
+      if (task.task.extra.github.env) {
+        task.task.payload.env = _.merge(
+          task.task.payload.env || {}, {
+            GITHUB_EVENT: payload.details['event.type'],
+            GITHUB_BRANCH: payload.details['event.base.repo.branch'],
+            GITHUB_PULL_REQUEST: stringify(payload.details['event.pullNumber']),
+            GITHUB_PULL_TITLE: stringify(payload.details['event.title']),
+            GITHUB_BASE_REPO_NAME: payload.details['event.base.repo.name'],
+            GITHUB_BASE_REPO_URL: payload.details['event.base.repo.url'],
+            GITHUB_BASE_USER: payload.details['event.base.user.login'],
+            GITHUB_BASE_SHA: payload.details['event.base.sha'],
+            GITHUB_BASE_BRANCH: payload.details['event.base.repo.branch'],
+            GITHUB_BASE_REF: payload.details['event.base.ref'],
+            GITHUB_HEAD_REPO_NAME: payload.details['event.head.repo.name'],
+            GITHUB_HEAD_REPO_URL: payload.details['event.head.repo.url'],
+            GITHUB_HEAD_USER: payload.details['event.head.user.login'],
+            GITHUB_HEAD_SHA: payload.details['event.head.sha'],
+            GITHUB_HEAD_BRANCH: payload.details['event.head.repo.branch'],
+            GITHUB_HEAD_TAG: payload.details['event.head.tag'],
+            GITHUB_HEAD_REF: payload.details['event.head.ref'],
+            GITHUB_HEAD_USER_EMAIL: payload.details['event.head.user.email'],
+          }
+        );
+      }
+      return task;
+    });
+    return config;
+  };
 
   substituteParameters(config, cfg, payload) {
     return jparam(config, _.merge(payload.details, {
@@ -182,7 +152,7 @@ class VersionZero extends Tcyaml {
         };
       });
     }
-    return completeInTreeConfig(config, payload);
+    return this.completeInTreeConfig(config, payload);
   }
 }
 
@@ -190,6 +160,36 @@ class VersionOne extends Tcyaml {
   constructor() {
     super();
     this.version = 1;
+  }
+
+  /**
+ * Get scopes and attach them to the task.
+ * v1 function
+ */
+  createScopes(config, payload) {
+    if (payload.tasks_for === 'github-pull-request') {
+      config.scopes = [
+        `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
+      ];
+    } else if (payload.tasks_for === 'github-push') {
+      if (payload.body.ref.split('/')[1] === 'tags') {
+        let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
+        config.scopes = [
+          prefix + payload.details['event.head.tag'],
+        ];
+      } else {
+        let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
+        config.scopes = [
+          prefix + payload.details['event.base.repo.branch'],
+        ];
+      }
+    } else if (payload.tasks_for === 'github-release') {
+      config.scopes = [
+        `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
+      ];
+    }
+
+    return config;
   }
 
   substituteParameters(config, cfg, payload) {
@@ -227,7 +227,7 @@ class VersionOne extends Tcyaml {
         };
       });
     }
-    return createScopes(config, payload);
+    return this.createScopes(config, payload);
   }
 }
 
