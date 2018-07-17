@@ -7,7 +7,7 @@ const tc = require('taskcluster-client');
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
 
-class Tcyaml {
+class TcYaml {
   static instantiate(version) {
     if (version === 0) {
       return new VersionZero();
@@ -17,7 +17,7 @@ class Tcyaml {
   }
 };
 
-class VersionZero extends Tcyaml {
+class VersionZero extends TcYaml {
   constructor() {
     super();
     this.version = 0;
@@ -156,7 +156,7 @@ class VersionZero extends Tcyaml {
   }
 }
 
-class VersionOne extends Tcyaml {
+class VersionOne extends TcYaml {
   constructor() {
     super();
     this.version = 1;
@@ -231,4 +231,4 @@ class VersionOne extends Tcyaml {
   }
 }
 
-module.exports = Tcyaml;
+module.exports = TcYaml;
