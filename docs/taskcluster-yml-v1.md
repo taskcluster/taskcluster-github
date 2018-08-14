@@ -173,7 +173,6 @@ tasks:
   - $if: 'tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]'
     then:
       taskId: {$eval: as_slugid("pr_task")}
-      created: {$fromNow: ''}
       deadline: {$fromNow: '1 hour'}
       provisionerId: aws-provisioner-v1
       workerType: github-worker
@@ -198,7 +197,6 @@ tasks:
   - $if: 'tasks_for == "github-push"'
     then:
       taskId: {$eval: as_slugid("push_task")}
-      created: {$fromNow: ''}
       deadline: {$fromNow: '1 hour'}
       provisionerId: aws-provisioner-v1
       workerType: github-worker
