@@ -7,6 +7,14 @@ const tc = require('taskcluster-client');
 // Assert that only scope-valid characters are in branches
 const branchTest = /^[\x20-\x7e]*$/;
 
+// For json-e parsing in v1
+const CONTEXT = {
+  tasks_for: payload.tasks_for,
+  event: payload.body,
+  as_slugid,
+  created: new Date().toJSON(),
+};
+
 class TcYaml {
   static instantiate(version) {
     if (version === 0) {
@@ -211,11 +219,7 @@ class VersionOne extends TcYaml {
     };
 
     try {
-      return jsone(config, {
-        tasks_for: payload.tasks_for,
-        event: payload.body,
-        as_slugid,
-      });
+      return jsone(config, CONTEXT);
     } catch (err) {
       // json-e creates errors that have properties in a format
       // that taskcluster-github messes up. Just fixing it here.
