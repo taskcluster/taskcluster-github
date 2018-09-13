@@ -215,7 +215,6 @@ class VersionOne extends TcYaml {
         tasks_for: payload.tasks_for,
         event: payload.body,
         as_slugid,
-        created: new Date().toJSON(),
       });
     } catch (err) {
       // json-e creates errors that have properties in a format
@@ -236,7 +235,11 @@ class VersionOne extends TcYaml {
       const defaultTaskGroupId = slugid.nice();
       let defaultTaskId = config.tasks.length == 1 ? defaultTaskGroupId : slugid.nice();
       config.tasks = config.tasks.map(task => {
-        task = _.defaults(task, {taskId: defaultTaskId, taskGroupId: defaultTaskGroupId});
+        task = _.defaults(task, {
+          taskId: defaultTaskId, 
+          taskGroupId: defaultTaskGroupId,
+          created: new Date().toJSON(),
+        });
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
         return {

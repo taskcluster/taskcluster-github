@@ -26,6 +26,7 @@ suite('tc-yaml_test.js', function() {
       assume(config.tasks).to.deeply.equal([{
         taskId: config.tasks[0].taskId,
         task: {
+          created: new Date().toJSON(),
           taskGroupId: config.tasks[0].taskId, // matches taskId
           schedulerId: 'test-sched',
         },
@@ -62,12 +63,14 @@ suite('tc-yaml_test.js', function() {
       assume(config.tasks).to.deeply.equal([{
         taskId: 'task-1',
         task: {
+          created: new Date().toJSON(),
           taskGroupId: 'tgid-1',
           schedulerId: 'test-sched',
         },
       }, {
         taskId: 'task-2',
         task: {
+          created: new Date().toJSON(),
           taskGroupId: 'tgid-2',
           schedulerId: 'test-sched',
         },
