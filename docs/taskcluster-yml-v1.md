@@ -184,7 +184,6 @@ tasks:
   $match:
     'tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]':
       taskId: {$eval: as_slugid("pr_task")}
-      deadline: {$fromNow: '1 hour'}
       provisionerId: aws-provisioner-v1
       workerType: github-worker
       scopes:
@@ -207,7 +206,6 @@ tasks:
         source: ${event.repository.url}
     'tasks_for == "github-push"':
       taskId: {$eval: as_slugid("push_task")}
-      deadline: {$fromNow: '1 hour'}
       provisionerId: aws-provisioner-v1
       workerType: github-worker
       scopes:
