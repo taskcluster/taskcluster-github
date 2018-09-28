@@ -15,7 +15,7 @@ class TcYaml {
       return new VersionOne();
     }
   }
-};
+}
 
 class VersionZero extends TcYaml {
   constructor() {
@@ -40,16 +40,16 @@ class VersionZero extends TcYaml {
       config.scopes = [
         `assume:repo:github.com/${ payload.organization }/${ payload.repository }:pull-request`,
       ];
-    } else if (payload.details['event.type'] == 'push') {
+    } else if (payload.details['event.type'] === 'push') {
       let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:branch:`;
       config.scopes = [
         prefix + payload.details['event.base.repo.branch'],
       ];
-    } else if (payload.details['event.type'] == 'release') {
+    } else if (payload.details['event.type'] === 'release') {
       config.scopes = [
         `assume:repo:github.com/${ payload.organization }/${ payload.repository }:release`,
       ];
-    } else if (payload.details['event.type'] == 'tag') {
+    } else if (payload.details['event.type'] === 'tag') {
       let prefix = `assume:repo:github.com/${ payload.organization }/${ payload.repository }:tag:`;
       config.scopes = [
         prefix + payload.details['event.head.tag'],
@@ -99,7 +99,7 @@ class VersionZero extends TcYaml {
       'taskcluster.docker.workerType': cfg.intree.workerType,
     }));
   }
-  compileTasks(config, cfg, payload) {
+  compileTasks(config, cfg, payload, now) {
     config.tasks = config.tasks.map((task) => {
       return {
         taskId: slugid.nice(),
@@ -226,19 +226,19 @@ class VersionOne extends TcYaml {
     }
   }
 
-  compileTasks(config, cfg, payload) {
+  compileTasks(config, cfg, payload, now) {
     if (config.tasks.length > 0) {
       // default taskGroupId and taskId
       // - if only one task, make these match (making the task appear to be a decision task)
       // - if two or more tasks, make them different (so that the taskgroup has no decision task)
       // of course, this can be overriden by users specifying these values.
       const defaultTaskGroupId = slugid.nice();
-      let defaultTaskId = config.tasks.length == 1 ? defaultTaskGroupId : slugid.nice();
+      let defaultTaskId = config.tasks.length === 1 ? defaultTaskGroupId : slugid.nice();
       config.tasks = config.tasks.map(task => {
         task = _.defaults(task, {
           taskId: defaultTaskId, 
           taskGroupId: defaultTaskGroupId,
-          created: new Date().toJSON(),
+          created: now,
         });
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
