@@ -234,7 +234,7 @@ class VersionOne extends TcYaml {
       // of course, this can be overriden by users specifying these values.
       let defaultTaskId;
       let defaultTaskGroupId;
-      if (config.tasks.length == 1) {
+      if (config.tasks.length === 1) {
         let soleTask = config.tasks[0];
         if (soleTask.taskId && soleTask.taskGroupId) {
           // Nothing to do. Everything is already defined.
