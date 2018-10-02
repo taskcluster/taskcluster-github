@@ -49,13 +49,6 @@ let commonMessageBuilder = function(msg) {
   return msg;
 };
 
-// Temporary function for debugging purposes. TO DO: remove
-let releaseMessageBuilder = function(msg) {
-  debug('Received webhook for release. Building message...');
-  msg.version = 1;
-  return msg;
-};
-
 /** Declaration of exchanges offered by the github */
 let exchanges = new Exchanges({
   serviceName: 'github',
@@ -118,7 +111,24 @@ exchanges.declare({
   ].join('\n'),
   routingKey:         commonRoutingKey(),
   schema:             'github-release-message.yml',
-  messageBuilder:     releaseMessageBuilder, // TO DO: replace with commonMessageBuilder
+  messageBuilder:     commonMessageBuilder,
+  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
+  CCBuilder:          () => [],
+});
+
+/** check suite exchange */
+exchanges.declare({
+  exchange:           'check suite',
+  name:               'checkSuite',
+  title:              'GitHub check suite Event',
+  description: [
+    'When a GitHub check suite event is posted it will be broadcast on this',
+    'exchange with the designated `organization` and `repository`',
+    'in the routing-key along with event specific metadata in the payload.',
+  ].join('\n'),
+  routingKey:         commonRoutingKey(),
+  schema:             'github-checksuite-message.yml', // TODO: define the schema
+  messageBuilder:     commonMessageBuilder,
   routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
   CCBuilder:          () => [],
 });
