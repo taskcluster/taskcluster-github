@@ -13,6 +13,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
   helper.withFakeGithub(mock, skipping);
 
   const URL_PREFIX = 'https://tools.taskcluster.net/task-group-inspector/#/';
+  const SLUG_ID_LENGTH = 22;
 
   let github = null;
   let handlers = null;
@@ -101,23 +102,23 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'TaskClusterRobot'});
 
-      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
+      assert(github.inst(5828).checks.create.calledOnce, 'Status was never updated!');
       assert(handlers.createTasks.calledWith({scopes: sinon.match.array, tasks: sinon.match.array}));
-      let args = github.inst(5828).repos.createStatus.firstCall.args[0];
+      let args = github.inst(5828).checks.create.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
       assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'pending');
-      assert.equal(args.description, 'TaskGroup: Pending (for push)');
-      assert.equal(/Taskcluster \((.*)\)/.exec(args.context)[1], 'push');
+      assert.equal(args.head_sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+      assert.equal(args.status, 'queued');
+      assert.equal(args.output.title, 'TaskGroup: Queued (for push)');
+      assert.equal(/Taskcluster \((.*)\)/.exec(args.name)[1], 'push');
       debug('Created task group: ' + args.target_url);
-      assert(args.target_url.startsWith(URL_PREFIX));
-      let taskGroupId = args.target_url.substr(URL_PREFIX.length);
+      assert(args.details_url.startsWith(URL_PREFIX));
+      let taskGroupId = args.details_url.substr(URL_PREFIX.length, SLUG_ID_LENGTH);
       let build = await helper.Builds.load({taskGroupId});
       assert.equal(build.organization, 'TaskClusterRobot');
       assert.equal(build.repository, 'hooks-testing');
       assert.equal(build.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(build.state, 'pending');
+      assert.equal(build.state, 'queued');
     });
 
     test('valid pull_request (user is collaborator) creates a taskGroup', async function() {
@@ -134,22 +135,22 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'goodBuddy', eventType: 'pull_request.opened'});
 
-      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
+      assert(github.inst(5828).checks.create.calledOnce, 'Status was never updated!');
       assert(handlers.createTasks.calledWith({scopes: sinon.match.array, tasks: sinon.match.array}));
-      let args = github.inst(5828).repos.createStatus.firstCall.args[0];
+      let args = github.inst(5828).checks.create.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
       assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'pending');
-      assert.equal(/Taskcluster \((.*)\)/.exec(args.context)[1], 'pull_request');
-      debug('Created task group: ' + args.target_url);
-      assert(args.target_url.startsWith(URL_PREFIX));
-      let taskGroupId = args.target_url.substr(URL_PREFIX.length);
+      assert.equal(args.head_sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+      assert.equal(args.status, 'queued');
+      assert.equal(/Taskcluster \((.*)\)/.exec(args.name)[1], 'pull_request');
+      debug('Created task group: ' + args.details_url);
+      assert(args.details_url.startsWith(URL_PREFIX));
+      let taskGroupId = args.details_url.substr(URL_PREFIX.length, SLUG_ID_LENGTH);
       let build = await helper.Builds.load({taskGroupId});
       assert.equal(build.organization, 'TaskClusterRobot');
       assert.equal(build.repository, 'hooks-testing');
       assert.equal(build.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(build.state, 'pending');
+      assert.equal(build.state, 'queued');
     });
 
     test('valid push (but not collaborator) creates a taskGroup', async function() {
@@ -161,20 +162,20 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'TaskClusterCollaborator', eventType: 'push'});
 
-      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
-      let args = github.inst(5828).repos.createStatus.firstCall.args[0];
+      assert(github.inst(5828).checks.create.calledOnce, 'Status was never updated!');
+      let args = github.inst(5828).checks.create.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
       assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'pending');
-      debug('Created task group: ' + args.target_url);
-      assert(args.target_url.startsWith(URL_PREFIX));
-      let taskGroupId = args.target_url.substr(URL_PREFIX.length);
+      assert.equal(args.head_sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+      assert.equal(args.status, 'queued');
+      debug('Created task group: ' + args.details_url);
+      assert(args.details_url.startsWith(URL_PREFIX));
+      let taskGroupId = args.details_url.substr(URL_PREFIX.length, SLUG_ID_LENGTH);
       let build = await helper.Builds.load({taskGroupId});
       assert.equal(build.organization, 'TaskClusterRobot');
       assert.equal(build.repository, 'hooks-testing');
       assert.equal(build.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(build.state, 'pending');
+      assert.equal(build.state, 'queued');
     });
 
     test('valid tag push (but not collaborator) creates a taskGroup', async function() {
@@ -190,23 +191,23 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
         eventType: 'tag'}
       );
       
-      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
+      assert(github.inst(5828).checks.create.calledOnce, 'Status was never updated!');
       assert(handlers.createTasks.calledWith({scopes: sinon.match.array, tasks: sinon.match.array}));
-      let args = github.inst(5828).repos.createStatus.firstCall.args[0];
+      let args = github.inst(5828).checks.create.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
       assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, 'pending');
-      assert.equal(args.description, 'TaskGroup: Pending (for tag)');
-      assert.equal(/Taskcluster \((.*)\)/.exec(args.context)[1], 'tag');
-      debug('Created task group: ' + args.target_url);
-      assert(args.target_url.startsWith(URL_PREFIX));
-      let taskGroupId = args.target_url.substr(URL_PREFIX.length);
+      assert.equal(args.head_sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
+      assert.equal(args.status, 'queued');
+      assert.equal(args.output.title, 'TaskGroup: Queued (for tag)');
+      assert.equal(/Taskcluster \((.*)\)/.exec(args.name)[1], 'tag');
+      debug('Created task group: ' + args.details_url);
+      assert(args.details_url.startsWith(URL_PREFIX));
+      let taskGroupId = args.details_url.substr(URL_PREFIX.length, SLUG_ID_LENGTH);
       let build = await helper.Builds.load({taskGroupId});
       assert.equal(build.organization, 'TaskClusterRobot');
       assert.equal(build.repository, 'hooks-testing');
       assert.equal(build.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(build.state, 'pending');
+      assert.equal(build.state, 'queued');
     });
 
     test('invalid YAML results in a comment', async function() {
@@ -218,7 +219,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'TaskClusterRobot'});
 
-      assert(github.inst(5828).repos.createStatus.callCount === 0, 'Status was unexpectedly updated!');
+      assert(github.inst(5828).checks.create.callCount === 0, 'Status was unexpectedly updated!');
       assert(github.inst(5828).repos.createCommitComment.calledOnce);
       let args = github.inst(5828).repos.createCommitComment.args;
       assert.equal(args[0][0].owner, 'TaskClusterRobot');
@@ -237,7 +238,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       handlers.createTasks.returns(Promise.reject({body: {error: 'oh noes'}}));
       await simulateJobMessage({user: 'TaskClusterRobot'});
 
-      assert(github.inst(5828).repos.createStatus.callCount === 1, 'Status was not updated!');
+      assert(github.inst(5828).checks.create.callCount === 1, 'Status was not updated!');
       assert(github.inst(5828).repos.createCommitComment.calledOnce);
       let args = github.inst(5828).repos.createCommitComment.args;
       assert.equal(args[0][0].owner, 'TaskClusterRobot');
@@ -278,7 +279,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'imbstack', eventType: 'pull_request.opened'});
 
-      assert(github.inst(5828).repos.createStatus.callCount === 1, 'Status was not updated!');
+      assert(github.inst(5828).checks.create.callCount === 1, 'Status was not updated!');
       assert(github.inst(5828).issues.createComment.callCount === 0);
     });
 
@@ -297,7 +298,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'imbstack', eventType: 'pull_request.opened'});
 
-      assert(github.inst(5828).repos.createStatus.callCount === 0);
+      assert(github.inst(5828).checks.create.callCount === 0);
       assert(github.inst(5828).issues.createComment.callCount === 1);
     });
 
@@ -310,7 +311,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await simulateJobMessage({user: 'imbstack', eventType: 'push'});
 
-      assert(github.inst(5828).repos.createStatus.calledOnce, 'Status was never updated!');
+      assert(github.inst(5828).checks.create.calledOnce, 'Status was never updated!');
       assert(github.inst(5828).repos.createCommitComment.callCount === 0);
     });
   });
@@ -324,9 +325,17 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
 
     teardown(async function() {
       await helper.Builds.remove({taskGroupId: TASKGROUPID}, true);
+      await helper.CheckRuns.remove({taskGroupId: TASKGROUPID, taskId: TASKID}, true);
     });
 
     const TASKGROUPID = 'AXB-sjV-SoCyibyq3P32ow';
+    const TASKID = 'AXB-s1V-So58ibyq3P32zm';
+    const CONCLUSIONS = { // maps queue exchange status to github checkrun conclusion
+      completed: 'success',
+      failed: 'failure',
+      exception: 'failure',
+    };
+
     async function addBuild({state, taskGroupId}) {
       debug(`adding Build row for ${taskGroupId} in state ${state}`);
       await helper.Builds.create({
@@ -343,7 +352,17 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
     }
 
-    function simulateStatusMessage({taskGroupId, exchange}) {
+    async function addCheckRun({taskGroupId, taskId}) {
+      debug(`adding CheckRun row for task ${taskId} of group ${taskGroupId}`);
+      await helper.CheckRuns.create({
+        taskGroupId,
+        taskId,
+        checkSuiteId: '11111',
+        checkRunId: '22222',
+      });
+    }
+
+    function simulateStatusMessage({taskGroupId, taskId, exchange, state}) {
       // set up to resolve when the handler has finished (even if it finishes with error)
       return new Promise((resolve, reject) => {
         handlers.handlerComplete = resolve;
@@ -354,7 +373,11 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
           routingKey: 'ignored',
           routes: [],
           payload: {
-            status: {taskGroupId},
+            status: {
+              taskGroupId,
+              taskId,
+              state,
+            },
           },
         };
 
@@ -363,15 +386,12 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
     }
 
     async function assertStatusUpdate(state) {
-      assert(github.inst(9988).repos.createStatus.calledOnce, 'createStatus was not called');
-      let args = github.inst(9988).repos.createStatus.firstCall.args[0];
+      assert(github.inst(9988).checks.update.calledOnce, 'checks.update was not called');
+      let args = github.inst(9988).checks.update.firstCall.args[0];
       assert.equal(args.owner, 'TaskClusterRobot');
       assert.equal(args.repo, 'hooks-testing');
-      assert.equal(args.sha, '03e9577bc1ec60f2ff0929d5f1554de36b8f48cf');
-      assert.equal(args.state, state);
-      assert(args.target_url.startsWith(URL_PREFIX));
-      let taskGroupId = args.target_url.replace(URL_PREFIX, '').trim();
-      assert.equal(taskGroupId, TASKGROUPID);
+      assert.equal(args.check_run_id, '22222');
+      assert.equal(args.conclusion, CONCLUSIONS[state]);
     }
 
     async function assertBuildState(state) {
@@ -381,32 +401,41 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
 
     test('task success gets a success comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
+      await addCheckRun({taskGroupId: TASKGROUPID, taskId: TASKID});
+      let state = 'completed';
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
+        taskId: TASKID,
         exchange: 'exchange/taskcluster-queue/v1/task-completed',
+        state,
       });
-      await assertStatusUpdate('success');
-      await assertBuildState('success');
+      await assertStatusUpdate(state);
     });
 
     test('task failure gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
+      await addCheckRun({taskGroupId: TASKGROUPID, taskId: TASKID});
+      let state = 'failed';
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
+        taskId: TASKID,
         exchange: 'exchange/taskcluster-queue/v1/task-failed',
+        state,
       });
-      await assertStatusUpdate('failure');
-      await assertBuildState('failure');
+      await assertStatusUpdate(state);
     });
 
     test('task exception gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
+      await addCheckRun({taskGroupId: TASKGROUPID, taskId: TASKID});
+      let state = 'exception';
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
+        taskId: TASKID,
         exchange: 'exchange/taskcluster-queue/v1/task-exception',
+        state,
       });
-      await assertStatusUpdate('failure');
-      await assertBuildState('failure');
+      await assertStatusUpdate(state);
     });
   });
 });

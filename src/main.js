@@ -127,6 +127,20 @@ const load = loader({
     }),
   },
 
+  CheckRuns: {
+    requires: ['cfg', 'monitor'],
+    setup: async ({cfg, monitor}) => data.CheckRuns.setup({
+      tableName: cfg.app.checkRunsTableName, // TODO: add the name to the config somewhere?
+      credentials: sasCredentials({
+        accountId: cfg.azure.accountId,
+        tableName: cfg.app.checkRunsTableName,
+        rootUrl: cfg.taskcluster.rootUrl,
+        credentials: cfg.taskcluster.credentials,
+      }),
+      monitor: monitor.prefix('table.checkruns'),
+    }),
+  },
+
   api: {
     requires: [
       'cfg', 'monitor', 'schemaset', 'github', 'publisher', 'Builds',
@@ -176,8 +190,8 @@ const load = loader({
   },
 
   handlers: {
-    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds'],
-    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds}) => new Handlers({
+    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds', 'CheckRuns'],
+    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds, CheckRuns}) => new Handlers({
       rootUrl: cfg.taskcluster.rootUrl,
       credentials: cfg.pulse,
       monitor: monitor.prefix('handlers'),
@@ -185,7 +199,7 @@ const load = loader({
       reference,
       jobQueueName: cfg.app.jobQueueName,
       statusQueueName: cfg.app.statusQueueName,
-      context: {cfg, github, schemaset, Builds},
+      context: {cfg, github, schemaset, Builds, CheckRuns},
     }),
   },
 

@@ -95,17 +95,23 @@ exports.withEntities = (mock, skipping) => {
     const tableVersion = slugid.nice().replace(/[_-]/g, '');
     exports.buildsTableName = `TaskclusterGithubBuildsV${tableVersion}`;
     exports.ownersTableName = `TaskclusterIntegrationOwnersV${tableVersion}`;
+    exports.checkRunsTableName = `TaskclusterCheckRunsV${tableVersion}`;
     exports.load.cfg('app.buildsTableName', exports.buildsTableName);
     exports.load.cfg('app.ownersDirectoryTableName', exports.ownersTableName);
+    exports.load.cfg('app.checkRunsTableName', exports.checkRunsTableName);
 
     if (mock) {
       const cfg = await exports.load('cfg');
-      exports.load.inject('Builds', data.Builds.setup({
+      exports.load.inject('Builds', data.Builds.setup({ // TODO: boilerplate?
         tableName: 'Builds',
         credentials: 'inMemory',
       }));
       exports.load.inject('OwnersDirectory', data.OwnersDirectory.setup({
         tableName: 'OwnersDirectory',
+        credentials: 'inMemory',
+      }));
+      exports.load.inject('CheckRuns', data.CheckRuns.setup({
+        tableName: 'CheckRuns',
         credentials: 'inMemory',
       }));
     }
@@ -115,12 +121,16 @@ exports.withEntities = (mock, skipping) => {
 
     exports.OwnersDirectory = await exports.load('OwnersDirectory');
     await exports.OwnersDirectory.ensureTable();
+
+    exports.CheckRuns = await exports.load('CheckRuns');
+    await exports.CheckRuns.ensureTable();
   });
 
   const cleanup = async () => {
     if (!skipping()) {
-      await exports.Builds.scan({}, {handler: secret => secret.remove()});
+      await exports.Builds.scan({}, {handler: secret => secret.remove()}); // TODO: boilerplate?
       await exports.OwnersDirectory.scan({}, {handler: secret => secret.remove()});
+      await exports.CheckRuns.scan({}, {handler: secret => secret.remove()});
     }
   };
   suiteSetup(cleanup);
