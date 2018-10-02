@@ -131,8 +131,7 @@ async function installationAuthenticate(owner, OwnersDirectory, github) {
   // Look up the installation ID in Azure. If no such owner in the table, no error thrown
   let ownerInfo = await OwnersDirectory.load({owner}, true);
   if (ownerInfo) {
-    let instGithub = await github.getInstallationGithub(ownerInfo.installationId);
-    return instGithub;
+    return await github.getInstallationGithub(ownerInfo.installationId);
   } else {
     return null;
   }
@@ -187,7 +186,7 @@ builder.declare({
   stability:  'experimental',
   description: [
     'Capture a GitHub event and publish it via pulse, if it\'s a push,',
-    'release or pull request.',
+    'release, pull request or a check.',
   ].join('\n'),
 }, async function(req, res) {
   let eventId = req.headers['x-github-delivery'];
@@ -229,46 +228,56 @@ builder.declare({
   try {
     msg.body = body;
 
-    if (eventType == 'pull_request') {
-      msg.organization = sanitizeGitHubField(body.repository.owner.login),
-      msg.action = body.action;
-      msg.details = getPullRequestDetails(body);
-      msg.installationId = body.installation.id;
-      publisherKey = 'pullRequest';
+    switch (eventType) {
 
-      msg.tasks_for = 'github-pull-request';
-      msg.branch = body.pull_request.head.ref;
-    
-    } else if (eventType == 'push') {
-      msg.organization = sanitizeGitHubField(body.repository.owner.name),
-      msg.details = getPushDetails(body);
-      msg.installationId = body.installation.id;
-      publisherKey = 'push';
+      case 'pull_request':
+        msg.organization = sanitizeGitHubField(body.repository.owner.login);
+        msg.action = body.action;
+        msg.details = getPullRequestDetails(body);
+        msg.installationId = body.installation.id;
+        publisherKey = 'pullRequest';
+        msg.tasks_for = 'github-pull-request';
+        msg.branch = body.pull_request.head.ref;
+        break;
 
-      msg.tasks_for = 'github-push';
-      msg.branch = body.ref.split('/').slice(2).join('/');
-    
-    } else if (eventType == 'ping') {
-      return resolve(res, 200, 'Received ping event!');
-    
-    } else if (eventType == 'release') {
-      msg.organization = sanitizeGitHubField(body.repository.owner.login),
-      msg.details = getReleaseDetails(body);
-      msg.installationId = body.installation.id;
-      publisherKey = 'release';
+      case 'push':
+        msg.organization = sanitizeGitHubField(body.repository.owner.name);
+        msg.details = getPushDetails(body);
+        msg.installationId = body.installation.id;
+        publisherKey = 'push';
+        msg.tasks_for = 'github-push';
+        msg.branch = body.ref.split('/').slice(2).join('/');
+        break;
 
-      msg.tasks_for = 'github-release';
-      msg.branch = body.release.target_commitish;
-    
-    } else if (eventType == 'integration_installation') {
-      // Creates a new entity or overwrites an existing one
-      await this.OwnersDirectory.create({
-        installationId: body.installation.id,
-        owner: body.installation.account.login,
-      }, true);
-      return resolve(res, 200, 'Created table row!');
-    } else {
-      return resolve(res, 400, 'No publisher available for X-GitHub-Event: ' + eventType);
+      case 'ping':
+        return resolve(res, 200, 'Received ping event!');
+
+      case 'release':
+        msg.organization = sanitizeGitHubField(body.repository.owner.login);
+        msg.details = getReleaseDetails(body);
+        msg.installationId = body.installation.id;
+        publisherKey = 'release';
+        msg.tasks_for = 'github-release';
+        msg.branch = body.release.target_commitish;
+        break;
+
+      case 'integration_installation':
+        // Creates a new entity or overwrites an existing one
+        await this.OwnersDirectory.create({
+          installationId: body.installation.id,
+          owner: body.installation.account.login,
+        }, true);
+        return resolve(res, 200, 'Created table row!');
+
+      case 'check_suite':
+        msg.organization = sanitizeGitHubField(body.repository.owner.login);
+        msg.installationId = body.installation.id;
+        publisherKey = 'checkSuite';
+        msg.details = body;
+        break;
+
+      default:
+        return resolve(res, 400, 'No publisher available for X-GitHub-Event: ' + eventType);
     }
   } catch (e) {
     debug('Error processing webhook payload!');
@@ -286,11 +295,11 @@ builder.declare({
   }
 
   // Not all webhook payloads include an e-mail for the user who triggered an event
-  let headUser = msg.details['event.head.user.id'].toString();
+  let headUser = msg.body.sender.id.toString();
   let userDetails = (await instGithub.users.getById({id: headUser})).data;
-  msg.details['event.head.user.email'] = this.ajv.validate({type: 'string', format: 'email'}, userDetails.email) ?
-    userDetails.email :
-    msg.details['event.head.user.login'].replace(/\[bot\]$/, '') + '@users.noreply.github.com';
+  msg.details['event.head.user.email'] = this.ajv.validate({type: 'string', format: 'email'}, userDetails.email)
+    ? userDetails.email
+    : msg.body.sender.login.replace(/\[bot\]$/, '') + '@users.noreply.github.com';
   msg.repository = sanitizeGitHubField(body.repository.name);
   msg.eventId = eventId;
 
