@@ -269,12 +269,12 @@ builder.declare({
         }, true);
         return resolve(res, 200, 'Created table row!');
 
-      case 'check_suite':
-        msg.organization = sanitizeGitHubField(body.repository.owner.login);
-        msg.installationId = body.installation.id;
-        publisherKey = 'checkSuite';
-        msg.details = body;
-        break;
+      // case 'check_suite':
+      //   msg.organization = sanitizeGitHubField(body.repository.owner.login);
+      //   msg.installationId = body.installation.id;
+      //   publisherKey = 'checkSuite';
+      //   msg.details = body;
+      //   break;
 
       default:
         return resolve(res, 400, 'No publisher available for X-GitHub-Event: ' + eventType);
@@ -289,7 +289,6 @@ builder.declare({
   try {
     debug(`Trying to authenticate as installation for ${eventType}`);
     var instGithub = await this.github.getInstallationGithub(msg.installationId);
-    console.log('💓');
   } catch (e) {
     debug('Error authenticating as installation');
     throw e;

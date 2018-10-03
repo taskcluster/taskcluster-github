@@ -117,21 +117,21 @@ exchanges.declare({
 });
 
 /** check suite exchange */
-exchanges.declare({
-  exchange:           'check suite',
-  name:               'checkSuite',
-  title:              'GitHub check suite Event',
-  description: [
-    'When a GitHub check suite event is posted it will be broadcast on this',
-    'exchange with the designated `organization` and `repository`',
-    'in the routing-key along with event specific metadata in the payload.',
-  ].join('\n'),
-  routingKey:         commonRoutingKey(),
-  schema:             'github-checksuite-message.yml', // TODO: define the schema
-  messageBuilder:     commonMessageBuilder,
-  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
-  CCBuilder:          () => [],
-});
+// exchanges.declare({
+//   exchange:           'check suite',
+//   name:               'checkSuite',
+//   title:              'GitHub check suite Event',
+//   description: [
+//     'When a GitHub check suite event is posted it will be broadcast on this',
+//     'exchange with the designated `organization` and `repository`',
+//     'in the routing-key along with event specific metadata in the payload.',
+//   ].join('\n'),
+//   routingKey:         commonRoutingKey(),
+//   schema:             'github-checksuite-message.yml', // TODO: define the schema
+//   messageBuilder:     commonMessageBuilder,
+//   routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
+//   CCBuilder:          () => [],
+// });
 
 // Export exchanges
 module.exports = exchanges;

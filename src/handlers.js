@@ -60,7 +60,7 @@ class Handlers {
     await this.jobListener.bind(githubEvents.pullRequest());
     await this.jobListener.bind(githubEvents.push());
     await this.jobListener.bind(githubEvents.release());
-    await this.jobListener.bind(githubEvents.checkSuite());
+    // await this.jobListener.bind(githubEvents.checkSuite());
 
     // Listen for state changes to the taskcluster tasks and taskgroups
     // We only need to listen for failure and exception events on
@@ -155,7 +155,7 @@ module.exports = Handlers;
 
 /**
  * Post updates to GitHub, when the status of a task changes.
- * Taskcluster States: https://docs.taskcluster.net/reference/platform/queue/references/events
+ * Taskcluster States:
  * GitHub Statuses: https://developer.github.com/v3/repos/statuses/
  **/
 async function statusHandler(message) {
