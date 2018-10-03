@@ -226,6 +226,16 @@ async function statusHandler(message) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
   }
+
+  // try {
+  //   await instGithub.checks.update({
+  //     owner: build.organization,
+  //     repo: build.repository,
+  //     sha: build.sha,
+  //   });
+  // } catch (e) {
+  //
+  // }
 }
 
 /**
@@ -396,6 +406,17 @@ async function jobHandler(message) {
       target_url: INSPECTOR_URL + taskGroupId,
       description,
       context: statusContext,
+    });
+
+    await instGithub.checks.create({
+      owner: organization,
+      repo: repository,
+      name: `Check for ${eventType}`,
+      head_sha: sha,
+      output: {
+        title: `Check for ${eventType}`,
+        summary: groupState,
+      },
     });
 
     let now = new Date();
