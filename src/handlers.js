@@ -219,25 +219,46 @@ async function statusHandler(message) {
   try {
     // I'm not sure what the difference is between creating a status and updating it...
     // Doing a simpler thing first
-    await instGithub.checks.create({
-      ...groupState,
-      owner: build.organization,
-      repo: build.repository,
-      name: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
-      head_sha: build.sha,
-      output: {
-        title: 'TaskGroup: ' + state,
-        summary: `Check for ${eventType}`,
+    // await instGithub.checks.create({
+    //   ...groupState,
+    //   owner: build.organization,
+    //   repo: build.repository,
+    //   name: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
+    //   head_sha: build.sha,
+    //   output: {
+    //     title: 'TaskGroup: ' + state,
+    //     summary: `Check for ${eventType}`,
+    //   },
+    //   details_url: INSPECTOR_URL + taskGroupId,
+    //   actions: [
+    //     {
+    //       label: 'Re-trigger task',
+    //       description: 'Restart the task in Taskcluster',
+    //       identifier: 'rerun'
+    //     }
+    //   ]
+    // });
+    await instGithub.checks.create(Object.assign(
+      {
+        owner: build.organization,
+        repo: build.repository,
+        name: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
+        head_sha: build.sha,
+        output: {
+          title: 'TaskGroup: ' + state,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: INSPECTOR_URL + taskGroupId,
+        actions: [
+          {
+            label: 'Re-trigger task',
+            description: 'Restart the task in Taskcluster',
+            identifier: 'rerun',
+          },
+        ],
       },
-      details_url: INSPECTOR_URL + taskGroupId,
-      actions: [
-        {
-          label: 'Re-trigger task',
-          description: 'Restart the task in Taskcluster',
-          identifier: 'rerun'
-        }
-      ]
-    });
+      groupState
+    ));
   } catch (e) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
@@ -408,25 +429,47 @@ async function jobHandler(message) {
     let eventType = message.payload.details['event.type'];
     let statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
 
-    await instGithub.checks.create({
-      ...groupState,
-      owner: organization,
-      repo: repository,
-      name: statusContext,
-      head_sha: sha,
-      output: {
-        title: groupState ? 'TaskGroup: Exception' : `TaskGroup: Pending (for ${eventType})`,
-        summary: `Check for ${eventType}`,
+    // await instGithub.checks.create({
+    //   ...groupState,
+    //   owner: organization,
+    //   repo: repository,
+    //   name: statusContext,
+    //   head_sha: sha,
+    //   output: {
+    //     title: groupState ? 'TaskGroup: Exception' : `TaskGroup: Pending (for ${eventType})`,
+    //     summary: `Check for ${eventType}`,
+    //   },
+    //   details_url: INSPECTOR_URL + taskGroupId,
+    //   actions: [
+    //     {
+    //       label: 'Re-trigger task',
+    //       description: 'Restart the task in Taskcluster',
+    //       identifier: 'rerun'
+    //     }
+    //   ]
+    // });
+
+    await instGithub.checks.create(Object.create(
+      {
+        owner: organization,
+        repo: repository,
+        name: statusContext,
+        head_sha: sha,
+        output: {
+          title: groupState ? 'TaskGroup: Exception' : `TaskGroup: Pending (for ${eventType})`,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: INSPECTOR_URL + taskGroupId,
+        actions: [
+          {
+            label: 'Re-trigger task',
+            description: 'Restart the task in Taskcluster',
+            identifier: 'rerun',
+          },
+        ],
       },
-      details_url: INSPECTOR_URL + taskGroupId,
-      actions: [
-        {
-          label: 'Re-trigger task',
-          description: 'Restart the task in Taskcluster',
-          identifier: 'rerun'
-        }
-      ]
-    });
+      groupState,
+    ));
 
     let now = new Date();
     await context.Builds.create({
