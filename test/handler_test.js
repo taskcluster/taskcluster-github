@@ -379,7 +379,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       assert.equal(build.state, state);
     }
 
-    test.skip('task success gets a success comment', async function() {
+    test('task success gets a success comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
@@ -389,7 +389,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       await assertBuildState('success');
     });
 
-    test.skip('task failure gets a failure comment', async function() {
+    test('task failure gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
@@ -399,7 +399,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       await assertBuildState('failure');
     });
 
-    test.skip('task exception gets a failure comment', async function() {
+    test('task exception gets a failure comment', async function() {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
       await simulateStatusMessage({
         taskGroupId: TASKGROUPID,
