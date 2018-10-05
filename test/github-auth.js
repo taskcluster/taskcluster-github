@@ -47,19 +47,6 @@ class FakeGithub {
           body,
         };
         if (!this._comments[key]) {
-          this._comments[key] = [];
-        }
-        this._comments[key].push(info);
-      },
-      'issues.createComment': ({owner, repo, number, body}) => {
-        if (repo === 'no-permission') {
-          throwError(403);
-        }
-        const key = `${owner}/${repo}@${number}`;
-        const info = {
-          body,
-        };
-        if (!this._comments[key]) {
           this._comments[key]=[];
         }
         this._comments[key].push(info);
@@ -128,6 +115,23 @@ class FakeGithub {
         } else {
           throwError(404);
         }
+      },
+      'checks.create': async ({owner, repo, name, head_sha, output, details_url, actions, status, conclusion}) => {
+        if (repo === 'no-permission') {
+          throwError(403);
+        }
+        const key = `${owner}/${repo}@${head_sha}`;
+        const info = {
+          status: status || 'queued',
+          conclusion,
+          details_url,
+          description: output.title,
+          context: name,
+        };
+        if (!this._statuses[key]) {
+          this._statuses[key] = [];
+        }
+        this._statuses[key].push(info);
       },
     };
 

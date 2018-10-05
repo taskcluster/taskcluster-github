@@ -29,6 +29,7 @@ helper.secrets.mockSuite('webhook', ['taskcluster'], function(mock, skipping) {
   statusTest('Push', 'webhook.push.json', 204);
   statusTest('Release', 'webhook.release.json', 204);
   statusTest('Tag', 'webhook.tag_push.json', 204);
+  // statusTest('Check run', 'webhook.check_suite.json', 204);
 
   // Bad data: should all return 400 responses
   statusTest('Push without secret', 'webhook.push.no_secret.json', 400);

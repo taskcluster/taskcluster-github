@@ -8,6 +8,21 @@ const prAllowed = require('./pr-allowed');
 
 const INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
 
+const CONCLUSIONS = {
+  success: 'Success',
+  failure: 'Failure',
+  neutral: 'It is neither good nor bad',
+  cancelled: 'Cancelled',
+  timed_out: 'Timed out',
+  action_required: 'Action required',
+};
+
+const STATUSES = {
+  queued: 'Queued',
+  in_progress: 'In progress',
+  completed: 'Completed',
+};
+
 const debugPrefix = 'taskcluster-github:handlers';
 const debug = Debug(debugPrefix);
 
@@ -60,6 +75,7 @@ class Handlers {
     await this.jobListener.bind(githubEvents.pullRequest());
     await this.jobListener.bind(githubEvents.push());
     await this.jobListener.bind(githubEvents.release());
+    // await this.jobListener.bind(githubEvents.checkSuite());
 
     // Listen for state changes to the taskcluster tasks and taskgroups
     // We only need to listen for failure and exception events on
@@ -154,7 +170,7 @@ module.exports = Handlers;
 
 /**
  * Post updates to GitHub, when the status of a task changes.
- * Taskcluster States: https://docs.taskcluster.net/reference/platform/queue/references/events
+ * Taskcluster States:
  * GitHub Statuses: https://developer.github.com/v3/repos/statuses/
  **/
 async function statusHandler(message) {
@@ -167,7 +183,11 @@ async function statusHandler(message) {
   let debug = Debug(debugPrefix + ':' + build.eventId);
   debug(`Handling state change for task-group ${taskGroupId}`);
 
-  let state = 'success';
+  groupState = {
+    status: 'completed',
+    conclusion: 'success',
+    completed_at: new Date().toISOString(),
+  };
 
   if (message.exchange.endsWith('task-group-resolved')) {
     let queue = new taskcluster.Queue({
@@ -179,23 +199,23 @@ async function statusHandler(message) {
       params.continuationToken = group.continuationToken;
       group.tasks.forEach(task => {
         if (_.includes(['failed', 'exception'], task.status.state)) {
-          state = 'failure';
+          groupState.conclusion = 'failure';
         }
       });
     } while (params.continuationToken);
   }
 
   if (message.exchange.endsWith('task-exception') || message.exchange.endsWith('task-failed')) {
-    state = 'failure';
+    groupState.conclusion = 'failure';
   }
 
   await build.modify(b => {
     if (b.state !== 'failure') {
-      b.state = state;
+      b.state = groupState.conclusion;
       b.updated = new Date();
     }
   });
-  if (build.state !== state) {
+  if (build.state !== groupState.conclusion) {
     debug('Task group already marked as failure. Continuing.');
     return;
   }
@@ -212,15 +232,48 @@ async function statusHandler(message) {
 
   debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha} (${state})`);
   try {
-    await instGithub.repos.createStatus({
-      owner: build.organization,
-      repo: build.repository,
-      sha: build.sha,
-      state,
-      target_url: INSPECTOR_URL + taskGroupId,
-      description: 'TaskGroup: ' + state,
-      context: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
-    });
+    // I'm not sure what the difference is between creating a status and updating it...
+    // Doing a simpler thing first
+    // await instGithub.checks.create({
+    //   ...groupState,
+    //   owner: build.organization,
+    //   repo: build.repository,
+    //   name: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
+    //   head_sha: build.sha,
+    //   output: {
+    //     title: 'TaskGroup: ' + state,
+    //     summary: `Check for ${eventType}`,
+    //   },
+    //   details_url: INSPECTOR_URL + taskGroupId,
+    //   actions: [
+    //     {
+    //       label: 'Re-trigger task',
+    //       description: 'Restart the task in Taskcluster',
+    //       identifier: 'rerun'
+    //     }
+    //   ]
+    // });
+    await instGithub.checks.create(Object.assign(
+      {
+        owner: build.organization,
+        repo: build.repository,
+        name: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
+        head_sha: build.sha,
+        output: {
+          title: 'TaskGroup: ' + state,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: INSPECTOR_URL + taskGroupId,
+        actions: [
+          {
+            label: 'Re-trigger task',
+            description: 'Restart the task in Taskcluster',
+            identifier: 'rerun',
+          },
+        ],
+      },
+      groupState
+    ));
   } catch (e) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
@@ -299,7 +352,9 @@ async function jobHandler(message) {
     throw e;
   }
 
-  let groupState = 'pending';
+  let groupState = {
+    status: 'queued',
+  };
   let taskGroupId = 'nonexistent';
   let graphConfig;
 
@@ -380,22 +435,60 @@ async function jobHandler(message) {
     await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
   } catch (e) {
     debug('Creating tasks failed! Leaving comment on Github.');
-    groupState = 'failure';
+    groupState = {
+      status: 'completed',
+      conclusion: 'failure',
+      completed_at: new Date().toISOString(),
+    };
     await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   } finally {
     debug(`Trying to create status for ${organization}/${repository}@${sha} (${groupState})`);
     let eventType = message.payload.details['event.type'];
     let statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
-    let description = groupState === 'pending' ? `TaskGroup: Pending (for ${eventType})` : 'TaskGroup: Exception';
-    await instGithub.repos.createStatus({
-      owner: organization,
-      repo: repository,
-      sha,
-      state: groupState,
-      target_url: INSPECTOR_URL + taskGroupId,
-      description,
-      context: statusContext,
-    });
+
+    // await instGithub.checks.create({
+    //   ...groupState,
+    //   owner: organization,
+    //   repo: repository,
+    //   name: statusContext,
+    //   head_sha: sha,
+    //   output: {
+    //     title: groupState ? 'TaskGroup: Exception' : `TaskGroup: Pending (for ${eventType})`,
+    //     summary: `Check for ${eventType}`,
+    //   },
+    //   details_url: INSPECTOR_URL + taskGroupId,
+    //   actions: [
+    //     {
+    //       label: 'Re-trigger task',
+    //       description: 'Restart the task in Taskcluster',
+    //       identifier: 'rerun'
+    //     }
+    //   ]
+    // });
+
+    await instGithub.checks.create(Object.assign(
+      {
+        owner: organization,
+        repo: repository,
+        name: statusContext,
+        head_sha: sha,
+        output: {
+          title: `TaskGroup: ${groupState.conclusion 
+            ? CONCLUSIONS[groupState.conclusion] 
+            : STATUSES[groupState.status]} (for ${eventType})`,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: INSPECTOR_URL + taskGroupId,
+        actions: [
+          {
+            label: 'Re-trigger task',
+            description: 'Restart the task in Taskcluster',
+            identifier: 'rerun',
+          },
+        ],
+      },
+      groupState,
+    ));
 
     let now = new Date();
     await context.Builds.create({
@@ -403,7 +496,7 @@ async function jobHandler(message) {
       repository,
       sha,
       taskGroupId,
-      state: groupState,
+      state: groupState.conclusion || groupState.status,
       created: now,
       updated: now,
       installationId: message.payload.installationId,
