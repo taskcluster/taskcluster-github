@@ -8,6 +8,21 @@ const prAllowed = require('./pr-allowed');
 
 const INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
 
+const CONCLUSIONS = {
+  success: 'Success',
+  failure: 'Failure',
+  neutral: 'It is neither good nor bad',
+  cancelled: 'Cancelled',
+  timed_out: 'Timed out',
+  action_required: 'Action required',
+};
+
+const STATUSES = {
+  queued: 'Queued',
+  in_progress: 'In progress',
+  completed: 'Completed',
+};
+
 const debugPrefix = 'taskcluster-github:handlers';
 const debug = Debug(debugPrefix);
 
@@ -337,7 +352,9 @@ async function jobHandler(message) {
     throw e;
   }
 
-  let groupState = null;
+  let groupState = {
+    status: 'queued',
+  };
   let taskGroupId = 'nonexistent';
   let graphConfig;
 
@@ -449,14 +466,16 @@ async function jobHandler(message) {
     //   ]
     // });
 
-    await instGithub.checks.create(Object.create(
+    await instGithub.checks.create(Object.assign(
       {
         owner: organization,
         repo: repository,
         name: statusContext,
         head_sha: sha,
         output: {
-          title: groupState ? 'TaskGroup: Exception' : `TaskGroup: Pending (for ${eventType})`,
+          title: `TaskGroup: ${groupState.conclusion 
+            ? CONCLUSIONS[groupState.conclusion] 
+            : STATUSES[groupState.status]} (for ${eventType})`,
           summary: `Check for ${eventType}`,
         },
         details_url: INSPECTOR_URL + taskGroupId,
@@ -477,7 +496,7 @@ async function jobHandler(message) {
       repository,
       sha,
       taskGroupId,
-      state: groupState,
+      state: groupState.conclusion || groupState.status,
       created: now,
       updated: now,
       installationId: message.payload.installationId,

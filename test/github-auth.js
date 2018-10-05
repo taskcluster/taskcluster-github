@@ -116,6 +116,23 @@ class FakeGithub {
           throwError(404);
         }
       },
+      'checks.create': async ({owner, repo, name, head_sha, output, details_url, actions, status, conclusion}) => {
+        if (repo === 'no-permission') {
+          throwError(403);
+        }
+        const key = `${owner}/${repo}@${head_sha}`;
+        const info = {
+          status: status || 'queued',
+          conclusion,
+          details_url,
+          description: output.title,
+          context: name,
+        };
+        if (!this._statuses[key]) {
+          this._statuses[key] = [];
+        }
+        this._statuses[key].push(info);
+      },
     };
 
     const debug = Debug('FakeGithub');
