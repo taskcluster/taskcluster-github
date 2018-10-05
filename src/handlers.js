@@ -236,6 +236,18 @@ async function jobHandler(message) {
   debug('Received message. Starting processing...');
   let context = this.context;
 
+  var elapsed = Date.now() - message.payload.created;  ///changes made now
+  this.monitor.measure('handling time', elapsed);
+  
+  
+  
+  this.monitor=new Date();              ////earlier
+  var end = this.monitor.getTime();
+  var difference= end-start;
+  console.log(difference);         ////
+
+
+
   // Authenticating as installation.
   let instGithub = await context.github.getInstallationGithub(message.payload.installationId);
 
