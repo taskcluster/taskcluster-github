@@ -213,7 +213,7 @@ async function groupStatusHandler(message) {
 
   await build.modify(b => {
     if (b.state !== 'failure') {
-      b.taskState = groupState;
+      b.state = groupState;
       b.updated = new Date();
     }
   });
