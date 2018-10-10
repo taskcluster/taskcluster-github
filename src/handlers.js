@@ -255,14 +255,12 @@ async function statusHandler(message) {
 
   debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha} (${taskState})`);
   try {
-    await instGithub.checks.update(Object.assign(
-      {
-        owner: build.organization,
-        repo: build.repository,
-        check_run_id: checkRun.checkRunId,
-      },
-      taskState
-    ));
+    await instGithub.checks.update({
+      ...taskState,
+      owner: build.organization,
+      repo: build.repository,
+      check_run_id: checkRun.checkRunId,
+    });
   } catch (e) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
@@ -435,22 +433,20 @@ async function jobHandler(message) {
     let eventType = message.payload.details['event.type'];
 
     await Promise.all(graphConfig.tasks.map(async (task, i) => {
-      const checkRun = await instGithub.checks.create(Object.assign( // TODO: need spread syntax
-        {
-          owner: organization,
-          repo: repository,
-          name: `Task ${i}: ${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`,
-          head_sha: sha,
-          output: { // TODO: maybe a more helpful output?
-            title: `TaskGroup: ${groupState.conclusion // TODO: we're using group status for individual task
-              ? TITLES[groupState.conclusion]
-              : TITLES[groupState.status]} (for ${eventType})`,
-            summary: `Check for ${eventType}`,
-          },
-          details_url: INSPECTOR_URL + taskGroupId + `/tasks/${task.taskId}/details`,
+      const checkRun = await instGithub.checks.create({
+        ...groupState, // TODO: we're using group status for individual task
+        owner: organization,
+        repo: repository,
+        name: `Task ${i}: ${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`,
+        head_sha: sha,
+        output: { // TODO: maybe a more helpful output?
+          title: `TaskGroup: ${groupState.conclusion // TODO: we're using group status for individual task
+            ? TITLES[groupState.conclusion]
+            : TITLES[groupState.status]} (for ${eventType})`,
+          summary: `Check for ${eventType}`,
         },
-        groupState, // TODO: we're using group status for individual task
-      ));
+        details_url: INSPECTOR_URL + taskGroupId + `/tasks/${task.taskId}/details`,
+      });
 
       return await context.CheckRuns.create({
         taskGroupId: taskGroupId,
