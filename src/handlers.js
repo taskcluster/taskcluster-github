@@ -225,14 +225,14 @@ async function groupStatusHandler(message) {
  * GitHub Checks: https://developer.github.com/v3/checks/
  **/
 async function statusHandler(message) {
-  let taskGroupId = message.payload.status.taskGroupId;
-  let taskId = message.payload.status.taskId;
+  let {taskGroupId, taskId} = message.payload.status;
 
   let build = await this.context.Builds.load({
     taskGroupId,
   });
+  let {organization, repository, sha, eventId, eventType, installationId} = build;
 
-  let debug = Debug(debugPrefix + ':' + build.eventId);
+  let debug = Debug(debugPrefix + ':' + eventId);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
 
   let taskState = {
@@ -241,26 +241,48 @@ async function statusHandler(message) {
     completed_at: new Date().toISOString(),
   };
 
-  let checkRun = await this.context.CheckRuns.load({taskGroupId, taskId});
+  // true means we'll get null if the record doesn't exist
+  let checkRun = await this.context.CheckRuns.load({taskGroupId, taskId}, true);
 
   // Authenticating as installation.
   try {
     debug('Authenticating as installation in status handler...');
-    var instGithub = await this.context.github.getInstallationGithub(build.installationId);
+    var instGithub = await this.context.github.getInstallationGithub(installationId);
     debug('Authorized as installation in status handler');
   } catch (e) {
     debug(`Error authenticating as installation in status handler! Error: ${e}`);
     throw e;
   }
 
-  debug(`Attempting to update status for ${build.organization}/${build.repository}@${build.sha} (${taskState})`);
+  debug(`Attempting to update status for ${organization}/${repository}@${sha} (${taskState})`);
   try {
-    await instGithub.checks.update({
-      ...taskState,
-      owner: build.organization,
-      repo: build.repository,
-      check_run_id: checkRun.checkRunId,
-    });
+    if (checkRun) {
+      await instGithub.checks.update({
+        ...taskState,
+        owner: organization,
+        repo: repository,
+        check_run_id: checkRun.checkRunId, // TODO: a helpful output
+      });
+    } else {
+      const checkRun = await instGithub.checks.create({
+        owner: organization,
+        repo: repository,
+        name: `Task ${taskId}`, // <-- this needs to be unique 😩
+        head_sha: sha,
+        output: { // TODO: a helpful output
+          title: `TaskGroup: queued for ${eventType})`,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: INSPECTOR_URL + taskGroupId + `/tasks/${taskId}/details`,
+      });
+
+      await context.CheckRuns.create({
+        taskGroupId: taskGroupId,
+        taskId: taskId,
+        checkSuiteId: checkRun.data.check_suite.id.toString(),
+        checkRunId: checkRun.data.id.toString(),
+      });
+    }
   } catch (e) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
@@ -282,6 +304,7 @@ async function jobHandler(message) {
   // We must attempt to convert the sanitized fields back to normal here. 
   // Further discussion of how to deal with this cleanly is in
   // https://github.com/taskcluster/taskcluster-github/issues/52
+  // TODO: maybe we don't have to save this to payload in the first place?
   message.payload.organization = message.payload.organization.replace(/%/g, '.');
   message.payload.repository = message.payload.repository.replace(/%/g, '.');
   let organization = message.payload.organization;
@@ -339,9 +362,6 @@ async function jobHandler(message) {
     throw e;
   }
 
-  let groupState = {
-    status: 'queued',
-  };
   let taskGroupId = 'nonexistent';
   let graphConfig;
 
@@ -370,6 +390,7 @@ async function jobHandler(message) {
     debug('Checking pull request permission...');
 
     // Decide if a user has permissions to run tasks.
+    // TODO: we probably could do this earlier?
     let login = message.payload.details['event.head.user.login'];
     try {
       if (!await prAllowed({login, organization, repository, instGithub, debug, message})) {
@@ -422,72 +443,63 @@ async function jobHandler(message) {
     await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
   } catch (e) {
     debug('Creating tasks failed! Leaving comment on Github.');
-    groupState = {
-      status: 'completed',
-      conclusion: 'failure',
-      completed_at: new Date().toISOString(),
-    };
-    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  } finally {
-    debug(`Trying to create check runs for ${organization}/${repository}@${sha} (${groupState})`);
-    let eventType = message.payload.details['event.type'];
+    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+  }
 
-    await Promise.all(graphConfig.tasks.map(async (task, i) => {
-      const checkRun = await instGithub.checks.create({
-        ...groupState, // TODO: we're using group status for individual task
-        owner: organization,
-        repo: repository,
-        name: `Task ${i}: ${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`,
-        head_sha: sha,
-        output: { // TODO: maybe a more helpful output?
-          title: `TaskGroup: ${groupState.conclusion // TODO: we're using group status for individual task
-            ? TITLES[groupState.conclusion]
-            : TITLES[groupState.status]} (for ${eventType})`,
-          summary: `Check for ${eventType}`,
-        },
-        details_url: INSPECTOR_URL + taskGroupId + `/tasks/${task.taskId}/details`,
-      });
+  debug(`Trying to create check runs for ${organization}/${repository}@${sha} (queued)`);
+  let eventType = message.payload.details['event.type'];
 
-      return await context.CheckRuns.create({
-        taskGroupId: taskGroupId,
-        taskId: task.taskId,
-        checkSuiteId: checkRun.data.check_suite.id.toString(),
-        checkRunId: checkRun.data.id.toString(),
-      }).catch(async (err) => {
-        if (err.code !== 'EntityAlreadyExists') {
-          throw err;
-        }
-      });
-    }));
+  await Promise.all(graphConfig.tasks.map(async (task, i) => {
+    const checkRun = await instGithub.checks.create({
+      owner: organization,
+      repo: repository,
+      name: `Task ${i}: ${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`,
+      head_sha: sha,
+      output: {
+        title: `TaskGroup: Queued (for ${eventType})`,
+        summary: `Check for ${eventType}`,
+      },
+      details_url: INSPECTOR_URL + taskGroupId + `/tasks/${task.taskId}/details`,
+    });
 
-    let now = new Date();
-    let state = groupState.conclusion || groupState.status;
-    await context.Builds.create({
-      organization,
-      repository,
-      sha,
-      taskGroupId,
-      state,
-      created: now,
-      updated: now,
-      installationId: message.payload.installationId,
-      eventType: message.payload.details['event.type'],
-      eventId: message.payload.eventId,
+    return await context.CheckRuns.create({
+      taskGroupId: taskGroupId,
+      taskId: task.taskId,
+      checkSuiteId: checkRun.data.check_suite.id.toString(),
+      checkRunId: checkRun.data.id.toString(),
     }).catch(async (err) => {
       if (err.code !== 'EntityAlreadyExists') {
         throw err;
       }
-      let build = await this.Builds.load({
-        taskGroupId,
-      });
-      assert.equal(build.state, state, `State for ${organization}/${repository}@${sha}
-        already exists but is set to ${build.state} instead of ${state}!`);
-      assert.equal(build.organization, organization);
-      assert.equal(build.repository, repository);
-      assert.equal(build.sha, sha);
-      assert.equal(build.eventType, message.payload.details['event.type']);
-      assert.equal(build.eventId, message.payload.eventId);
     });
-  }
+  }));
+
+  let now = new Date();
+  await context.Builds.create({
+    organization,
+    repository,
+    sha,
+    taskGroupId,
+    state: 'pending',
+    created: now,
+    updated: now,
+    installationId: message.payload.installationId,
+    eventType: message.payload.details['event.type'],
+    eventId: message.payload.eventId,
+  }).catch(async (err) => {
+    if (err.code !== 'EntityAlreadyExists') {
+      throw err;
+    }
+    let build = await this.Builds.load({
+      taskGroupId,
+    });
+    assert.equal(build.state, state, `State for ${organization}/${repository}@${sha}
+      already exists but is set to ${build.state} instead of ${state}!`);
+    assert.equal(build.organization, organization);
+    assert.equal(build.repository, repository);
+    assert.equal(build.sha, sha);
+    assert.equal(build.eventType, message.payload.details['event.type']);
+    assert.equal(build.eventId, message.payload.eventId);
+  });
 }
 
