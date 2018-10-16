@@ -10,12 +10,14 @@ const fakeGithubAuth = require('./github-auth');
 const data = require('../src/data');
 const libUrls = require('taskcluster-lib-urls');
 const {fakeauth, stickyLoader, Secrets} = require('taskcluster-lib-testing');
+const {FakeClient} = require('taskcluster-lib-pulse');
 
 exports.load = stickyLoader(load);
 
 suiteSetup(async function() {
   exports.load.inject('profile', 'test');
   exports.load.inject('process', 'test');
+  exports.load.inject('pulseClient', new FakeClient());
 });
 
 // set up the testing secrets
@@ -66,7 +68,6 @@ exports.withFakePublisher = (mock, skipping) => {
     }
     exports.load.save();
 
-    exports.load.cfg('pulse.fake', true);
     exports.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
     await exports.load('publisher');
   });

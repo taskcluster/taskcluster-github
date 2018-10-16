@@ -17,6 +17,7 @@ const docs = require('taskcluster-lib-docs');
 const App = require('taskcluster-lib-app');
 const {sasCredentials} = require('taskcluster-lib-azure');
 const githubAuth = require('./github-auth');
+const {Client, claimedCredentials} = require('taskcluster-lib-pulse');
 
 const load = loader({
   cfg: {
@@ -77,15 +78,32 @@ const load = loader({
     setup: ({docs}) => docs.write({docsDir: process.env['DOCS_OUTPUT_DIR']}),
   },
 
+  pulseClient: {
+    requires: ['cfg', 'monitor'],
+    setup: ({cfg, monitor}) => {
+      const {namespace, expiresAfter, contact} = cfg.pulse;
+      const {rootUrl, credentials} = cfg.taskcluster;
+      return new Client({
+        namespace,
+        monitor,
+        credentials: claimedCredentials({
+          rootUrl,
+          credentials,
+          namespace,
+          expiresAfter,
+          contact}),
+      });
+    },
+  },
+
   publisher: {
-    requires: ['cfg', 'monitor', 'schemaset'],
-    setup: async ({cfg, monitor, schemaset}) => exchanges.setup({
-      rootUrl:            cfg.taskcluster.rootUrl,
-      credentials:        cfg.pulse,
-      validator:          await schemaset.validator(cfg.taskcluster.rootUrl),
-      publish:            cfg.app.publishMetaData,
-      aws:                cfg.aws,
-      monitor:            monitor.prefix('publisher'),
+    requires: ['cfg', 'schemaset', 'pulseClient'],
+    setup: async ({cfg, pulseClient, schemaset}) => await exchanges.publisher({
+      rootUrl: cfg.taskcluster.rootUrl,
+      schemaset,
+      client: pulseClient,
+      publish: cfg.app.publishMetaData,
+      aws: cfg.aws,
     }),
   },
 
@@ -176,8 +194,8 @@ const load = loader({
   },
 
   handlers: {
-    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds'],
-    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds}) => new Handlers({
+    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds', 'pulseClient'],
+    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds, pulseClient}) => new Handlers({
       rootUrl: cfg.taskcluster.rootUrl,
       credentials: cfg.pulse,
       monitor: monitor.prefix('handlers'),
@@ -186,6 +204,7 @@ const load = loader({
       jobQueueName: cfg.app.jobQueueName,
       statusQueueName: cfg.app.statusQueueName,
       context: {cfg, github, schemaset, Builds},
+      pulseClient,
     }),
   },
 

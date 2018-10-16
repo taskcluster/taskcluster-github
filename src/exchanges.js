@@ -1,4 +1,4 @@
-const Exchanges = require('pulse-publisher');
+const {Exchanges} = require('taskcluster-lib-pulse');
 const assert = require('assert');
 const _ = require('lodash');
 const debug = require('debug')('taskcluster-github:exchanges');

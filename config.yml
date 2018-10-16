@@ -41,10 +41,9 @@ defaults:
     trustProxy: false
 
   pulse:
-    username: !env PULSE_USERNAME
-    password: !env PULSE_PASSWORD
-    hostname: !env PULSE_HOSTNAME
-    vhost: !env PULSE_VHOST
+    namespace: !env PULSE_NAMESPACE
+    expiresAfter: !env PULSE_EXPIRES_AFTER
+    contact: !env PULSE_CONTACT
 
   aws:
     accessKeyId: !env AWS_ACCESS_KEY
