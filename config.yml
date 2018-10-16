@@ -120,3 +120,4 @@ test:
 
   pulse:
     fake: true
+    namespace: 'taskcluster-fake'
