@@ -17,7 +17,9 @@ exports.load = stickyLoader(load);
 suiteSetup(async function() {
   exports.load.inject('profile', 'test');
   exports.load.inject('process', 'test');
-  exports.load.inject('pulseClient', new FakeClient());
+  let fakePulseClient = new FakeClient();
+  fakePulseClient.namespace = 'taskcluster-fake';
+  exports.load.inject('pulseClient', fakePulseClient);
 });
 
 // set up the testing secrets
