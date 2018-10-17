@@ -47,11 +47,8 @@ const load = loader({
   },
 
   reference: {
-    requires: ['cfg'],
-    setup: ({cfg}) => exchanges.reference({
-      rootUrl:          cfg.taskcluster.rootUrl,
-      credentials:      cfg.pulse,
-    }),
+    requires: [],
+    setup: () => exchanges.reference(),
   },
 
   ajv: {
