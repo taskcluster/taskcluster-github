@@ -358,7 +358,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
           },
         };
 
-        handlers.statusListener.fakeMessage(message);
+        handlers.statusPq.fakeMessage(message);
       });
     }
 
