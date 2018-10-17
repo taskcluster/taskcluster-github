@@ -92,7 +92,7 @@ class Handlers {
         bindings: jobBindings,
         queueName: this.jobQueueName,
       },
-      message => this.monitor.timedHandler('joblistener', callHandler('job', jobHandler))
+      message => this.monitor.timedHandler('joblistener', jobHandler(message))
     );
     this.statusPq = await consume(
       {
@@ -100,7 +100,7 @@ class Handlers {
         bindings: statusBindings,
         queueName: this.statusQueueName,
       },
-      message => this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler))
+      message => this.monitor.timedHandler('statuslistener', statusHandler(message))
     );
   }
 
