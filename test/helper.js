@@ -3,7 +3,6 @@ const fs = require('fs');
 const _ = require('lodash');
 const slugid = require('slugid');
 const builder = require('../src/api');
-const Intree = require('../src/intree');
 const taskcluster = require('taskcluster-client');
 const load = require('../src/main');
 const fakeGithubAuth = require('./github-auth');
