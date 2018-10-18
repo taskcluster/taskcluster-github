@@ -17,7 +17,7 @@ const docs = require('taskcluster-lib-docs');
 const App = require('taskcluster-lib-app');
 const {sasCredentials} = require('taskcluster-lib-azure');
 const githubAuth = require('./github-auth');
-const {Client, claimedCredentials} = require('taskcluster-lib-pulse');
+const {Client, pulseCredentials} = require('taskcluster-lib-pulse');
 
 const load = loader({
   cfg: {
@@ -78,17 +78,10 @@ const load = loader({
   pulseClient: {
     requires: ['cfg', 'monitor'],
     setup: ({cfg, monitor}) => {
-      const {namespace, expiresAfter, contact} = cfg.pulse;
-      const {rootUrl, credentials} = cfg.taskcluster;
       return new Client({
-        namespace,
+        namespace: cfg.pulse.namespace,
         monitor,
-        credentials: claimedCredentials({
-          rootUrl,
-          credentials,
-          namespace,
-          expiresAfter,
-          contact}),
+        credentials: pulseCredentials(cfg.pulse),
       });
     },
   },
