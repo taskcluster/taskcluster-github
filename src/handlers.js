@@ -30,8 +30,8 @@ class Handlers {
     this.connection = null;
     this.statusListener = null;
     this.jobListener = null;
-    this.statusQueueName = statusQueueName;  // Optional
-    this.jobQueueName = jobQueueName;  // Optional
+    this.statusQueueName = statusQueueName;
+    this.jobQueueName = jobQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
 
