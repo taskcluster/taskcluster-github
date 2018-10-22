@@ -41,10 +41,11 @@ defaults:
     trustProxy: false
 
   pulse:
+    hostname: !env PULSE_HOSTNAME
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
-    hostname: !env PULSE_HOSTNAME
     vhost: !env PULSE_VHOST
+    namespace: !env PULSE_NAMESPACE
 
   aws:
     accessKeyId: !env AWS_ACCESS_KEY
@@ -64,13 +65,14 @@ production:
 
   server:
     env: 'production'
-    forceSSL: true
-    # We trust the proxy on heroku, as the SSL end-point provided by heroku
-    # is a proxy, so we have to trust it.
-    trustProxy: true
+    forceSSL: !env:bool FORCE_SSL
+    trustProxy: !env:bool TRUST_PROXY
 
   taskcluster:
     schedulerId: taskcluster-github
+
+  pulse:
+    namespace: taskcluster-github
 
 staging:
   app:
@@ -99,6 +101,8 @@ staging:
 test:
   app:
     botName: 'magicalTCspirit'
+    jobQueue: 'test-jobs'
+    statusQueue: 'test-statuses'
 
   webhook:
     secret: ['abc123', 'def456']
@@ -120,4 +124,8 @@ test:
     schedulerId: tc-gh-devel
 
   pulse:
-    fake: true
+    namespace: 'taskcluster-fake'
+    hostname: 'test-hostname'
+    username: 'username'
+    password: 'password'
+    vhost: 'test-vhost'
