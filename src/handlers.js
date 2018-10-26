@@ -7,8 +7,6 @@ const _ = require('lodash');
 const prAllowed = require('./pr-allowed');
 const {consume} = require('taskcluster-lib-pulse');
 
-const INSPECTOR_URL = 'https://tools.taskcluster.net/task-group-inspector/#/';
-
 const TITLES = { // maps github checkruns statuses and conclusions to titles to be displayed
   success: 'Success',
   failure: 'Failure',
@@ -285,7 +283,7 @@ async function statusHandler(message) {
           title: `TaskGroup: queued for ${eventType})`,
           summary: `Check for ${eventType}`,
         },
-        details_url: INSPECTOR_URL + taskGroupId + `/tasks/${taskId}/details`,
+        details_url: `${context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
       });
 
       await context.CheckRuns.create({
@@ -471,7 +469,7 @@ async function jobHandler(message) {
         title: `TaskGroup: Queued (for ${eventType})`,
         summary: `Check for ${eventType}`,
       },
-      details_url: INSPECTOR_URL + taskGroupId + `/tasks/${task.taskId}/details`,
+      details_url: `${context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${task.taskId}/details`,
     });
 
     return await context.CheckRuns.create({

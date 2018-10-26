@@ -12,7 +12,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
   helper.withEntities(mock, skipping);
   helper.withFakeGithub(mock, skipping);
 
-  const URL_PREFIX = 'https://tools.taskcluster.net/task-group-inspector/#/';
+  const URL_PREFIX = 'https://tc-tests.localhost/groups/';
   const SLUG_ID_LENGTH = 22;
 
   let github = null;
