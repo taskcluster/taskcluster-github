@@ -478,9 +478,8 @@ async function jobHandler(message) {
       checkSuiteId: checkRun.data.check_suite.id.toString(),
       checkRunId: checkRun.data.id.toString(),
     }).catch(async (err) => {
-      if (err.code !== 'EntityAlreadyExists') {
-        throw err;
-      }
+      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
+      throw err;
     });
   }));
 
@@ -498,6 +497,7 @@ async function jobHandler(message) {
     eventId: message.payload.eventId,
   }).catch(async (err) => {
     if (err.code !== 'EntityAlreadyExists') {
+      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
       throw err;
     }
     let build = await this.Builds.load({
