@@ -158,7 +158,7 @@ class Handlers {
     }
     let body = [
       '<details>\n',
-      '<summary>Submitting the task to Taskcluster failed. Details</summary>',
+      '<summary>Error during processing the tasks. Details</summary>',
       '',
       errorBody, // already in Markdown..
       '',
