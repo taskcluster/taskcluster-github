@@ -11,7 +11,6 @@ This service monitors all of the repositories associated with an organization fo
 Insert the following string (replacing the words in caps with your organization or user name, repository name and the branch name) to the readme file in your project's repository:
 `[![Task Status](https://github.taskcluster.net/v1/repository/USERNAME/REPONAME/BRANCHNAME/badge.svg)](https://github.taskcluster.net/v1/repository/USERNAME/REPONAME/BRANCHNAME/latest)`
 
-
 ## Components
 
 ### API Server
