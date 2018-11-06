@@ -395,19 +395,6 @@ async function jobHandler(message) {
     await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   } finally {
     debug(`Trying to create status for ${organization}/${repository}@${sha} (${groupState})`);
-    let eventType = message.payload.details['event.type'];
-    let statusContext = `${context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
-    let description = groupState === 'pending' ? `TaskGroup: Pending (for ${eventType})` : 'TaskGroup: Exception';
-    const target_url = libUrls.ui(context.cfg.taskcluster.rootUrl, `/task-group-inspector/#/${taskGroupId}`);
-    await instGithub.repos.createStatus({
-      owner: organization,
-      repo: repository,
-      sha,
-      state: groupState,
-      target_url,
-      description,
-      context: statusContext,
-    });
 
     let now = new Date();
     await context.Builds.create({
@@ -439,4 +426,44 @@ async function jobHandler(message) {
 
     debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
   }
+}
+
+/**
+ * If a task was defined, post the initial status to github
+ *
+ * @param message - taskDefined exchange message
+ *   https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/events#taskdefined
+ * @returns {Promise<void>}
+ */
+async function taskHandler(message) {
+  const {taskGroupId} = message.payload;
+
+  const debug = Debug(`${debugPrefix}:task-handler`);
+  debug(`Task was defined for ${taskGroupId}. Creating status...`);
+
+  const {
+    organization,
+    repository,
+    sha,
+    state,
+    eventType,
+    installationId,
+  } = await this.context.Builds.load({taskGroupId});
+
+  const statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
+  const description = state === 'pending' ? `TaskGroup: Pending (for ${eventType})` : 'TaskGroup: Exception';
+  const target_url = libUrls.ui(this.context.cfg.taskcluster.rootUrl, `/task-group-inspector/#/${taskGroupId}`);
+
+  // Authenticating as installation.
+  const instGithub = await this.context.github.getInstallationGithub(installationId);
+
+  await instGithub.repos.createStatus({
+    owner: organization,
+    repo: repository,
+    sha,
+    state,
+    target_url,
+    description,
+    context: statusContext,
+  });
 }
