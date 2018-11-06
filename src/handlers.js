@@ -14,8 +14,21 @@ const debug = Debug(debugPrefix);
  * Create handlers
  */
 class Handlers {
-  constructor({rootUrl, credentials, monitor, reference, jobQueueName, statusQueueName, intree, context, pulseClient}) {
+  constructor(options) {
     debug('Constructing handlers...');
+    const {
+      rootUrl,
+      credentials,
+      monitor,
+      reference,
+      jobQueueName,
+      statusQueueName,
+      taskQueueName,
+      intree,
+      context,
+      pulseClient,
+    } = options;
+
     assert(monitor, 'monitor is required for statistics');
     assert(reference, 'reference must be provided');
     assert(rootUrl, 'rootUrl must be provided');
@@ -28,6 +41,7 @@ class Handlers {
     this.connection = null;
     this.statusQueueName = statusQueueName;
     this.jobQueueName = jobQueueName;
+    this.taskQueueName = taskQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
 
@@ -36,6 +50,7 @@ class Handlers {
 
     this.jobPq = null;
     this.statusPq = null;
+    this.taskPq = null;
   }
 
   /**
@@ -56,16 +71,22 @@ class Handlers {
       githubEvents.release(),
     ];
 
+    let schedulerId = this.context.cfg.taskcluster.schedulerId;
+    let queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
+
     // Listen for state changes to the taskcluster tasks and taskgroups
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    let queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
-    let schedulerId = this.context.cfg.taskcluster.schedulerId;
     const statusBindings = [
       queueEvents.taskFailed({schedulerId}),
       queueEvents.taskException({schedulerId}),
       queueEvents.taskGroupResolved({schedulerId}),
+    ];
+
+    // Listen for taskDefined event to create initial status on github
+    const taskBindings = [
+      queueEvents.taskDefined({schedulerId}),
     ];
 
     const callHandler = (name, handler) => message => {
@@ -98,6 +119,15 @@ class Handlers {
       },
       this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
+    this.taskPq = await consume(
+      {
+        client: this.pulseClient,
+        bindings: taskBindings,
+        queueName: this.taskQueueName,
+      },
+      this.monitor.timedHandler('tasklistener', callHandler('task', taskHandler).bind(this))
+    );
+
   }
 
   async terminate() {

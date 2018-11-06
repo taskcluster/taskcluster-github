@@ -191,6 +191,7 @@ const load = loader({
       reference,
       jobQueueName: cfg.app.jobQueue,
       statusQueueName: cfg.app.statusQueue,
+      taskQueueName: cfg.app.taskQueue,
       context: {cfg, github, schemaset, Builds},
       pulseClient,
     }),
