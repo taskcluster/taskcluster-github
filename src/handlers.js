@@ -86,7 +86,7 @@ class Handlers {
 
     // Listen for taskDefined event to create initial status on github
     const taskBindings = [
-      queueEvents.taskDefined({schedulerId}),
+      githubEvents.taskGroupDefined(),
     ];
 
     const callHandler = (name, handler) => message => {
@@ -125,7 +125,7 @@ class Handlers {
         bindings: taskBindings,
         queueName: this.taskQueueName,
       },
-      this.monitor.timedHandler('tasklistener', callHandler('task', taskHandler).bind(this))
+      this.monitor.timedHandler('tasklistener', callHandler('task', taskGroupHandler).bind(this))
     );
 
   }
@@ -419,6 +419,10 @@ async function jobHandler(message) {
     taskGroupId = graphConfig.tasks[0].task.taskGroupId;
     debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
     await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+
+    debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
+    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
+
   } catch (e) {
     debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
     groupState = 'failure';
@@ -465,7 +469,7 @@ async function jobHandler(message) {
  *   https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/events#taskdefined
  * @returns {Promise<void>}
  */
-async function taskHandler(message) {
+async function taskGroupHandler(message) {
   const {taskGroupId} = message.payload;
 
   const debug = Debug(`${debugPrefix}:task-handler`);
