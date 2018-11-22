@@ -56,23 +56,22 @@ class Handlers {
   /**
    * Set up the handlers.
    */
-  async setup(options) {
+  async setup(options = {}) {
     debug('Setting up handlers...');
-    options = options || {};
     assert(!this.connection, 'Cannot setup twice!');
     this.connection = new taskcluster.PulseConnection(this.credentials);
 
     // Listen for new jobs created via the api webhook endpoint
-    let GithubEvents = taskcluster.createClient(this.reference);
-    let githubEvents = new GithubEvents({rootUrl: this.rootUrl});
+    const GithubEvents = taskcluster.createClient(this.reference);
+    const githubEvents = new GithubEvents({rootUrl: this.rootUrl});
     const jobBindings = [
       githubEvents.pullRequest(),
       githubEvents.push(),
       githubEvents.release(),
     ];
 
-    let schedulerId = this.context.cfg.taskcluster.schedulerId;
-    let queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
+    const schedulerId = this.context.cfg.taskcluster.schedulerId;
+    const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
     // Listen for state changes to the taskcluster tasks and taskgroups
     // We only need to listen for failure and exception events on
