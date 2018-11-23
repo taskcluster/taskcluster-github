@@ -419,15 +419,7 @@ async function jobHandler(message) {
     debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
     await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
 
-    debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
-
-  } catch (e) {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
-    groupState = 'failure';
-    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  } finally {
-    debug(`Trying to create status for ${organization}/${repository}@${sha} (${groupState})`);
+    debug(`Trying to create status for ${organization}/${repository}@${sha} (${groupState}) in Azure`);
 
     let now = new Date();
     await context.Builds.create({
@@ -457,7 +449,14 @@ async function jobHandler(message) {
       assert.equal(build.eventId, message.payload.eventId);
     });
 
+    debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
+    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
+
     debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
+
+  } catch (e) {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
+    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   }
 }
 
@@ -484,7 +483,7 @@ async function taskGroupHandler(message) {
   } = await this.context.Builds.load({taskGroupId});
 
   const statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
-  const description = state === 'pending' ? `TaskGroup: Pending (for ${eventType})` : 'TaskGroup: Exception';
+  const description = `TaskGroup: Pending (for ${eventType})`;
   const target_url = libUrls.ui(this.context.cfg.taskcluster.rootUrl, `/task-group-inspector/#/${taskGroupId}`);
 
   // Authenticating as installation.
