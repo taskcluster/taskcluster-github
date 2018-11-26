@@ -2,8 +2,8 @@
 defaults:
   app:
     jobQueue: null
-    statusQueue: null
-    taskQueue: null
+    resultStatusQueue: null
+    initialStatusQueue: null
     buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     publishMetaData: !env:bool PUBLISH_METADATA
@@ -57,8 +57,8 @@ defaults:
 production:
   app:
     jobQueue: 'jobs'
-    statusQueue: 'statuses'
-    taskQueue: 'tasks'
+    resultStatusQueue: 'statuses'
+    initialStatusQueue: 'tasks'
     botName: 'taskcluster[bot]'
 
   intree:
@@ -79,8 +79,8 @@ production:
 staging:
   app:
     jobQueue: 'jobs'
-    statusQueue: 'statuses'
-    taskQueue: 'tasks'
+    resultStatusQueue: 'statuses'
+    initialStatusQueue: 'tasks'
     buildsTableName: 'TaskclusterGithubBuildsStaging'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwnersStaging'
     name: 'tc-github-staging'
@@ -105,8 +105,8 @@ test:
   app:
     botName: 'magicalTCspirit'
     jobQueue: 'test-jobs'
-    statusQueue: 'test-statuses'
-    taskQueue: 'tasks'
+    resultStatusQueue: 'test-statuses'
+    initialStatusQueue: 'tasks'
 
   webhook:
     secret: ['abc123', 'def456']

@@ -22,8 +22,8 @@ class Handlers {
       monitor,
       reference,
       jobQueueName,
-      statusQueueName,
-      taskQueueName,
+      resultStatusQueueName,
+      initialStatusQueueName,
       intree,
       context,
       pulseClient,
@@ -39,9 +39,9 @@ class Handlers {
     this.reference = reference;
     this.intree = intree;
     this.connection = null;
-    this.statusQueueName = statusQueueName;
+    this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
-    this.taskQueueName = taskQueueName;
+    this.initialStatusQueueName = initialStatusQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
 
@@ -49,8 +49,8 @@ class Handlers {
     this.handlerRejected = null;
 
     this.jobPq = null;
-    this.statusPq = null;
-    this.taskPq = null;
+    this.resultStatusPq = null;
+    this.initialStatusPq = null;
   }
 
   /**
@@ -110,19 +110,19 @@ class Handlers {
       },
       this.monitor.timedHandler('joblistener', callHandler('job', jobHandler).bind(this))
     );
-    this.statusPq = await consume(
+    this.resultStatusPq = await consume(
       {
         client: this.pulseClient,
         bindings: statusBindings,
-        queueName: this.statusQueueName,
+        queueName: this.resultStatusQueueName,
       },
       this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
-    this.taskPq = await consume(
+    this.initialStatusPq = await consume(
       {
         client: this.pulseClient,
         bindings: taskBindings,
-        queueName: this.taskQueueName,
+        queueName: this.initialStatusQueueName,
       },
       this.monitor.timedHandler('tasklistener', callHandler('task', taskGroupHandler).bind(this))
     );
@@ -419,7 +419,7 @@ async function jobHandler(message) {
     debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
     await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
 
-    debug(`Trying to create status for ${organization}/${repository}@${sha} (${groupState}) in Azure`);
+    debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
 
     let now = new Date();
     await context.Builds.create({
@@ -463,15 +463,15 @@ async function jobHandler(message) {
 /**
  * If a task was defined, post the initial status to github
  *
- * @param message - taskDefined exchange message
- *   https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/events#taskdefined
+ * @param message - taskGroupDefined exchange message
+ *   this repo/schemas/task-group-defined-message.yml
  * @returns {Promise<void>}
  */
 async function taskGroupHandler(message) {
   const {taskGroupId} = message.payload;
 
   const debug = Debug(`${debugPrefix}:task-handler`);
-  debug(`Task was defined for ${taskGroupId}. Creating status...`);
+  debug(`Task was defined for task group ${taskGroupId}. Creating status...`);
 
   const {
     organization,

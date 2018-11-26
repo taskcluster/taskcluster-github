@@ -1,7 +1,8 @@
 $schema:  http://json-schema.org/draft-06/schema#
 title:        "Task Group Defined - Create Status"
 description: |
-  Create a commit status on GitHub.
+  Indicates that this service has created a new task group in response to a GitHub event.
+  This message is for internal use only and should not be relied on for other purposes.
   Full specification on [GitHub docs](https://developer.github.com/v3/repos/statuses/#create-a-status)
 type:         object
 properties:
@@ -22,7 +23,10 @@ properties:
     pattern:      {$const: github-identifier-pattern}
   taskGroupId:
     type: string
-    description: The target URL to associate with this status. This URL will be linked from the GitHub UI to allow users to easily see the 'source' of the Status.
+    description: The id of the taskGroup that had been created.
 additionalProperties: false
 required:
   - taskGroupId
+  - organization
+  - repository
+  - version

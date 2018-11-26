@@ -48,7 +48,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
         },
       };
 
-      handlers.statusPq.fakeMessage(message);
+      handlers.resultStatusPq.fakeMessage(message);
     });
   }
 
