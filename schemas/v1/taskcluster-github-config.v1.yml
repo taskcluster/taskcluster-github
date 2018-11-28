@@ -19,6 +19,9 @@ properties:
       enum:
         - public
         - collaborators
+  reporting:
+    enum:
+      - checks-v1
   tasks:
     title: Task definition template"
     description: |

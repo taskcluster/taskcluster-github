@@ -251,20 +251,30 @@ class VersionOne extends TcYaml {
         defaultTaskGroupId = slugid.nice();
       }
 
+      console.log('🍁', JSON.stringify(config, null, 2));
+
       config.tasks = config.tasks.map(task => {
-        task = _.defaults(task, {
+        task = Object.assign({
           taskId: defaultTaskId,
           taskGroupId: defaultTaskGroupId,
           created: now,
-        });
+          /*eslint-disable no-extra-parens*/
+          ...(config.reporting && {routes:['route.checks-queue']}),
+        }, task);
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
-        return {
+        console.log('🍁🍁', JSON.stringify(task, null, 2));
+
+        let a = {
           taskId: task.taskId,
           task: _.omit(
             _.extend(task, {schedulerId: cfg.taskcluster.schedulerId}),
             'taskId'),
         };
+
+        console.log('🍁🍁🍁', JSON.stringify(a, null, 2));
+
+        return a;
       });
     }
     return this.createScopes(config, payload);
