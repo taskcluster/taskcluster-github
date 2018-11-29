@@ -131,6 +131,20 @@ const load = loader({
     }),
   },
 
+  CheckRuns: {
+    requires: ['cfg', 'monitor'],
+    setup: async ({cfg, monitor}) => data.CheckRuns.setup({
+      tableName: cfg.app.checkRunsTableName,
+      credentials: sasCredentials({
+        accountId: cfg.azure.accountId,
+        tableName: cfg.app.checkRunsTableName,
+        rootUrl: cfg.taskcluster.rootUrl,
+        credentials: cfg.taskcluster.credentials,
+      }),
+      monitor: monitor.prefix('table.checkruns'),
+    }),
+  },
+
   api: {
     requires: [
       'cfg', 'monitor', 'schemaset', 'github', 'publisher', 'Builds',
@@ -182,8 +196,8 @@ const load = loader({
   },
 
   handlers: {
-    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds', 'pulseClient', 'publisher'],
-    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds, pulseClient, publisher}) =>
+    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds', 'pulseClient', 'publisher', 'CheckRuns'],
+    setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds, pulseClient, publisher, CheckRuns}) =>
       new Handlers({
         rootUrl: cfg.taskcluster.rootUrl,
         credentials: cfg.pulse,
@@ -193,7 +207,8 @@ const load = loader({
         jobQueueName: cfg.app.jobQueue,
         resultStatusQueueName: cfg.app.resultStatusQueue,
         initialStatusQueueName: cfg.app.initialStatusQueue,
-        context: {cfg, github, schemaset, Builds, publisher},
+        checksInitialStatusQueueName: cfg.app.checksInitialStatusQueue,
+        context: {cfg, github, schemaset, Builds, CheckRuns, publisher},
         pulseClient,
       }),
   },
