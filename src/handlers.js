@@ -24,6 +24,7 @@ class Handlers {
       jobQueueName,
       resultStatusQueueName,
       initialStatusQueueName,
+      checksInitialStatusQueueName,
       intree,
       context,
       pulseClient,
@@ -42,6 +43,7 @@ class Handlers {
     this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
     this.initialStatusQueueName = initialStatusQueueName;
+    this.checksInitialStatusQueueName = checksInitialStatusQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
 
@@ -83,10 +85,16 @@ class Handlers {
       queueEvents.taskGroupResolved({schedulerId}),
     ];
 
-    // Listen for taskDefined event to create initial status on github
-    const taskBindings = [
+    // Listen for taskGroupDefined event to create initial status on github
+    const taskGroupBindings = [
       githubEvents.taskGroupDefined(),
     ];
+
+    // Listen for taskGroupDefined event to create initial status on github
+    const taskBindings = [
+      queueEvents.taskDefined({reserved: this.context.cfg.app.checkTaskRoute}),
+    ];
+
 
     const callHandler = (name, handler) => message => {
       handler.call(this, message).catch(async err => {
@@ -110,6 +118,7 @@ class Handlers {
       },
       this.monitor.timedHandler('joblistener', callHandler('job', jobHandler).bind(this))
     );
+
     this.resultStatusPq = await consume(
       {
         client: this.pulseClient,
@@ -118,13 +127,23 @@ class Handlers {
       },
       this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
+
     this.initialStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: taskBindings,
+        bindings: taskGroupBindings,
         queueName: this.initialStatusQueueName,
       },
-      this.monitor.timedHandler('tasklistener', callHandler('task', taskGroupHandler).bind(this))
+      this.monitor.timedHandler('taskGrouplistener', callHandler('task', taskGroupHandler).bind(this))
+    );
+
+    this.initialTaskStatusPq = await consume(
+      {
+        client: this.pulseClient,
+        bindings: taskBindings,
+        queueName: this.checksInitialStatusQueueName,
+      },
+      this.monitor.timedHandler('tasklistener', callHandler('task', taskHandler).bind(this))
     );
 
   }
@@ -461,7 +480,8 @@ async function jobHandler(message) {
 }
 
 /**
- * If a task was defined, post the initial status to github
+ * When the task was defined, post the initial status to github
+ * statuses api function
  *
  * @param message - taskGroupDefined exchange message
  *   this repo/schemas/task-group-defined-message.yml
@@ -498,4 +518,52 @@ async function taskGroupHandler(message) {
     description,
     context: statusContext,
   });
+}
+
+/**
+ * When the task was defined, post the initial status to github
+ * checks api function
+ *
+ * @param message - taskDefined exchange message
+ *   https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/events#taskDefined
+ * @returns {Promise<void>}
+ */
+async function taskHandler(message) {
+  const {taskGroupId, taskId} = message.payload;
+
+  const {
+    organization,
+    repository,
+    sha,
+    eventType,
+    installationId,
+  } = await this.context.Builds.load({taskGroupId});
+
+  // Authenticating as installation.
+  const instGithub = await this.context.github.getInstallationGithub(installationId);
+
+  const checkRun = await instGithub.checks.create({
+    owner: organization,
+    repo: repository,
+    name: `Task ${taskId}: ${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`,
+    head_sha: sha,
+    output: {
+      title: `TaskGroup: Queued (for ${eventType})`,
+      summary: `Check for ${eventType}`,
+    },
+    details_url: `${context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
+  }).catch(async (err) => {
+      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
+      throw err;
+  });
+
+  await this.context.CheckRuns.create({
+      taskGroupId,
+      taskId,
+      checkSuiteId: checkRun.data.check_suite.id.toString(),
+      checkRunId: checkRun.data.id.toString(),
+    }).catch(async (err) => {
+      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
+      throw err;
+    });
 }
