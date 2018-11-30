@@ -490,8 +490,8 @@ async function jobHandler(message) {
 async function taskGroupHandler(message) {
   const {taskGroupId} = message.payload;
 
-  const debug = Debug(`${debugPrefix}:task-handler`);
-  debug(`Task was defined for task group ${taskGroupId}. Creating status...`);
+  const debug = Debug(`${debugPrefix}:taskGroup-handler`);
+  debug(`Task group ${taskGroupId} was defined. Creating group status...`);
 
   const {
     organization,
@@ -531,6 +531,10 @@ async function taskGroupHandler(message) {
 async function taskHandler(message) {
   const {taskGroupId, taskId} = message.payload;
 
+  const debug = Debug(`${debugPrefix}:task-handler`);
+  debug(`Task was defined for task group ${taskGroupId}. Creating status for task ${taskId}...`);
+
+
   const {
     organization,
     repository,
@@ -541,6 +545,8 @@ async function taskHandler(message) {
 
   // Authenticating as installation.
   const instGithub = await this.context.github.getInstallationGithub(installationId);
+
+  debug(`Authenticated as installation. Creating check run for task ${taskId}, task group ${taskGroupId}`);
 
   const checkRun = await instGithub.checks.create({
     owner: organization,
@@ -557,6 +563,8 @@ async function taskHandler(message) {
       throw err;
   });
 
+  debug(`Created check run for task ${taskId}, task group ${taskGroupId}. Now updating data base`);
+
   await this.context.CheckRuns.create({
       taskGroupId,
       taskId,
@@ -566,4 +574,6 @@ async function taskHandler(message) {
       await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
       throw err;
     });
+
+  debug(`Status for task ${taskId}, task group ${taskGroupId} created`);
 }
