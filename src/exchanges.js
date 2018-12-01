@@ -27,6 +27,11 @@ let commonRoutingKey = function(options) {
                         'characters aside from - and _ have been stripped.',
       maxSize:          100,
       required:         true,
+    },{
+      name:             'reporting',
+      summary:          'Can indicate which API will be used to report status',
+      maxSize:          22,
+      required:         false,
     },
   ];
   if (options.hasActions) {
@@ -116,16 +121,18 @@ exchanges.declare({
 
 /** task group exchange */
 exchanges.declare({
-  exchange:           'task-group-defined',
-  name:               'taskGroupDefined',
-  title:              'GitHub release Event',
+  exchange:           'task-group-creation-requested',
+  name:               'taskGroupCreationRequested',
+  title:              'tc-gh requested the Queue service to create all the tasks in a group',
   description: [
-    'used for creating status indicators in GitHub UI using Statuses API',
+    'supposed to signal that taskCreate API has been called for every task in the task group',
+    'for this particular repo and this particular organization',
+    'currently used for creating initial status indicators in GitHub UI using Statuses API',
   ].join('\n'),
   routingKey:         commonRoutingKey(),
-  schema:             'task-group-defined-message.yml',
+  schema:             'task-group-creation-requested.yml',
   messageBuilder:     commonMessageBuilder,
-  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
+  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository', 'reporting'),
   CCBuilder:          () => [],
 });
 

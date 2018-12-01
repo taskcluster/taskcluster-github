@@ -85,14 +85,14 @@ class Handlers {
       queueEvents.taskGroupResolved({schedulerId}),
     ];
 
-    // Listen for taskGroupDefined event to create initial status on github
+    // Listen for taskGroupCreationRequested event to create initial status on github
     const taskGroupBindings = [
-      githubEvents.taskGroupDefined(),
+      githubEvents.taskGroupCreationRequested({statusApi: 'true'}),
     ];
 
-    // Listen for taskGroupDefined event to create initial status on github
+    // Listen for taskDefined event to create initial status on github
     const taskBindings = [
-      queueEvents.taskDefined({reserved: this.context.cfg.app.checkTaskRoute}),
+      queueEvents.taskDefined(`route.${this.context.cfg.app.checkTaskRoute}`),
     ];
 
 
@@ -433,71 +433,72 @@ async function jobHandler(message) {
     }
   }
 
-  try {
-    taskGroupId = graphConfig.tasks[0].task.taskGroupId;
-    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
-    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  taskGroupId = graphConfig.tasks[0].task.taskGroupId;
+  let {routes} = graphConfig.tasks[0].task;
 
-    debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
-
-    let now = new Date();
-    await context.Builds.create({
-      organization,
-      repository,
-      sha,
+  debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
+  let now = new Date();
+  await context.Builds.create({
+    organization,
+    repository,
+    sha,
+    taskGroupId,
+    state: groupState,
+    created: now,
+    updated: now,
+    installationId: message.payload.installationId,
+    eventType: message.payload.details['event.type'],
+    eventId: message.payload.eventId,
+  }).catch(async (err) => {
+    if (err.code !== 'EntityAlreadyExists') {
+      throw err;
+    }
+    let build = await this.Builds.load({
       taskGroupId,
-      state: groupState,
-      created: now,
-      updated: now,
-      installationId: message.payload.installationId,
-      eventType: message.payload.details['event.type'],
-      eventId: message.payload.eventId,
-    }).catch(async (err) => {
-      if (err.code !== 'EntityAlreadyExists') {
-        throw err;
-      }
-      let build = await this.Builds.load({
-        taskGroupId,
-      });
-      assert.equal(build.state, groupState, `State for ${organization}/${repository}@${sha}
-        already exists but is set to ${build.state} instead of ${groupState}!`);
-      assert.equal(build.organization, organization);
-      assert.equal(build.repository, repository);
-      assert.equal(build.sha, sha);
-      assert.equal(build.eventType, message.payload.details['event.type']);
-      assert.equal(build.eventId, message.payload.eventId);
     });
-
-    debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
-
-    debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
-
-  } catch (e) {
+    assert.equal(build.state, groupState, `State for ${organization}/${repository}@${sha}
+      already exists but is set to ${build.state} instead of ${groupState}!`);
+    assert.equal(build.organization, organization);
+    assert.equal(build.repository, repository);
+    assert.equal(build.sha, sha);
+    assert.equal(build.eventType, message.payload.details['event.type']);
+    assert.equal(build.eventId, message.payload.eventId);
+  }).then(async data => {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
+    return await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  }).catch(async e => {
     debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
-    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  }
+    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+  }).then(async data => {
+    debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
+    return await context.publisher.taskGroupCreationRequested({taskGroupId, organization, repository, reporting: });
+  }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange for ${organization}/${repository}@${sha}
+    with the error: ${JSON.stringify(e, null, 2)}`));
+
+  debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
+
 }
 
 /**
  * When the task was defined, post the initial status to github
  * statuses api function
  *
- * @param message - taskGroupDefined exchange message
- *   this repo/schemas/task-group-defined-message.yml
+ * @param message - taskGroupCreationRequested exchange message
+ *   this repo/schemas/task-group-creation-requested.yml
  * @returns {Promise<void>}
  */
 async function taskGroupHandler(message) {
-  const {taskGroupId} = message.payload;
+  const {
+    taskGroupId,
+    organization,
+    repository,
+  } = message.payload;
 
   const debug = Debug(`${debugPrefix}:taskGroup-handler`);
   debug(`Task group ${taskGroupId} was defined. Creating group status...`);
 
   const {
-    organization,
-    repository,
     sha,
-    state,
     eventType,
     installationId,
   } = await this.context.Builds.load({taskGroupId});
@@ -513,7 +514,7 @@ async function taskGroupHandler(message) {
     owner: organization,
     repo: repository,
     sha,
-    state,
+    state: 'pending',
     target_url,
     description,
     context: statusContext,
@@ -529,9 +530,10 @@ async function taskGroupHandler(message) {
  * @returns {Promise<void>}
  */
 async function taskHandler(message) {
-  const {taskGroupId, taskId} = message.payload;
+  const {taskGroupId, taskId} = message.payload.status;
 
   const debug = Debug(`${debugPrefix}:task-handler`);
+  debug(`🍗 Got a message: ${JSON.stringify(message, null, 2)}`);
   debug(`Task was defined for task group ${taskGroupId}. Creating status for task ${taskId}...`);
 
 
@@ -557,7 +559,7 @@ async function taskHandler(message) {
       title: `TaskGroup: Queued (for ${eventType})`,
       summary: `Check for ${eventType}`,
     },
-    details_url: `${context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
+    details_url: `${this.context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
   }).catch(async (err) => {
       await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
       throw err;
