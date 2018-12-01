@@ -92,7 +92,7 @@ class Handlers {
 
     // Listen for taskGroupDefined event to create initial status on github
     const taskBindings = [
-      queueEvents.taskDefined({reserved: this.context.cfg.app.checkTaskRoute}),
+      queueEvents.taskDefined(this.context.cfg.app.checkTaskRoute),
     ];
 
 
