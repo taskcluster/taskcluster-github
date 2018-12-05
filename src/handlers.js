@@ -92,7 +92,7 @@ class Handlers {
 
     // Listen for taskGroupDefined event to create initial status on github
     const taskBindings = [
-      queueEvents.taskDefined(`routes.${this.context.cfg.app.checkTaskRoute}`),
+      queueEvents.taskDefined(`route.${this.context.cfg.app.checkTaskRoute}`),
     ];
 
 
@@ -469,7 +469,7 @@ async function jobHandler(message) {
     });
 
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
+    // await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
 
     debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
@@ -529,9 +529,10 @@ async function taskGroupHandler(message) {
  * @returns {Promise<void>}
  */
 async function taskHandler(message) {
-  const {taskGroupId, taskId} = message.payload;
+  const {taskGroupId, taskId} = message.payload.status;
 
   const debug = Debug(`${debugPrefix}:task-handler`);
+  debug(`🍗 Got a message: ${JSON.stringify(message, null, 2)}`);
   debug(`Task was defined for task group ${taskGroupId}. Creating status for task ${taskId}...`);
 
 
