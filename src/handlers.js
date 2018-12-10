@@ -433,49 +433,53 @@ async function jobHandler(message) {
     }
   }
 
-  try {
-    taskGroupId = graphConfig.tasks[0].task.taskGroupId;
-    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
-    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  taskGroupId = graphConfig.tasks[0].task.taskGroupId;
 
-    debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
-
-    let now = new Date();
-    await context.Builds.create({
-      organization,
-      repository,
-      sha,
+  debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
+  let now = new Date();
+  await context.Builds.create({
+    organization,
+    repository,
+    sha,
+    taskGroupId,
+    state: groupState,
+    created: now,
+    updated: now,
+    installationId: message.payload.installationId,
+    eventType: message.payload.details['event.type'],
+    eventId: message.payload.eventId,
+  }).catch(async (err) => {
+    if (err.code !== 'EntityAlreadyExists') {
+      throw err;
+    }
+    let build = await this.Builds.load({
       taskGroupId,
-      state: groupState,
-      created: now,
-      updated: now,
-      installationId: message.payload.installationId,
-      eventType: message.payload.details['event.type'],
-      eventId: message.payload.eventId,
-    }).catch(async (err) => {
-      if (err.code !== 'EntityAlreadyExists') {
-        throw err;
-      }
-      let build = await this.Builds.load({
-        taskGroupId,
-      });
-      assert.equal(build.state, groupState, `State for ${organization}/${repository}@${sha}
-        already exists but is set to ${build.state} instead of ${groupState}!`);
-      assert.equal(build.organization, organization);
-      assert.equal(build.repository, repository);
-      assert.equal(build.sha, sha);
-      assert.equal(build.eventType, message.payload.details['event.type']);
-      assert.equal(build.eventId, message.payload.eventId);
     });
+    assert.equal(build.state, groupState, `State for ${organization}/${repository}@${sha}
+      already exists but is set to ${build.state} instead of ${groupState}!`);
+    assert.equal(build.organization, organization);
+    assert.equal(build.repository, repository);
+    assert.equal(build.sha, sha);
+    assert.equal(build.eventType, message.payload.details['event.type']);
+    assert.equal(build.eventId, message.payload.eventId);
+  }).then(async data => {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
+    return await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  }).catch(async e => {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
+    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+  });
+
+
+  try { // TODO
 
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    // await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
+    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
 
     debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
   } catch (e) {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
-    await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+
   }
 }
 
@@ -558,7 +562,7 @@ async function taskHandler(message) {
       title: `TaskGroup: Queued (for ${eventType})`,
       summary: `Check for ${eventType}`,
     },
-    details_url: `${context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
+    details_url: `${this.context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
   }).catch(async (err) => {
       await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
       throw err;

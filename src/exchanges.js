@@ -122,7 +122,7 @@ exchanges.declare({
   description: [
     'used for creating status indicators in GitHub UI using Statuses API',
   ].join('\n'),
-  routingKey:         commonRoutingKey(),
+  routingKey:         ['status-api'],
   schema:             'task-group-defined-message.yml',
   messageBuilder:     commonMessageBuilder,
   routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
