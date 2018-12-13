@@ -27,6 +27,11 @@ let commonRoutingKey = function(options) {
                         'characters aside from - and _ have been stripped.',
       maxSize:          100,
       required:         true,
+    },{
+      name:             'statusApi',
+      summary:          'Indicates an exchange for creating status with Github Statuses API',
+      maxSize:          22,
+      required:         false,
     },
   ];
   if (options.hasActions) {
@@ -122,10 +127,10 @@ exchanges.declare({
   description: [
     'used for creating status indicators in GitHub UI using Statuses API',
   ].join('\n'),
-  routingKey:         ['status-api'],
+  routingKey:         commonRoutingKey(),
   schema:             'task-group-defined-message.yml',
   messageBuilder:     commonMessageBuilder,
-  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
+  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository', 'statusApi'),
   CCBuilder:          () => [],
 });
 

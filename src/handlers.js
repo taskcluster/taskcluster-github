@@ -87,7 +87,7 @@ class Handlers {
 
     // Listen for taskGroupDefined event to create initial status on github
     const taskGroupBindings = [
-      githubEvents.taskGroupDefined(),
+      githubEvents.taskGroupDefined({statusApi: 'true'}),
     ];
 
     // Listen for taskGroupDefined event to create initial status on github
@@ -434,6 +434,7 @@ async function jobHandler(message) {
   }
 
   taskGroupId = graphConfig.tasks[0].task.taskGroupId;
+  let {routes} = graphConfig.tasks[0].task;
 
   debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
   let now = new Date();
@@ -468,19 +469,14 @@ async function jobHandler(message) {
   }).catch(async e => {
     debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
     return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  });
-
-
-  try { // TODO
-
+  }).then(async data => {
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    await context.publisher.taskGroupDefined({taskGroupId, organization, repository});
+    return await context.publisher.taskGroupDefined({taskGroupId, organization, repository, statusApi: Boolean(routes)});
+  }).catch(async e => debug(`Failed to publish to taskGroupDefined exchange for ${organization}/${repository}@${sha}
+    with the error: ${JSON.stringify(e, null, 2)}`));
 
-    debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
+  debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
-  } catch (e) {
-
-  }
 }
 
 /**
