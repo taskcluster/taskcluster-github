@@ -24,8 +24,8 @@ properties:
   taskGroupId:
     type: string
     description: The id of the taskGroup that had been created.
-  statusApi:
-    type: boolean
+  reporting:
+    type: string
     description: Indicates which api is used to create statuses
 additionalProperties: false
 required:
@@ -33,4 +33,4 @@ required:
   - organization
   - repository
   - version
-  - statusApi
+  - reporting

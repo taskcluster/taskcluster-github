@@ -85,12 +85,12 @@ class Handlers {
       queueEvents.taskGroupResolved({schedulerId}),
     ];
 
-    // Listen for taskGroupDefined event to create initial status on github
+    // Listen for taskGroupCreationRequested event to create initial status on github
     const taskGroupBindings = [
-      githubEvents.taskGroupDefined({statusApi: 'true'}),
+      githubEvents.taskGroupCreationRequested({statusApi: 'true'}),
     ];
 
-    // Listen for taskGroupDefined event to create initial status on github
+    // Listen for taskDefined event to create initial status on github
     const taskBindings = [
       queueEvents.taskDefined(`route.${this.context.cfg.app.checkTaskRoute}`),
     ];
@@ -471,8 +471,8 @@ async function jobHandler(message) {
     return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   }).then(async data => {
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    return await context.publisher.taskGroupDefined({taskGroupId, organization, repository, statusApi: Boolean(routes)});
-  }).catch(async e => debug(`Failed to publish to taskGroupDefined exchange for ${organization}/${repository}@${sha}
+    return await context.publisher.taskGroupCreationRequested({taskGroupId, organization, repository, reporting: });
+  }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange for ${organization}/${repository}@${sha}
     with the error: ${JSON.stringify(e, null, 2)}`));
 
   debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
@@ -483,21 +483,22 @@ async function jobHandler(message) {
  * When the task was defined, post the initial status to github
  * statuses api function
  *
- * @param message - taskGroupDefined exchange message
- *   this repo/schemas/task-group-defined-message.yml
+ * @param message - taskGroupCreationRequested exchange message
+ *   this repo/schemas/task-group-creation-requested.yml
  * @returns {Promise<void>}
  */
 async function taskGroupHandler(message) {
-  const {taskGroupId} = message.payload;
+  const {
+    taskGroupId,
+    organization,
+    repository,
+  } = message.payload;
 
   const debug = Debug(`${debugPrefix}:taskGroup-handler`);
   debug(`Task group ${taskGroupId} was defined. Creating group status...`);
 
   const {
-    organization,
-    repository,
     sha,
-    state,
     eventType,
     installationId,
   } = await this.context.Builds.load({taskGroupId});
@@ -513,7 +514,7 @@ async function taskGroupHandler(message) {
     owner: organization,
     repo: repository,
     sha,
-    state,
+    state: 'pending',
     target_url,
     description,
     context: statusContext,
