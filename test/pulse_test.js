@@ -79,7 +79,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
     listenFor: 'pull-request',
     action: 'opened',
     exchangeFunc: 'pullRequest',
-    routingKey: 'primary.TaskClusterRobot.hooks-testing.opened',
+    routingKey: 'primary.TaskClusterRobot.hooks-testing._.opened',
     eventId: '81254e00-d9c1-11e6-8964-748a671f0cee',
     details: {
       'event.base.ref': 'refs/heads/master',
@@ -109,7 +109,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
     testName:     'Publish Push',
     listenFor:    'push',
     exchangeFunc: 'push',
-    routingKey:   'primary.TaskClusterRobot.hooks-testing',
+    routingKey:   'primary.TaskClusterRobot.hooks-testing._',
     eventId: '9637a980-d8fb-11e6-9830-1244ca57c95f',
     details:      {
       'event.base.ref': 'refs/heads/master',
@@ -137,7 +137,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
     testName:     'Publish Release',
     listenFor:    'release',
     exchangeFunc: 'release',
-    routingKey: 'primary.TaskClusterRobot.hooks-testing',
+    routingKey: 'primary.TaskClusterRobot.hooks-testing._',
     eventId: '2c81a200-cd36-11e6-9106-ad0d7be0e22e',
     details:      {
       'event.type': 'release',
@@ -164,7 +164,7 @@ helper.secrets.mockSuite('pulse', ['taskcluster'], function(mock, skipping) {
     testName:     'Publish Tag Push',
     listenFor:    'push',
     exchangeFunc: 'push',
-    routingKey:   'primary.TaskClusterRobot.hooks-testing',
+    routingKey:   'primary.TaskClusterRobot.hooks-testing._',
     eventId: '9637a980-d8fb-11e6-9830-1244ca57c95f',
     details:      {
       'event.base.ref': 'refs/tags/v1.0.2',

@@ -251,8 +251,6 @@ class VersionOne extends TcYaml {
         defaultTaskGroupId = slugid.nice();
       }
 
-      console.log('🍁', JSON.stringify(config, null, 2));
-
       config.tasks = config.tasks.map(task => {
         task = Object.assign({
           taskId: defaultTaskId,
@@ -263,8 +261,6 @@ class VersionOne extends TcYaml {
         }, task);
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
-        console.log('🍁🍁', JSON.stringify(task, null, 2));
-
         const {taskId, ...taskWithoutTaskId} = task;
         const b = {
           taskId,
@@ -273,8 +269,6 @@ class VersionOne extends TcYaml {
             schedulerId: cfg.taskcluster.schedulerId,
           },
         };
-
-        console.log('🐢', JSON.stringify(b, null, 2));
 
         return b;
       });
