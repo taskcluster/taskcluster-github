@@ -24,7 +24,7 @@ class Handlers {
       jobQueueName,
       resultStatusQueueName,
       deprecatedInitialStatusQueueName,
-      checksInitialStatusQueueName,
+      initialStatusQueueName,
       intree,
       context,
       pulseClient,
@@ -43,7 +43,7 @@ class Handlers {
     this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
     this.deprecatedInitialStatusQueueName = deprecatedInitialStatusQueueName;
-    this.checksInitialStatusQueueName = checksInitialStatusQueueName;
+    this.initialStatusQueueName = initialStatusQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
 
@@ -52,6 +52,7 @@ class Handlers {
 
     this.jobPq = null;
     this.resultStatusPq = null;
+    this.initialTaskStatusPq = null;
     this.deprecatedInitialStatusPq = null;
   }
 
@@ -140,7 +141,7 @@ class Handlers {
       {
         client: this.pulseClient,
         bindings: taskBindings,
-        queueName: this.checksInitialStatusQueueName,
+        queueName: this.initialStatusQueueName,
       },
       this.monitor.timedHandler('tasklistener', callHandler('task', taskDefinedHandler).bind(this))
     );
