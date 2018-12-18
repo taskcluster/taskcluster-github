@@ -196,7 +196,18 @@ const load = loader({
   },
 
   handlers: {
-    requires: ['cfg', 'github', 'monitor', 'intree', 'schemaset', 'reference', 'Builds', 'pulseClient', 'publisher', 'CheckRuns'],
+    requires: [
+      'cfg',
+      'github',
+      'monitor',
+      'intree',
+      'schemaset',
+      'reference',
+      'Builds',
+      'pulseClient',
+      'publisher',
+      'CheckRuns',
+    ],
     setup: async ({cfg, github, monitor, intree, schemaset, reference, Builds, pulseClient, publisher, CheckRuns}) =>
       new Handlers({
         rootUrl: cfg.taskcluster.rootUrl,

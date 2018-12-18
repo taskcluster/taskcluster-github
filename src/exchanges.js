@@ -27,7 +27,7 @@ let commonRoutingKey = function(options) {
                         'characters aside from - and _ have been stripped.',
       maxSize:          100,
       required:         true,
-    },{
+    }, {
       name:             'reporting',
       summary:          'Can indicate which API will be used to report status',
       maxSize:          22,

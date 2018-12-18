@@ -95,7 +95,6 @@ class Handlers {
       queueEvents.taskDefined(`route.${this.context.cfg.app.checkTaskRoute}`),
     ];
 
-
     const callHandler = (name, handler) => message => {
       handler.call(this, message).catch(async err => {
         debug(`Error (reported to sentry) while calling ${name} handler: ${err}`);
@@ -134,7 +133,7 @@ class Handlers {
         bindings: taskGroupBindings,
         queueName: this.initialStatusQueueName,
       },
-      this.monitor.timedHandler('taskGrouplistener', callHandler('task', taskGroupHandler).bind(this))
+      this.monitor.timedHandler('taskGrouplistener', callHandler('task', taskGroupCreationHandler).bind(this))
     );
 
     this.initialTaskStatusPq = await consume(
@@ -143,7 +142,7 @@ class Handlers {
         bindings: taskBindings,
         queueName: this.checksInitialStatusQueueName,
       },
-      this.monitor.timedHandler('tasklistener', callHandler('task', taskHandler).bind(this))
+      this.monitor.timedHandler('tasklistener', callHandler('task', taskDefinedHandler).bind(this))
     );
 
   }
@@ -472,9 +471,15 @@ async function jobHandler(message) {
     return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   }).then(async data => {
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    return await context.publisher.taskGroupCreationRequested({taskGroupId, organization, repository, reporting: routes});
-  }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange for ${organization}/${repository}@${sha}
-    with the error: ${JSON.stringify(e, null, 2)}`));
+    return await context.publisher.taskGroupCreationRequested({
+      taskGroupId,
+      organization,
+      repository,
+      reporting: routes,
+    });
+  }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange 
+    for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`
+  ));
 
   debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
@@ -488,7 +493,7 @@ async function jobHandler(message) {
  *   this repo/schemas/task-group-creation-requested.yml
  * @returns {Promise<void>}
  */
-async function taskGroupHandler(message) {
+async function taskGroupCreationHandler(message) {
   const {
     taskGroupId,
     organization,
@@ -530,13 +535,11 @@ async function taskGroupHandler(message) {
  *   https://docs.taskcluster.net/docs/reference/platform/taskcluster-queue/references/events#taskDefined
  * @returns {Promise<void>}
  */
-async function taskHandler(message) {
+async function taskDefinedHandler(message) {
   const {taskGroupId, taskId} = message.payload.status;
 
   const debug = Debug(`${debugPrefix}:task-handler`);
-  debug(`🍗 Got a message: ${JSON.stringify(message, null, 2)}`);
   debug(`Task was defined for task group ${taskGroupId}. Creating status for task ${taskId}...`);
-
 
   const {
     organization,
@@ -562,21 +565,21 @@ async function taskHandler(message) {
     },
     details_url: `${this.context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
   }).catch(async (err) => {
-      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
-      throw err;
+    await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
+    throw err;
   });
 
   debug(`Created check run for task ${taskId}, task group ${taskGroupId}. Now updating data base`);
 
   await this.context.CheckRuns.create({
-      taskGroupId,
-      taskId,
-      checkSuiteId: checkRun.data.check_suite.id.toString(),
-      checkRunId: checkRun.data.id.toString(),
-    }).catch(async (err) => {
-      await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
-      throw err;
-    });
+    taskGroupId,
+    taskId,
+    checkSuiteId: checkRun.data.check_suite.id.toString(),
+    checkRunId: checkRun.data.id.toString(),
+  }).catch(async (err) => {
+    await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
+    throw err;
+  });
 
   debug(`Status for task ${taskId}, task group ${taskGroupId} created`);
 }
