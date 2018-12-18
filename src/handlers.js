@@ -23,7 +23,7 @@ class Handlers {
       reference,
       jobQueueName,
       resultStatusQueueName,
-      initialStatusQueueName,
+      deprecatedInitialStatusQueueName,
       checksInitialStatusQueueName,
       intree,
       context,
@@ -42,7 +42,7 @@ class Handlers {
     this.connection = null;
     this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
-    this.initialStatusQueueName = initialStatusQueueName;
+    this.deprecatedInitialStatusQueueName = deprecatedInitialStatusQueueName;
     this.checksInitialStatusQueueName = checksInitialStatusQueueName;
     this.context = context;
     this.pulseClient = pulseClient;
@@ -52,7 +52,7 @@ class Handlers {
 
     this.jobPq = null;
     this.resultStatusPq = null;
-    this.initialStatusPq = null;
+    this.deprecatedInitialStatusPq = null;
   }
 
   /**
@@ -86,7 +86,7 @@ class Handlers {
     ];
 
     // Listen for taskGroupCreationRequested event to create initial status on github
-    const taskGroupBindings = [
+    const deprecatedBindings = [
       githubEvents.taskGroupCreationRequested({statusApi: 'true'}),
     ];
 
@@ -127,13 +127,13 @@ class Handlers {
       this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
 
-    this.initialStatusPq = await consume(
+    this.deprecatedInitialStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: taskGroupBindings,
-        queueName: this.initialStatusQueueName,
+        bindings: deprecatedBindings,
+        queueName: this.deprecatedInitialStatusQueueName,
       },
-      this.monitor.timedHandler('taskGrouplistener', callHandler('task', taskGroupCreationHandler).bind(this))
+      this.monitor.timedHandler('deprecatedlistener', callHandler('task', taskGroupCreationHandler).bind(this))
     );
 
     this.initialTaskStatusPq = await consume(

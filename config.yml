@@ -3,7 +3,7 @@ defaults:
   app:
     jobQueue: null
     resultStatusQueue: null
-    initialStatusQueue: null
+    deprecatedInitialStatusQueue: null
     checksInitialStatusQueue: null
     buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
@@ -61,7 +61,7 @@ production:
   app:
     jobQueue: 'jobs'
     resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    deprecatedInitialStatusQueue: 'tasks'
     checksInitialStatusQueue: 'tasks-checks'
     botName: 'taskcluster[bot]'
 
@@ -84,7 +84,7 @@ staging:
   app:
     jobQueue: 'jobs'
     resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    deprecatedInitialStatusQueue: 'tasks'
     checksInitialStatusQueue: 'tasks-checks'
     buildsTableName: 'TaskclusterGithubBuildsStaging'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwnersStaging'
@@ -111,7 +111,7 @@ test:
     botName: 'magicalTCspirit'
     jobQueue: 'test-jobs'
     resultStatusQueue: 'test-statuses'
-    initialStatusQueue: 'tasks'
+    deprecatedInitialStatusQueue: 'tasks'
     checksInitialStatusQueue: 'tasks-checks'
 
   webhook:

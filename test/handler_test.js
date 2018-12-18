@@ -376,7 +376,8 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
     });
   });
 
-  suite('taskHandler', function() {
+  // Statuses API
+  suite('taskGroupCreationHandler', function() {
     suiteSetup(function() {
       if (skipping()) {
         this.skip();
@@ -411,18 +412,9 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
       await simulateExchangeMessage({
         taskGroupId: TASKGROUPID,
-        exchange: 'exchange/taskcluster-queue/v1/task-defined',
+        exchange: 'exchange/taskcluster-github/v1/task-group-creation-requested',
       });
       assertStatusCreation('pending');
-    });
-
-    test('create failure status', async function() {
-      await addBuild({state: 'failure', taskGroupId: TASKGROUPID});
-      await simulateExchangeMessage({
-        taskGroupId: TASKGROUPID,
-        exchange: 'exchange/taskcluster-queue/v1/task-defined',
-      });
-      assert(github.inst(9988).repos.createStatus.notCalled, 'createStatus was called twice');
     });
   });
 });

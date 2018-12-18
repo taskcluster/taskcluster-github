@@ -251,8 +251,6 @@ class VersionOne extends TcYaml {
         defaultTaskGroupId = slugid.nice();
       }
 
-      console.log('🍁', JSON.stringify(config, null, 2));
-
       config.tasks = config.tasks.map(task => {
         task = Object.assign({
           taskId: defaultTaskId,
