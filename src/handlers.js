@@ -10,6 +10,33 @@ const {consume} = require('taskcluster-lib-pulse');
 const debugPrefix = 'taskcluster-github:handlers';
 const debug = Debug(debugPrefix);
 
+const TITLES = { // maps github checkruns statuses and conclusions to titles to be displayed
+  success: 'Success',
+  failure: 'Failure',
+  neutral: 'It is neither good nor bad',
+  cancelled: 'Cancelled',
+  timed_out: 'Timed out',
+  action_required: 'Action required',
+  queued: 'Queued',
+  in_progress: 'In progress',
+  completed: 'Completed',
+};
+
+const CONCLUSIONS = { // maps queue exchange status to github checkrun conclusion
+  completed: 'success', // TODO: remove this stupid rule from es-lint
+  failed: 'failure',
+  exception: 'failure',
+  'deadline-exceeded': 'timed_out',
+  canceled: 'cancelled',
+  superseded: 'neutral', // is not relevant anymore
+  'claim-expired': 'neutral', // will be retried
+  'worker-shutdown': 'neutral', // will be retried
+  'malformed-payload': 'action_required', // like, correct your task definition???
+  'resource-unavailable': 'failure',
+  'internal-error': 'failure',
+  'intermittent-task': 'neutral', // will be retried
+};
+
 /**
  * Create handlers
  */
@@ -22,8 +49,9 @@ class Handlers {
       monitor,
       reference,
       jobQueueName,
-      resultStatusQueueName,
+      deprecatedResultStatusQueueName,
       deprecatedInitialStatusQueueName,
+      resultStatusQueueName,
       initialStatusQueueName,
       intree,
       context,
@@ -40,6 +68,7 @@ class Handlers {
     this.reference = reference;
     this.intree = intree;
     this.connection = null;
+    this.deprecatedResultStatusQueueName = deprecatedResultStatusQueueName;
     this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
     this.deprecatedInitialStatusQueueName = deprecatedInitialStatusQueueName;
@@ -52,6 +81,7 @@ class Handlers {
 
     this.jobPq = null;
     this.resultStatusPq = null;
+    this.deprecatedResultStatusPq = null;
     this.initialTaskStatusPq = null;
     this.deprecatedInitialStatusPq = null;
   }
@@ -76,12 +106,18 @@ class Handlers {
     const schedulerId = this.context.cfg.taskcluster.schedulerId;
     const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
+    const statusBindings = [
+      queueEvents.taskFailed(`route.${this.context.cfg.app.checkTaskRoute}`),
+      queueEvents.taskException(`route.${this.context.cfg.app.checkTaskRoute}`),
+      queueEvents.taskCompleted(`route.${this.context.cfg.app.checkTaskRoute}`),
+    ];
+
     // Listen for state changes to the taskcluster tasks and taskgroups
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    const statusBindings = [
-      queueEvents.taskFailed({schedulerId}),
+    const deprecatedStatusBindings = [
+      queueEvents.taskFailed({schedulerId}), // TODO: I think this is going to match EVERYTHING
       queueEvents.taskException({schedulerId}),
       queueEvents.taskGroupResolved({schedulerId}),
     ];
@@ -119,13 +155,13 @@ class Handlers {
       this.monitor.timedHandler('joblistener', callHandler('job', jobHandler).bind(this))
     );
 
-    this.resultStatusPq = await consume(
+    this.deprecatedResultStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: statusBindings,
-        queueName: this.resultStatusQueueName,
+        bindings: deprecatedStatusBindings,
+        queueName: this.deprecatedResultStatusQueueName,
       },
-      this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
+      this.monitor.timedHandler('deprecatedStatuslistener', callHandler('status', deprecatedStatusHandler).bind(this))
     );
 
     this.deprecatedInitialStatusPq = await consume(
@@ -135,6 +171,15 @@ class Handlers {
         queueName: this.deprecatedInitialStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedlistener', callHandler('task', taskGroupCreationHandler).bind(this))
+    );
+
+    this.resultStatusPq = await consume(
+      {
+        client: this.pulseClient,
+        bindings: statusBindings,
+        queueName: this.resultStatusQueueName,
+      },
+      this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
 
     this.initialTaskStatusPq = await consume(
@@ -207,11 +252,11 @@ class Handlers {
 module.exports = Handlers;
 
 /**
- * Post updates to GitHub, when the status of a task changes.
+ * Post updates to GitHub, when the status of a task changes. Uses Statuses API
  * Taskcluster States: https://docs.taskcluster.net/reference/platform/queue/references/events
  * GitHub Statuses: https://developer.github.com/v3/repos/statuses/
  **/
-async function statusHandler(message) {
+async function deprecatedStatusHandler(message) {
   let taskGroupId = message.payload.taskGroupId || message.payload.status.taskGroupId;
 
   let build = await this.context.Builds.load({
@@ -219,7 +264,7 @@ async function statusHandler(message) {
   });
 
   let debug = Debug(debugPrefix + ':' + build.eventId);
-  debug(`Handling state change for task-group ${taskGroupId}`);
+  debug(`Statuses API. Handling state change for task-group ${taskGroupId}`);
 
   let state = 'success';
 
@@ -276,6 +321,80 @@ async function statusHandler(message) {
       description: 'TaskGroup: ' + state,
       context: `${this.context.cfg.app.statusContext} (${build.eventType.split('.')[0]})`,
     });
+  } catch (e) {
+    debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
+    throw e;
+  }
+}
+
+/**
+ * Post updates to GitHub, when the status of a task changes. Uses Checks API
+ **/
+async function statusHandler(message) {
+  let {taskGroupId, state, runs, taskId} = message.payload.status;
+  let {runId} = message.payload;
+  let {reasonResolved} = runs[runId];
+
+  let {organization, repository, sha, eventId, eventType, installationId} = await this.context.Builds.load({
+    taskGroupId,
+  });
+
+  let debug = Debug(`${debugPrefix}:${eventId}`);
+  debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
+
+  let taskState = {
+    status: 'completed',
+    conclusion: CONCLUSIONS[reasonResolved || state],
+    completed_at: new Date().toISOString(),
+  };
+
+  // true means we'll get null if the record doesn't exist
+  let checkRun = await this.context.CheckRuns.load({taskGroupId, taskId}, true);
+
+  // Authenticating as installation.
+  try {
+    debug('Authenticating as installation in status handler...');
+    var instGithub = await this.context.github.getInstallationGithub(installationId);
+    debug('Authorized as installation in status handler');
+  } catch (e) {
+    debug(`Error authenticating as installation in status handler! Error: ${e}`);
+    throw e;
+  }
+
+  debug(
+    `Attempting to update status of the checkrun for ${organization}/${repository}@${sha} (${taskState.conclusion})`
+  );
+  try {
+    if (checkRun) {
+      await instGithub.checks.update({
+        ...taskState,
+        owner: organization,
+        repo: repository,
+        check_run_id: checkRun.checkRunId, // TODO: a helpful output
+      });
+    } else {
+      const checkRun = await instGithub.checks.create({
+        owner: organization,
+        repo: repository,
+        name: `Task ${taskId}`, // <-- this needs to be unique 😩
+        head_sha: sha,
+        output: { // TODO: a helpful output
+          title: `TaskGroup: queued for ${eventType})`,
+          summary: `Check for ${eventType}`,
+        },
+        details_url: libUrls.ui(
+          this.context.cfg.taskcluster.rootUrl,
+          `/groups/${taskGroupId}/tasks/${taskId}/details`
+        ),
+      });
+
+      await context.CheckRuns.create({
+        taskGroupId: taskGroupId,
+        taskId: taskId,
+        checkSuiteId: checkRun.data.check_suite.id.toString(),
+        checkRunId: checkRun.data.id.toString(),
+      });
+    }
   } catch (e) {
     debug(`Failed to update status: ${build.organization}/${build.repository}@${build.sha}`);
     throw e;
@@ -564,7 +683,10 @@ async function taskDefinedHandler(message) {
       title: `TaskGroup: Queued (for ${eventType})`,
       summary: `Check for ${eventType}`,
     },
-    details_url: `${this.context.cfg.taskcluster.rootUrl}/groups/${taskGroupId}/tasks/${taskId}/details`,
+    details_url: libUrls.ui(
+      this.context.cfg.taskcluster.rootUrl,
+      `/groups/${taskGroupId}/tasks/${taskId}/details`
+    ),
   }).catch(async (err) => {
     await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
     throw err;
