@@ -21,15 +21,14 @@ const TITLES = { // maps github checkruns statuses and conclusions to titles to 
   in_progress: 'In progress',
   completed: 'Completed',
 };
-success, failure, neutral, cancelled, timed_out, action_required
 
 const CONCLUSIONS = { // maps queue exchange status to github checkrun conclusion
-  'completed': 'success',
-  'failed': 'failure',
-  'exception': 'failure',
+  completed: 'success', // TODO: remove this stupid rule from es-lint
+  failed: 'failure',
+  exception: 'failure',
   'deadline-exceeded': 'timed_out',
-  'canceled': 'cancelled',
-  'superseded': 'neutral', // is not relevant anymore
+  canceled: 'cancelled',
+  superseded: 'neutral', // is not relevant anymore
   'claim-expired': 'neutral', // will be retried
   'worker-shutdown': 'neutral', // will be retried
   'malformed-payload': 'action_required', // like, correct your task definition???
@@ -362,7 +361,9 @@ async function statusHandler(message) {
     throw e;
   }
 
-  debug(`Attempting to update status of the checkrun for ${organization}/${repository}@${sha} (${taskState.conclusion})`);
+  debug(
+    `Attempting to update status of the checkrun for ${organization}/${repository}@${sha} (${taskState.conclusion})`
+  );
   try {
     if (checkRun) {
       await instGithub.checks.update({
@@ -399,7 +400,6 @@ async function statusHandler(message) {
     throw e;
   }
 }
-
 
 /**
  * If a .taskcluster.yml exists, attempt to turn it into a taskcluster
