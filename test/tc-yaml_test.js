@@ -121,5 +121,24 @@ suite('tc-yaml_test.js', function() {
         },
       }]);
     });
+
+    test('compileTasks sets checks route if we have reporting in the YML', function() {
+      const config = {
+        tasks: [{
+          taskId: 'task-1',
+        }],
+        reporting: 'checks-v1',
+      };
+      tcyaml.compileTasks(config, cfg, {}, now);
+      assume(config.tasks).to.deeply.equal([{
+        taskId: 'task-1',
+        task: {
+          created: now,
+          taskGroupId: 'task-1',
+          schedulerId: 'test-sched',
+          routes: ['checks-queue'],
+        },
+      }]);
+    });
   });
 });
