@@ -216,7 +216,7 @@ const load = loader({
         intree,
         reference,
         jobQueueName: cfg.app.jobQueue,
-        resultStatusQueueName: cfg.app.resultStatusQueue,
+        deprecatedResultStatusQueueName: cfg.app.deprecatedResultStatusQueue,
         deprecatedInitialStatusQueueName: cfg.app.deprecatedInitialStatusQueue,
         initialStatusQueueName: cfg.app.initialStatusQueue,
         context: {cfg, github, schemaset, Builds, CheckRuns, publisher},

@@ -50,7 +50,7 @@ class Handlers {
       monitor,
       reference,
       jobQueueName,
-      resultStatusQueueName,
+      deprecatedResultStatusQueueName,
       deprecatedInitialStatusQueueName,
       initialStatusQueueName,
       intree,
@@ -68,7 +68,7 @@ class Handlers {
     this.reference = reference;
     this.intree = intree;
     this.connection = null;
-    this.resultStatusQueueName = resultStatusQueueName;
+    this.deprecatedResultStatusQueueName = deprecatedResultStatusQueueName;
     this.jobQueueName = jobQueueName;
     this.deprecatedInitialStatusQueueName = deprecatedInitialStatusQueueName;
     this.initialStatusQueueName = initialStatusQueueName;
@@ -79,7 +79,7 @@ class Handlers {
     this.handlerRejected = null;
 
     this.jobPq = null;
-    this.resultStatusPq = null;
+    this.deprecatedResultStatusPq = null;
     this.initialTaskStatusPq = null;
     this.deprecatedInitialStatusPq = null;
   }
@@ -153,13 +153,13 @@ class Handlers {
       this.monitor.timedHandler('joblistener', callHandler('job', jobHandler).bind(this))
     );
 
-    this.resultStatusPq = await consume(
+    this.deprecatedResultStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: statusBindings,
-        queueName: this.resultStatusQueueName,
+        bindings: deprecatedStatusBindings,
+        queueName: this.deprecatedResultStatusQueueName,
       },
-      this.monitor.timedHandler('statuslistener', callHandler('status', deprecatedStatusHandler).bind(this))
+      this.monitor.timedHandler('deprecatedStatuslistener', callHandler('status', deprecatedStatusHandler).bind(this))
     );
 
     this.deprecatedInitialStatusPq = await consume(

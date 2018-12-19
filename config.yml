@@ -2,7 +2,7 @@
 defaults:
   app:
     jobQueue: null
-    resultStatusQueue: null
+    deprecatedResultStatusQueue: null
     deprecatedInitialStatusQueue: null
     initialStatusQueue: null
     buildsTableName: 'TaskclusterGithubBuilds'
@@ -60,7 +60,7 @@ defaults:
 production:
   app:
     jobQueue: 'jobs'
-    resultStatusQueue: 'statuses'
+    deprecatedResultStatusQueue: 'statuses'
     deprecatedInitialStatusQueue: 'tasks'
     initialStatusQueue: 'tasks-checks'
     botName: 'taskcluster[bot]'
@@ -83,7 +83,7 @@ production:
 staging:
   app:
     jobQueue: 'jobs'
-    resultStatusQueue: 'statuses'
+    deprecatedResultStatusQueue: 'statuses'
     deprecatedInitialStatusQueue: 'tasks'
     initialStatusQueue: 'tasks-checks'
     buildsTableName: 'TaskclusterGithubBuildsStaging'
@@ -110,7 +110,7 @@ test:
   app:
     botName: 'magicalTCspirit'
     jobQueue: 'test-jobs'
-    resultStatusQueue: 'test-statuses'
+    deprecatedResultStatusQueue: 'test-statuses'
     deprecatedInitialStatusQueue: 'tasks'
     initialStatusQueue: 'tasks-checks'
 
