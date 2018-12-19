@@ -384,7 +384,7 @@ async function statusHandler(message) {
         },
         details_url: libUrls.ui(
           this.context.cfg.taskcluster.rootUrl,
-          `/task-group-inspector/#/${taskGroupId}/tasks/${taskId}/details`
+          `/groups/${taskGroupId}/tasks/${taskId}/details`
         ),
       });
 
@@ -685,7 +685,7 @@ async function taskDefinedHandler(message) {
     },
     details_url: libUrls.ui(
       this.context.cfg.taskcluster.rootUrl,
-      `/task-group-inspector/#/${taskGroupId}/tasks/${taskId}/details`
+      `/groups/${taskGroupId}/tasks/${taskId}/details`
     ),
   }).catch(async (err) => {
     await this.createExceptionComment({instGithub, organization, repository, sha, error: err});
