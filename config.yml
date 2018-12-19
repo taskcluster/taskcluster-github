@@ -10,6 +10,7 @@ defaults:
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     checkRunsTableName: 'TaskclusterCheckRuns'
     checkTaskRoute: 'checks-queue'
+    statusTaskRoute: 'statuses-queue'
     publishMetaData: !env:bool PUBLISH_METADATA
     statusContext: 'Taskcluster'
     botName: !env BOT_USERNAME
