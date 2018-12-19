@@ -117,14 +117,14 @@ class Handlers {
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
     const deprecatedStatusBindings = [
-      queueEvents.taskFailed({schedulerId}), // TODO: I think this is going to match EVERYTHING
-      queueEvents.taskException({schedulerId}),
-      queueEvents.taskGroupResolved({schedulerId}),
+      queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
+      queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
+      queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
     // Listen for taskGroupCreationRequested event to create initial status on github
     const deprecatedBindings = [
-      githubEvents.taskGroupCreationRequested({statusApi: 'true'}),
+      githubEvents.taskGroupCreationRequested(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
     // Listen for taskDefined event to create initial status on github
@@ -554,7 +554,6 @@ async function jobHandler(message) {
   }
 
   taskGroupId = graphConfig.tasks[0].task.taskGroupId;
-  let {routes} = graphConfig.tasks[0].task;
 
   debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
   let now = new Date();
@@ -595,8 +594,7 @@ async function jobHandler(message) {
       taskGroupId,
       organization,
       repository,
-      reporting: routes,
-    });
+    }, [this.context.cfg.app.statusTaskRoute]);
   }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange 
     for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`
   ));

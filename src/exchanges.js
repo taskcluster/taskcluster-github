@@ -1,8 +1,9 @@
 const {Exchanges} = require('taskcluster-lib-pulse');
 const _ = require('lodash');
+const assert = require('assert');
 
 /** Build common routing key construct for `exchanges.declare` */
-let commonRoutingKey = function(options) {
+const commonRoutingKey = function(options) {
   options = options || {};
   let routingKey = [
     {
@@ -27,11 +28,6 @@ let commonRoutingKey = function(options) {
                         'characters aside from - and _ have been stripped.',
       maxSize:          100,
       required:         true,
-    }, {
-      name:             'reporting',
-      summary:          'Can indicate which API will be used to report status',
-      maxSize:          22,
-      required:         false,
     },
   ];
   if (options.hasActions) {
@@ -47,9 +43,15 @@ let commonRoutingKey = function(options) {
   return routingKey;
 };
 
-let commonMessageBuilder = function(msg) {
+const commonMessageBuilder = function(msg) {
   msg.version = 1;
   return msg;
+};
+
+/** Build list of routing keys to CC */
+const commonCCBuilder = (message, routes) => {
+  assert(Array.isArray(routes), 'Routes must be an array');
+  return routes.map(route => 'route.' + route);
 };
 
 /** Declaration of exchanges offered by the github */
@@ -132,8 +134,8 @@ exchanges.declare({
   routingKey:         commonRoutingKey(),
   schema:             'task-group-creation-requested.yml',
   messageBuilder:     commonMessageBuilder,
-  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository', 'reporting'),
-  CCBuilder:          () => [],
+  routingKeyBuilder:  msg => _.pick(msg, 'organization', 'repository'),
+  CCBuilder:          commonCCBuilder,
 });
 
 // Export exchanges

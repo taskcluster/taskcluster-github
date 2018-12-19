@@ -256,8 +256,7 @@ class VersionOne extends TcYaml {
           taskId: defaultTaskId,
           taskGroupId: defaultTaskGroupId,
           created: now,
-          /*eslint-disable no-extra-parens*/
-          ...(config.reporting && {routes:[cfg.app.checkTaskRoute]}),
+          routes: config.reporting ? [cfg.app.checkTaskRoute] : [cfg.app.statusTaskRoute],
         }, task);
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 

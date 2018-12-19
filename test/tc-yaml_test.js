@@ -8,6 +8,10 @@ suite('tc-yaml_test.js', function() {
       taskcluster: {
         schedulerId: 'test-sched',
       },
+      app: {
+        checkTaskRoute: 'checks-queue',
+        statusTaskRoute: 'statuses-queue',
+      },
     };
     const now = new Date().toJSON();
 
@@ -31,6 +35,7 @@ suite('tc-yaml_test.js', function() {
           created: now,
           taskGroupId: config.tasks[0].taskId, // matches taskId
           schedulerId: 'test-sched',
+          routes: ['statuses-queue'],
         },
       }]);
     });
@@ -48,6 +53,7 @@ suite('tc-yaml_test.js', function() {
           created: now,
           taskGroupId: 'task-1',
           schedulerId: 'test-sched',
+          routes: ['statuses-queue'],
         },
       }]);
     });
@@ -65,6 +71,7 @@ suite('tc-yaml_test.js', function() {
           created: now,
           taskGroupId: 'tgid-1',
           schedulerId: 'test-sched',
+          routes: ['statuses-queue'],
         },
       }]);
     });
@@ -102,6 +109,7 @@ suite('tc-yaml_test.js', function() {
           created: now,
           taskGroupId: 'tgid-1',
           schedulerId: 'test-sched',
+          routes: ['statuses-queue'],
         },
       }, {
         taskId: 'task-2',
@@ -109,6 +117,7 @@ suite('tc-yaml_test.js', function() {
           created: now,
           taskGroupId: 'tgid-2',
           schedulerId: 'test-sched',
+          routes: ['statuses-queue'],
         },
       }]);
     });
