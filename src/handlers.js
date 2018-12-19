@@ -52,6 +52,7 @@ class Handlers {
       jobQueueName,
       deprecatedResultStatusQueueName,
       deprecatedInitialStatusQueueName,
+      resultStatusQueueName,
       initialStatusQueueName,
       intree,
       context,
@@ -69,6 +70,7 @@ class Handlers {
     this.intree = intree;
     this.connection = null;
     this.deprecatedResultStatusQueueName = deprecatedResultStatusQueueName;
+    this.resultStatusQueueName = resultStatusQueueName;
     this.jobQueueName = jobQueueName;
     this.deprecatedInitialStatusQueueName = deprecatedInitialStatusQueueName;
     this.initialStatusQueueName = initialStatusQueueName;
@@ -79,6 +81,7 @@ class Handlers {
     this.handlerRejected = null;
 
     this.jobPq = null;
+    this.resultStatusPq = null;
     this.deprecatedResultStatusPq = null;
     this.initialTaskStatusPq = null;
     this.deprecatedInitialStatusPq = null;
@@ -105,9 +108,9 @@ class Handlers {
     const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
     const statusBindings = [
-      queueEvents.taskFailed({schedulerId}),
-      queueEvents.taskException({schedulerId}),
-      queueEvents.taskCompleted({schedulerId}),
+      queueEvents.taskFailed(`route.${this.context.cfg.app.checkTaskRoute}`),
+      queueEvents.taskException(`route.${this.context.cfg.app.checkTaskRoute}`),
+      queueEvents.taskCompleted(`route.${this.context.cfg.app.checkTaskRoute}`),
     ];
 
     // Listen for state changes to the taskcluster tasks and taskgroups
@@ -115,7 +118,7 @@ class Handlers {
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
     const deprecatedStatusBindings = [
-      queueEvents.taskFailed({schedulerId}),
+      queueEvents.taskFailed({schedulerId}), // TODO: I think this is going to match EVERYTHING
       queueEvents.taskException({schedulerId}),
       queueEvents.taskGroupResolved({schedulerId}),
     ];
@@ -169,6 +172,15 @@ class Handlers {
         queueName: this.deprecatedInitialStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedlistener', callHandler('task', taskGroupCreationHandler).bind(this))
+    );
+
+    this.resultStatusPq = await consume(
+      {
+        client: this.pulseClient,
+        bindings: statusBindings,
+        queueName: this.resultStatusQueueName,
+      },
+      this.monitor.timedHandler('statuslistener', callHandler('status', statusHandler).bind(this))
     );
 
     this.initialTaskStatusPq = await consume(

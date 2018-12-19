@@ -218,6 +218,7 @@ const load = loader({
         jobQueueName: cfg.app.jobQueue,
         deprecatedResultStatusQueueName: cfg.app.deprecatedResultStatusQueue,
         deprecatedInitialStatusQueueName: cfg.app.deprecatedInitialStatusQueue,
+        resultStatusQueueName: cfg.app.resultStatusQueueName,
         initialStatusQueueName: cfg.app.initialStatusQueue,
         context: {cfg, github, schemaset, Builds, CheckRuns, publisher},
         pulseClient,
