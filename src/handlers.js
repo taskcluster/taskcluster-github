@@ -554,6 +554,7 @@ async function jobHandler(message) {
   }
 
   taskGroupId = graphConfig.tasks[0].task.taskGroupId;
+  let {routes} = graphConfig.tasks[0].task;
 
   debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
   let now = new Date();
@@ -594,7 +595,7 @@ async function jobHandler(message) {
       taskGroupId,
       organization,
       repository,
-    }, [this.context.cfg.app.statusTaskRoute]);
+    }, routes);
   }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange 
     for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`
   ));
