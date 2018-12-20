@@ -29,7 +29,7 @@ const CONCLUSIONS = { // maps status communicated bu the queue service to github
   'deadline-exceeded': 'timed_out',
   canceled: 'cancelled',
   superseded: 'neutral', // is not relevant anymore
-  'claim-expired': 'neutral', // will be retried
+  'claim-expired': 'failure',
   'worker-shutdown': 'neutral', // will be retried
   'malformed-payload': 'action_required', // like, correct your task definition???
   'resource-unavailable': 'failure',
@@ -106,7 +106,6 @@ class Handlers {
       githubEvents.release(),
     ];
 
-    const schedulerId = this.context.cfg.taskcluster.schedulerId;
     const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
     const statusBindings = [
@@ -283,8 +282,6 @@ async function deprecatedStatusHandler(message) {
   let debug = Debug(debugPrefix + ':' + build.eventId);
   debug(`Statuses API. Handling state change for task-group ${taskGroupId}`);
 
-  debug(`👹 The message gotten: ${JSON.stringify(message, null, 2)}`);
-
   let state = 'success';
 
   if (message.exchange.endsWith('task-group-resolved')) {
@@ -350,10 +347,7 @@ async function deprecatedStatusHandler(message) {
  * Post updates to GitHub, when the status of a task changes. Uses Checks API
  **/
 async function statusHandler(message) {
-  let debug = Debug(`${debugPrefix}:statusHandler`);
-  debug(`🎃 The message gotten: ${JSON.stringify(message, null, 2)}`);
-
-  let {taskGroupId, state, runs, taskId} = message.payload.status; // TODO: this handler is firing on taskGroupResolved
+  let {taskGroupId, state, runs, taskId} = message.payload.status;
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
@@ -361,7 +355,7 @@ async function statusHandler(message) {
     taskGroupId,
   });
 
-  debug = Debug(`${debugPrefix}:${eventId}`);
+  let debug = Debug(`${debugPrefix}:${eventId}`);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
 
   let taskState = {
