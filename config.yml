@@ -9,8 +9,8 @@ defaults:
     buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     checkRunsTableName: 'TaskclusterCheckRuns'
-    checkTaskRoute: 'checks-queue'
-    statusTaskRoute: 'statuses-queue'
+    checkTaskRoute: 'checks'
+    statusTaskRoute: 'statuses'
     publishMetaData: !env:bool PUBLISH_METADATA
     statusContext: 'Taskcluster'
     botName: !env BOT_USERNAME
