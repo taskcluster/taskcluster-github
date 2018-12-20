@@ -22,7 +22,7 @@ const TITLES = { // maps github checkruns statuses and conclusions to titles to 
   completed: 'Completed',
 };
 
-const CONCLUSIONS = { // maps queue exchange status to github checkrun conclusion
+const CONCLUSIONS = { // maps status communicated bu the queue service to github checkrun conclusions
   completed: 'success', // TODO: remove this stupid rule from es-lint
   failed: 'failure',
   exception: 'failure',
@@ -116,11 +116,14 @@ class Handlers {
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
+    debug(`The binding for statuses: route.${this.context.cfg.app.statusTaskRoute}`);
     const deprecatedStatusBindings = [
       queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
+
+    deprecatedStatusBindings.forEach((b, i) => debug(`The result binding ${i}: ${JSON.stringify(b, null, 2)}`));
 
     // Listen for taskGroupCreationRequested event to create initial status on github
     const deprecatedBindings = [
@@ -266,6 +269,8 @@ async function deprecatedStatusHandler(message) {
   let debug = Debug(debugPrefix + ':' + build.eventId);
   debug(`Statuses API. Handling state change for task-group ${taskGroupId}`);
 
+  debug(`👹 The message gotten: ${JSON.stringify(message, null, 2)}`);
+
   let state = 'success';
 
   if (message.exchange.endsWith('task-group-resolved')) {
@@ -331,7 +336,10 @@ async function deprecatedStatusHandler(message) {
  * Post updates to GitHub, when the status of a task changes. Uses Checks API
  **/
 async function statusHandler(message) {
-  let {taskGroupId, state, runs, taskId} = message.payload.status;
+  let debug = Debug(`${debugPrefix}:statusHandler`);
+  debug(`🎃 The message gotten: ${JSON.stringify(message, null, 2)}`);
+
+  let {taskGroupId, state, runs, taskId} = message.payload.status; // TODO: this handler is firing on taskGroupResolved
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
@@ -339,7 +347,7 @@ async function statusHandler(message) {
     taskGroupId,
   });
 
-  let debug = Debug(`${debugPrefix}:${eventId}`);
+  debug = Debug(`${debugPrefix}:${eventId}`);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
 
   let taskState = {
