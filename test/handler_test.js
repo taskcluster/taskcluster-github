@@ -377,7 +377,7 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
   });
 
   // Statuses API
-  suite('taskGroupCreationHandler', function() {
+  suite('Statuses API: initial status handler', function() {
     suiteSetup(function() {
       if (skipping()) {
         this.skip();
