@@ -101,6 +101,9 @@ class VersionZero extends TcYaml {
   }
   compileTasks(config, cfg, payload, now) {
     config.tasks = config.tasks.map((task) => {
+      task.routes = task.routes || [];
+      task.routes.push(cfg.app.statusTaskRoute);
+
       return {
         taskId: slugid.nice(),
         task,
@@ -252,24 +255,24 @@ class VersionOne extends TcYaml {
       }
 
       config.tasks = config.tasks.map(task => {
+        task.routes = task.routes || [];
+        task.routes.push(config.reporting ? cfg.app.checkTaskRoute : cfg.app.statusTaskRoute);
+
         task = Object.assign({
           taskId: defaultTaskId,
           taskGroupId: defaultTaskGroupId,
           created: now,
-          routes: config.reporting ? [cfg.app.checkTaskRoute] : [cfg.app.statusTaskRoute],
         }, task);
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
         const {taskId, ...taskWithoutTaskId} = task;
-        const b = {
+        return {
           taskId,
           task: {
             ...taskWithoutTaskId,
             schedulerId: cfg.taskcluster.schedulerId,
           },
         };
-
-        return b;
       });
     }
     return this.createScopes(config, payload);

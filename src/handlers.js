@@ -22,19 +22,20 @@ const TITLES = { // maps github checkruns statuses and conclusions to titles to 
   completed: 'Completed',
 };
 
-const CONCLUSIONS = { // maps status communicated bu the queue service to github checkrun conclusions
-  completed: 'success', // TODO: remove this stupid rule from es-lint
-  failed: 'failure',
-  exception: 'failure',
+const CONCLUSIONS = { // maps status communicated by the queue service to github checkrun conclusions
+  /*eslint-disable quote-props*/
+  'completed': 'success',
+  'failed': 'failure',
+  'exception': 'failure',
   'deadline-exceeded': 'timed_out',
-  canceled: 'cancelled',
-  superseded: 'neutral', // is not relevant anymore
-  'claim-expired': 'neutral', // will be retried
-  'worker-shutdown': 'neutral', // will be retried
-  'malformed-payload': 'action_required', // like, correct your task definition???
+  'canceled': 'cancelled',
+  'superseded': 'neutral', // queue status means: is not relevant anymore
+  'claim-expired': 'failure',
+  'worker-shutdown': 'neutral', // queue status means: will be retried
+  'malformed-payload': 'action_required', // github status means "correct your task definition"
   'resource-unavailable': 'failure',
   'internal-error': 'failure',
-  'intermittent-task': 'neutral', // will be retried
+  'intermittent-task': 'neutral', // queue status means: will be retried
 };
 
 /**
@@ -102,7 +103,6 @@ class Handlers {
       githubEvents.release(),
     ];
 
-    const schedulerId = this.context.cfg.taskcluster.schedulerId;
     const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
     const statusBindings = [
@@ -115,17 +115,14 @@ class Handlers {
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    debug(`The binding for statuses: route.${this.context.cfg.app.statusTaskRoute}`);
-    const deprecatedStatusBindings = [
+    const deprecatedResultStatusBindings = [
       queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
-    deprecatedStatusBindings.forEach((b, i) => debug(`The result binding ${i}: ${JSON.stringify(b, null, 2)}`));
-
     // Listen for taskGroupCreationRequested event to create initial status on github
-    const deprecatedBindings = [
+    const deprecatedInitialStatusBindings = [
       githubEvents.taskGroupCreationRequested(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
@@ -160,7 +157,7 @@ class Handlers {
     this.deprecatedResultStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: deprecatedStatusBindings,
+        bindings: deprecatedResultStatusBindings,
         queueName: this.deprecatedResultStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedStatuslistener', callHandler('status', deprecatedStatusHandler).bind(this))
@@ -169,7 +166,7 @@ class Handlers {
     this.deprecatedInitialStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: deprecatedBindings,
+        bindings: deprecatedInitialStatusBindings,
         queueName: this.deprecatedInitialStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedlistener', callHandler('task', taskGroupCreationHandler).bind(this))
@@ -273,8 +270,6 @@ async function deprecatedStatusHandler(message) {
   let debug = Debug(debugPrefix + ':' + build.eventId);
   debug(`Statuses API. Handling state change for task-group ${taskGroupId}`);
 
-  debug(`👹 The message gotten: ${JSON.stringify(message, null, 2)}`);
-
   let state = 'success';
 
   if (message.exchange.endsWith('task-group-resolved')) {
@@ -340,25 +335,40 @@ async function deprecatedStatusHandler(message) {
  * Post updates to GitHub, when the status of a task changes. Uses Checks API
  **/
 async function statusHandler(message) {
-  let debug = Debug(`${debugPrefix}:statusHandler`);
-  debug(`🎃 The message gotten: ${JSON.stringify(message, null, 2)}`);
-
-  let {taskGroupId, state, runs, taskId} = message.payload.status; // TODO: this handler is firing on taskGroupResolved
+  let {taskGroupId, state, runs, taskId} = message.payload.status;
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
-  let {organization, repository, sha, eventId, eventType, installationId} = await this.context.Builds.load({
+  let conclusion = CONCLUSIONS[reasonResolved || state];
+
+  let build = await this.context.Builds.load({
     taskGroupId,
   });
 
-  debug = Debug(`${debugPrefix}:${eventId}`);
+  let {organization, repository, sha, eventId, eventType, installationId} = build;
+
+  let debug = Debug(`${debugPrefix}:${eventId}`);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
 
   let taskState = {
     status: 'completed',
-    conclusion: CONCLUSIONS[reasonResolved || state],
+    conclusion: conclusion || 'neutral',
     completed_at: new Date().toISOString(),
   };
+
+  if (conclusion === undefined) {
+    this.monitor.reportError(new Error(`Unknown reasonResolved or state in ${message.exchange}!
+      Resolution reason received: ${reasonResolved}. State received: ${state}. Add these to the handlers map.
+      TaskId: ${taskId}, taskGroupId: ${taskGroupId}`)
+    );
+
+    taskState.output = {
+      summary: `Message came with unknown resolution reason or state. 
+        Resolution reason received: ${reasonResolved}. State received: ${state}. The status has been marked as neutral. 
+        For further information, please inspect the task in Taskcluster`,
+      title: 'Unknown Resolution',
+    };
+  }
 
   // true means we'll get null if the record doesn't exist
   let checkRun = await this.context.CheckRuns.load({taskGroupId, taskId}, true);
@@ -382,13 +392,13 @@ async function statusHandler(message) {
         ...taskState,
         owner: organization,
         repo: repository,
-        check_run_id: checkRun.checkRunId, // TODO: a helpful output
+        check_run_id: checkRun.checkRunId,
       });
     } else {
       const checkRun = await instGithub.checks.create({
         owner: organization,
         repo: repository,
-        name: `Task ${taskId}`, // <-- this needs to be unique 😩
+        name: `Task ${taskId}`,
         head_sha: sha,
         output: { // TODO: a helpful output
           title: `TaskGroup: queued for ${eventType})`,
@@ -400,7 +410,7 @@ async function statusHandler(message) {
         ),
       });
 
-      await context.CheckRuns.create({
+      await this.context.CheckRuns.create({
         taskGroupId: taskGroupId,
         taskId: taskId,
         checkSuiteId: checkRun.data.check_suite.id.toString(),
@@ -479,7 +489,6 @@ async function jobHandler(message) {
   // This is a bit of a hack, but is needed for bug 1274077 for now
   try {
     let c = yaml.safeLoad(repoconf);
-    debug(`Result of yml.safeLoad: ${JSON.stringify(c, null, 2)}`);
   } catch (e) {
     if (e.name === 'YAMLException') {
       return await this.createExceptionComment({instGithub, organization, repository, sha, error: e, pullNumber});
@@ -568,20 +577,22 @@ async function jobHandler(message) {
   taskGroupId = graphConfig.tasks[0].task.taskGroupId;
   let {routes} = graphConfig.tasks[0].task;
 
-  debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
-  let now = new Date();
-  await context.Builds.create({
-    organization,
-    repository,
-    sha,
-    taskGroupId,
-    state: groupState,
-    created: now,
-    updated: now,
-    installationId: message.payload.installationId,
-    eventType: message.payload.details['event.type'],
-    eventId: message.payload.eventId,
-  }).catch(async (err) => {
+  try {
+    debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
+    let now = new Date();
+    await context.Builds.create({
+      organization,
+      repository,
+      sha,
+      taskGroupId,
+      state: groupState,
+      created: now,
+      updated: now,
+      installationId: message.payload.installationId,
+      eventType: message.payload.details['event.type'],
+      eventId: message.payload.eventId,
+    });
+  } catch (e) {
     if (err.code !== 'EntityAlreadyExists') {
       throw err;
     }
@@ -595,22 +606,30 @@ async function jobHandler(message) {
     assert.equal(build.sha, sha);
     assert.equal(build.eventType, message.payload.details['event.type']);
     assert.equal(build.eventId, message.payload.eventId);
-  }).then(async data => {
+  }
+
+  try {
     debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
-    return await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
-  }).catch(async e => {
+    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  } catch (e) {
     debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
     return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  }).then(async data => {
+  }
+
+  try {
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    return await context.publisher.taskGroupCreationRequested({
+    await context.publisher.taskGroupCreationRequested({
       taskGroupId,
       organization,
       repository,
     }, routes);
-  }).catch(async e => debug(`Failed to publish to taskGroupCreationRequested exchange 
-    for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`
-  ));
+  } catch (e) {
+    debug(`Failed to publish to taskGroupCreationRequested exchange. 
+    Parameters: ${taskGroupId}, ${organization}, ${repository}, ${routes}`);
+    debug(`Stack: ${e.stack}`);
+    return debug(`Failed to publish to taskGroupCreationRequested exchange 
+    for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`);
+  }
 
   debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
@@ -627,8 +646,6 @@ async function jobHandler(message) {
 async function taskGroupCreationHandler(message) {
   const {
     taskGroupId,
-    organization,
-    repository,
   } = message.payload;
 
   const debug = Debug(`${debugPrefix}:taskGroup-handler`);
@@ -638,6 +655,8 @@ async function taskGroupCreationHandler(message) {
     sha,
     eventType,
     installationId,
+    organization,
+    repository,
   } = await this.context.Builds.load({taskGroupId});
 
   const statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;

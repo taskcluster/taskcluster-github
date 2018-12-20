@@ -129,7 +129,10 @@ exchanges.declare({
   description: [
     'supposed to signal that taskCreate API has been called for every task in the task group',
     'for this particular repo and this particular organization',
-    'currently used for creating initial status indicators in GitHub UI using Statuses API',
+    'currently used for creating initial status indicators in GitHub UI using Statuses API.',
+    'This particular exchange can also be bound to RabbitMQ queues by custom routes - for that,',
+    'Pass in the array of routes as a second argument to the publish method. Currently, we do',
+    'use the statuses routes to bind the handler that creates the initial status.',
   ].join('\n'),
   routingKey:         commonRoutingKey(),
   schema:             'task-group-creation-requested.yml',

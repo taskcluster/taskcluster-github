@@ -9,8 +9,8 @@ defaults:
     buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
     checkRunsTableName: 'TaskclusterCheckRuns'
-    checkTaskRoute: 'checks-queue'
-    statusTaskRoute: 'statuses-queue'
+    checkTaskRoute: 'checks'
+    statusTaskRoute: 'statuses'
     publishMetaData: !env:bool PUBLISH_METADATA
     statusContext: 'Taskcluster'
     botName: !env BOT_USERNAME
@@ -62,10 +62,10 @@ defaults:
 production:
   app:
     jobQueue: 'jobs'
-    deprecatedResultStatusQueue: 'deprecated-statuses'
-    deprecatedInitialStatusQueue: 'deprecated-tasks'
-    resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    deprecatedResultStatusQueue: 'stat-result'
+    deprecatedInitialStatusQueue: 'stat-init'
+    resultStatusQueue: 'ch-result'
+    initialStatusQueue: 'ch-init'
     botName: 'taskcluster[bot]'
 
   intree:
