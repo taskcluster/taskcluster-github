@@ -336,7 +336,10 @@ async function deprecatedStatusHandler(message) {
  * Post updates to GitHub, when the status of a task changes. Uses Checks API
  **/
 async function statusHandler(message) {
-  let {taskGroupId, state, runs, taskId} = message.payload.status;
+  let debug = Debug(`${debugPrefix}:statusHandler`);
+  debug(`🎃 The message gotten: ${JSON.stringify(message, null, 2)}`);
+
+  let {taskGroupId, state, runs, taskId} = message.payload.status; // TODO: this handler is firing on taskGroupResolved
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
@@ -344,7 +347,7 @@ async function statusHandler(message) {
     taskGroupId,
   });
 
-  let debug = Debug(`${debugPrefix}:${eventId}`);
+  debug = Debug(`${debugPrefix}:${eventId}`);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
 
   let taskState = {
