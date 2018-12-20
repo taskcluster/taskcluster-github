@@ -91,8 +91,7 @@ class Handlers {
    */
   async setup(options = {}) {
     debug('Setting up handlers...');
-    assert(!this.connection, 'Cannot setup twice!');
-    this.connection = new taskcluster.PulseConnection(this.credentials);
+    assert(!this.jobPq, 'Cannot setup twice!');
 
     // Listen for new jobs created via the api webhook endpoint
     const GithubEvents = taskcluster.createClient(this.reference);
@@ -198,9 +197,14 @@ class Handlers {
 
   async terminate() {
     debug('Terminating handlers...');
-    if (this.connection) {
-      await this.connection.close();
-      this.connection = undefined;
+    if (this.jobPq) {
+      await this.jobPq.stop();
+    }
+    if (this.resultStatusPq) {
+      await this.resultStatusPq.stop();
+    }
+    if (this.initialStatusPq) {
+      await this.initialStatusPq.stop();
     }
   }
 
