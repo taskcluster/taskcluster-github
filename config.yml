@@ -4,7 +4,7 @@ defaults:
     jobQueue: null
     deprecatedResultStatusQueue: null
     deprecatedInitialStatusQueue: null
-    resultStatusQueueName: null
+    resultStatusQueue: null
     initialStatusQueue: null
     buildsTableName: 'TaskclusterGithubBuilds'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwners'
@@ -62,10 +62,10 @@ defaults:
 production:
   app:
     jobQueue: 'jobs'
-    deprecatedResultStatusQueue: 'statuses'
-    deprecatedInitialStatusQueue: 'tasks'
-    resultStatusQueueName: 'statuses-checks'
-    initialStatusQueue: 'tasks-checks'
+    deprecatedResultStatusQueue: 'deprecated-statuses'
+    deprecatedInitialStatusQueue: 'deprecated-tasks'
+    resultStatusQueue: 'statuses'
+    initialStatusQueue: 'tasks'
     botName: 'taskcluster[bot]'
 
   intree:
@@ -86,10 +86,10 @@ production:
 staging:
   app:
     jobQueue: 'jobs'
-    deprecatedResultStatusQueue: 'statuses'
-    deprecatedInitialStatusQueue: 'tasks'
-    resultStatusQueueName: 'statuses-checks'
-    initialStatusQueue: 'tasks-checks'
+    deprecatedResultStatusQueue: 'deprecated-statuses'
+    deprecatedInitialStatusQueue: 'deprecated-tasks'
+    resultStatusQueue: 'statuses'
+    initialStatusQueue: 'tasks'
     buildsTableName: 'TaskclusterGithubBuildsStaging'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwnersStaging'
     name: 'tc-github-staging'
@@ -114,10 +114,10 @@ test:
   app:
     botName: 'magicalTCspirit'
     jobQueue: 'test-jobs'
-    deprecatedResultStatusQueue: 'test-statuses'
-    deprecatedInitialStatusQueue: 'tasks'
-    resultStatusQueueName: 'statuses-checks'
-    initialStatusQueue: 'tasks-checks'
+    deprecatedResultStatusQueue: 'deprecated-statuses'
+    deprecatedInitialStatusQueue: 'deprecated-tasks'
+    resultStatusQueue: 'statuses'
+    initialStatusQueue: 'tasks'
 
   webhook:
     secret: ['abc123', 'def456']
