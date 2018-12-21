@@ -101,6 +101,7 @@ class VersionZero extends TcYaml {
   }
   compileTasks(config, cfg, payload, now) {
     config.tasks = config.tasks.map((task) => {
+      task.routes = task.routes || [];
       return {
         taskId: slugid.nice(),
         task,
@@ -263,6 +264,7 @@ class VersionOne extends TcYaml {
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
         const {taskId, ...taskWithoutTaskId} = task;
+        console.log(task.routes);
         return {
           taskId,
           task: {

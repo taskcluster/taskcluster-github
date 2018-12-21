@@ -630,8 +630,8 @@ async function jobHandler(message) {
     Parameters: ${taskGroupId}, ${organization}, ${repository}, ${routes}`);
     debug(`Stack: ${e.stack}`);
     return debug(`Failed to publish to taskGroupCreationRequested exchange 
-    for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`
-  )});
+    for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`);
+  });
 
   debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
