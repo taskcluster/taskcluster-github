@@ -351,6 +351,13 @@ async function statusHandler(message) {
 
   let conclusion = CONCLUSIONS[reasonResolved || state];
 
+  if (conclusion === undefined) {
+    this.monitor.reportError(new Error(`Unknown reasonResolved or state in ${message.exchange}!
+      Resolution reason received: ${reasonResolved}. State received: ${state}. Add these to the handlers map.
+      TaskId: ${taskId}, taskGroupId: ${taskGroupId}`)
+    );
+  }
+
   let build = await this.context.Builds.load({
     taskGroupId,
   });
