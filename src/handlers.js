@@ -23,12 +23,13 @@ const TITLES = { // maps github checkruns statuses and conclusions to titles to 
 };
 
 const CONCLUSIONS = { // maps status communicated bu the queue service to github checkrun conclusions
-  completed: 'success', // TODO: remove this stupid rule from es-lint
-  failed: 'failure',
-  exception: 'failure',
+  /*eslint-disable quote-props*/
+  'completed': 'success',
+  'failed': 'failure',
+  'exception': 'failure',
   'deadline-exceeded': 'timed_out',
-  canceled: 'cancelled',
-  superseded: 'neutral', // is not relevant anymore
+  'canceled': 'cancelled',
+  'superseded': 'neutral', // is not relevant anymore
   'claim-expired': 'failure',
   'worker-shutdown': 'neutral', // will be retried
   'malformed-payload': 'action_required', // like, correct your task definition???
