@@ -252,11 +252,13 @@ class VersionOne extends TcYaml {
       }
 
       config.tasks = config.tasks.map(task => {
+        task.routes = task.routes || [];
+        task.routes.push(config.reporting ? cfg.app.checkTaskRoute : cfg.app.statusTaskRoute);
+
         task = Object.assign({
           taskId: defaultTaskId,
           taskGroupId: defaultTaskGroupId,
           created: now,
-          routes: config.reporting ? [cfg.app.checkTaskRoute] : [cfg.app.statusTaskRoute],
         }, task);
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
