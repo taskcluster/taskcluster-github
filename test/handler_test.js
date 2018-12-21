@@ -510,6 +510,19 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
       });
       await assertStatusCreate('completed');
     });
+
+    test('Undefined state/reasonResolved in the task exchange message -> neutral status', async function() {
+      await addBuild({state: 'pending', taskGroupId: TASKGROUPID});
+      await simulateExchangeMessage({
+        taskGroupId: TASKGROUPID,
+        exchange: 'exchange/taskcluster-queue/v1/task-completed',
+        queue: 'resultStatusPq',
+        taskId: TASKID,
+        reasonResolved: 'banana',
+        state: 'completed',
+      });
+      await assertStatusCreate('neutral');
+    });
   });
 
   suite('Statuses API: initial status handler', function() {

@@ -348,6 +348,8 @@ async function statusHandler(message) {
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
+  let conclusion = CONCLUSIONS[reasonResolved || state];
+
   let build = await this.context.Builds.load({
     taskGroupId,
   });
@@ -359,8 +361,13 @@ async function statusHandler(message) {
 
   let taskState = {
     status: 'completed',
-    conclusion: CONCLUSIONS[reasonResolved || state],
+    conclusion: conclusion || 'neutral',
     completed_at: new Date().toISOString(),
+    /*eslint-disable no-extra-parens*/
+    ...(conclusion && {output: {summary: `Message came with unknown resolution reason or state.
+      Resolution reason received: ${reasonResolved}. State received: ${state}. The status has been marked as neutral.
+      For further information, please inspect the task in Taskcluster`},
+    }),
   };
 
   // true means we'll get null if the record doesn't exist
