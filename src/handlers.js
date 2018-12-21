@@ -497,7 +497,6 @@ async function jobHandler(message) {
   // This is a bit of a hack, but is needed for bug 1274077 for now
   try {
     let c = yaml.safeLoad(repoconf);
-    debug(`Result of yml.safeLoad: ${JSON.stringify(c, null, 2)}`);
   } catch (e) {
     if (e.name === 'YAMLException') {
       return await this.createExceptionComment({instGithub, organization, repository, sha, error: e, pullNumber});
