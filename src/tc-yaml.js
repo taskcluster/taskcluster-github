@@ -261,15 +261,13 @@ class VersionOne extends TcYaml {
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
         const {taskId, ...taskWithoutTaskId} = task;
-        const b = {
+        return {
           taskId,
           task: {
             ...taskWithoutTaskId,
             schedulerId: cfg.taskcluster.schedulerId,
           },
         };
-
-        return b;
       });
     }
     return this.createScopes(config, payload);

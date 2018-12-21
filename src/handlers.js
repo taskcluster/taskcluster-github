@@ -385,13 +385,13 @@ async function statusHandler(message) {
         ...taskState,
         owner: organization,
         repo: repository,
-        check_run_id: checkRun.checkRunId, // TODO: a helpful output
+        check_run_id: checkRun.checkRunId,
       });
     } else {
       const checkRun = await instGithub.checks.create({
         owner: organization,
         repo: repository,
-        name: `Task ${taskId}`, // <-- this needs to be unique 😩
+        name: `Task ${taskId}`,
         head_sha: sha,
         output: { // TODO: a helpful output
           title: `TaskGroup: queued for ${eventType})`,
