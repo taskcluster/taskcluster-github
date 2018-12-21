@@ -118,14 +118,11 @@ class Handlers {
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    debug(`The binding for statuses: route.${this.context.cfg.app.statusTaskRoute}`);
     const deprecatedStatusBindings = [
       queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
-
-    deprecatedStatusBindings.forEach((b, i) => debug(`The result binding ${i}: ${JSON.stringify(b, null, 2)}`));
 
     // Listen for taskGroupCreationRequested event to create initial status on github
     const deprecatedBindings = [
@@ -351,9 +348,11 @@ async function statusHandler(message) {
   let {runId} = message.payload;
   let {reasonResolved} = runs[runId];
 
-  let {organization, repository, sha, eventId, eventType, installationId} = await this.context.Builds.load({
+  let build = await this.context.Builds.load({
     taskGroupId,
   });
+
+  let {organization, repository, sha, eventId, eventType, installationId} = build;
 
   let debug = Debug(`${debugPrefix}:${eventId}`);
   debug(`Handling state change for task ${taskId} in group ${taskGroupId}`);
@@ -404,7 +403,7 @@ async function statusHandler(message) {
         ),
       });
 
-      await context.CheckRuns.create({
+      await this.context.CheckRuns.create({
         taskGroupId: taskGroupId,
         taskId: taskId,
         checkSuiteId: checkRun.data.check_suite.id.toString(),
@@ -631,8 +630,6 @@ async function jobHandler(message) {
 async function taskGroupCreationHandler(message) {
   const {
     taskGroupId,
-    organization,
-    repository,
   } = message.payload;
 
   const debug = Debug(`${debugPrefix}:taskGroup-handler`);
@@ -642,6 +639,8 @@ async function taskGroupCreationHandler(message) {
     sha,
     eventType,
     installationId,
+    organization,
+    repository,
   } = await this.context.Builds.load({taskGroupId});
 
   const statusContext = `${this.context.cfg.app.statusContext} (${eventType.split('.')[0]})`;
