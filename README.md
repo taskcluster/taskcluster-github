@@ -12,12 +12,11 @@ Insert the following string (replacing the words in caps with your organization 
 `[![Task Status](https://github.taskcluster.net/v1/repository/USERNAME/REPONAME/BRANCHNAME/badge.svg)](https://github.taskcluster.net/v1/repository/USERNAME/REPONAME/BRANCHNAME/latest)`
 
 
-
-
 ## Components
 
 ### API Server
 Listens for WebHooks and, if they are valid, forwards them to a pulse exchange.
+
 
 ### Handlers
 Listen for WebHook triggered pulse messages and attempts to schedule Taskcluster tasks for any events related to a repository which contains a `.taskcluster.yml` file.
