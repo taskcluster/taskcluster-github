@@ -351,13 +351,6 @@ async function statusHandler(message) {
 
   let conclusion = CONCLUSIONS[reasonResolved || state];
 
-  if (conclusion === undefined) {
-    this.monitor.reportError(new Error(`Unknown reasonResolved or state in ${message.exchange}!
-      Resolution reason received: ${reasonResolved}. State received: ${state}. Add these to the handlers map.
-      TaskId: ${taskId}, taskGroupId: ${taskGroupId}`)
-    );
-  }
-
   let build = await this.context.Builds.load({
     taskGroupId,
   });
@@ -371,12 +364,21 @@ async function statusHandler(message) {
     status: 'completed',
     conclusion: conclusion || 'neutral',
     completed_at: new Date().toISOString(),
-    /*eslint-disable no-extra-parens*/
-    ...(conclusion && {output: {summary: `Message came with unknown resolution reason or state.
-      Resolution reason received: ${reasonResolved}. State received: ${state}. The status has been marked as neutral.
-      For further information, please inspect the task in Taskcluster`},
-    }),
   };
+
+  if (conclusion === undefined) {
+    this.monitor.reportError(new Error(`Unknown reasonResolved or state in ${message.exchange}!
+      Resolution reason received: ${reasonResolved}. State received: ${state}. Add these to the handlers map.
+      TaskId: ${taskId}, taskGroupId: ${taskGroupId}`)
+    );
+
+    taskState.output = {
+      summary: `Message came with unknown resolution reason or state. 
+        Resolution reason received: ${reasonResolved}. State received: ${state}. The status has been marked as neutral. 
+        For further information, please inspect the task in Taskcluster`,
+      title: `Unknown Resolution`,
+    };
+  }
 
   // true means we'll get null if the record doesn't exist
   let checkRun = await this.context.CheckRuns.load({taskGroupId, taskId}, true);
