@@ -588,14 +588,6 @@ async function jobHandler(message) {
   let {routes} = graphConfig.tasks[0].task;
 
   try {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
-    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
-  } catch (e) {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
-    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  }
-
-  try {
     debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
     let now = new Date();
     await context.Builds.create({
@@ -624,6 +616,14 @@ async function jobHandler(message) {
     assert.equal(build.sha, sha);
     assert.equal(build.eventType, message.payload.details['event.type']);
     assert.equal(build.eventId, message.payload.eventId);
+  }
+
+  try {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
+    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  } catch (e) {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
+    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
   }
 
   try {
