@@ -1,5 +1,6 @@
 version: 1
 reporting: checks-v1
+
 policy:
   pullRequests: public
 tasks:
