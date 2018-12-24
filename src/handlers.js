@@ -22,20 +22,20 @@ const TITLES = { // maps github checkruns statuses and conclusions to titles to 
   completed: 'Completed',
 };
 
-const CONCLUSIONS = { // maps status communicated bu the queue service to github checkrun conclusions
+const CONCLUSIONS = { // maps status communicated by the queue service to github checkrun conclusions
   /*eslint-disable quote-props*/
   'completed': 'success',
   'failed': 'failure',
   'exception': 'failure',
   'deadline-exceeded': 'timed_out',
   'canceled': 'cancelled',
-  'superseded': 'neutral', // is not relevant anymore
+  'superseded': 'neutral', // queue status means: is not relevant anymore
   'claim-expired': 'failure',
-  'worker-shutdown': 'neutral', // will be retried
-  'malformed-payload': 'action_required', // like, correct your task definition???
+  'worker-shutdown': 'neutral', // queue status means: will be retried
+  'malformed-payload': 'action_required', // github status means "correct your task definition"
   'resource-unavailable': 'failure',
   'internal-error': 'failure',
-  'intermittent-task': 'neutral', // will be retried
+  'intermittent-task': 'neutral', // queue status means: will be retried
 };
 
 /**
@@ -119,14 +119,14 @@ class Handlers {
     // We only need to listen for failure and exception events on
     // tasks. We wait for the entire group to be resolved before checking
     // for success.
-    const deprecatedStatusBindings = [
+    const deprecatedResultStatusBindings = [
       queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
     // Listen for taskGroupCreationRequested event to create initial status on github
-    const deprecatedBindings = [
+    const deprecatedInitialStatusBindings = [
       githubEvents.taskGroupCreationRequested(`route.${this.context.cfg.app.statusTaskRoute}`),
     ];
 
@@ -161,7 +161,7 @@ class Handlers {
     this.deprecatedResultStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: deprecatedStatusBindings,
+        bindings: deprecatedResultStatusBindings,
         queueName: this.deprecatedResultStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedStatuslistener', callHandler('status', deprecatedStatusHandler).bind(this))
@@ -170,7 +170,7 @@ class Handlers {
     this.deprecatedInitialStatusPq = await consume(
       {
         client: this.pulseClient,
-        bindings: deprecatedBindings,
+        bindings: deprecatedInitialStatusBindings,
         queueName: this.deprecatedInitialStatusQueueName,
       },
       this.monitor.timedHandler('deprecatedlistener', callHandler('task', taskGroupCreationHandler).bind(this))
@@ -376,7 +376,7 @@ async function statusHandler(message) {
       summary: `Message came with unknown resolution reason or state. 
         Resolution reason received: ${reasonResolved}. State received: ${state}. The status has been marked as neutral. 
         For further information, please inspect the task in Taskcluster`,
-      title: `Unknown Resolution`,
+      title: 'Unknown Resolution',
     };
   }
 

@@ -266,7 +266,6 @@ class VersionOne extends TcYaml {
         defaultTaskId = slugid.nice(); // invent a new taskId for the next task
 
         const {taskId, ...taskWithoutTaskId} = task;
-        console.log(task.routes);
         return {
           taskId,
           task: {

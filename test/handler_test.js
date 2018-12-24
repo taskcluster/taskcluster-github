@@ -415,20 +415,20 @@ helper.secrets.mockSuite('handlers', ['taskcluster'], function(mock, skipping) {
 
     const TASKGROUPID = 'AXB-sjV-SoCyibyq3P32ow';
     const TASKID = 'banana';
-    const CONCLUSIONS = { // maps status communicated bu the queue service to github checkrun conclusions
+    const CONCLUSIONS = { // maps status communicated by the queue service to github checkrun conclusions
       /*eslint-disable quote-props*/
       'completed': 'success',
       'failed': 'failure',
       'exception': 'failure',
       'deadline-exceeded': 'timed_out',
       'canceled': 'cancelled',
-      'superseded': 'neutral', // is not relevant anymore
+      'superseded': 'neutral', // means: is not relevant anymore
       'claim-expired': 'failure',
-      'worker-shutdown': 'neutral', // will be retried
-      'malformed-payload': 'action_required', // like, correct your task definition???
+      'worker-shutdown': 'neutral', // means: will be retried
+      'malformed-payload': 'action_required', // like, "correct your task definition"
       'resource-unavailable': 'failure',
       'internal-error': 'failure',
-      'intermittent-task': 'neutral', // will be retried
+      'intermittent-task': 'neutral', // means: will be retried
     };
 
     async function assertStatusUpdate(state) {
