@@ -587,20 +587,30 @@ async function jobHandler(message) {
   taskGroupId = graphConfig.tasks[0].task.taskGroupId;
   let {routes} = graphConfig.tasks[0].task;
 
-  debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
-  let now = new Date();
-  await context.Builds.create({
-    organization,
-    repository,
-    sha,
-    taskGroupId,
-    state: groupState,
-    created: now,
-    updated: now,
-    installationId: message.payload.installationId,
-    eventType: message.payload.details['event.type'],
-    eventId: message.payload.eventId,
-  }).catch(async (err) => {
+  try {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
+    await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
+  } catch (e) {
+    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
+    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
+  }
+
+  try {
+    debug(`Trying to create a record for ${organization}/${repository}@${sha} (${groupState}) in Builds table`);
+    let now = new Date();
+    await context.Builds.create({
+      organization,
+      repository,
+      sha,
+      taskGroupId,
+      state: groupState,
+      created: now,
+      updated: now,
+      installationId: message.payload.installationId,
+      eventType: message.payload.details['event.type'],
+      eventId: message.payload.eventId,
+    });
+  } catch (e) {
     if (err.code !== 'EntityAlreadyExists') {
       throw err;
     }
@@ -614,26 +624,22 @@ async function jobHandler(message) {
     assert.equal(build.sha, sha);
     assert.equal(build.eventType, message.payload.details['event.type']);
     assert.equal(build.eventId, message.payload.eventId);
-  }).then(async data => {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} (taskGroupId: ${taskGroupId})`);
-    return await this.createTasks({scopes: graphConfig.scopes, tasks: graphConfig.tasks});
-  }).catch(async e => {
-    debug(`Creating tasks for ${organization}/${repository}@${sha} failed! Leaving comment on Github.`);
-    return await this.createExceptionComment({instGithub, organization, repository, sha, error: e});
-  }).then(async data => {
+  }
+
+  try {
     debug(`Publishing status exchange for ${organization}/${repository}@${sha} (${groupState})`);
-    return await context.publisher.taskGroupCreationRequested({
+    await context.publisher.taskGroupCreationRequested({
       taskGroupId,
       organization,
       repository,
     }, routes);
-  }).catch(async e => {
+  } catch (e) {
     debug(`Failed to publish to taskGroupCreationRequested exchange. 
     Parameters: ${taskGroupId}, ${organization}, ${repository}, ${routes}`);
     debug(`Stack: ${e.stack}`);
     return debug(`Failed to publish to taskGroupCreationRequested exchange 
     for ${organization}/${repository}@${sha} with the error: ${JSON.stringify(e, null, 2)}`);
-  });
+  }
 
   debug(`Job handling for ${organization}/${repository}@${sha} completed.`);
 
