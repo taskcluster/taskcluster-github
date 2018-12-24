@@ -102,6 +102,8 @@ class VersionZero extends TcYaml {
   compileTasks(config, cfg, payload, now) {
     config.tasks = config.tasks.map((task) => {
       task.routes = task.routes || [];
+      task.routes.push(cfg.app.statusTaskRoute);
+
       return {
         taskId: slugid.nice(),
         task,
