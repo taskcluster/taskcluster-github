@@ -64,8 +64,8 @@ production:
     jobQueue: 'jobs'
     deprecatedResultStatusQueue: 'deprecated-statuses'
     deprecatedInitialStatusQueue: 'deprecated-tasks'
-    resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    resultStatusQueue: 'checks-statuses'
+    initialStatusQueue: 'checks-tasks'
     botName: 'taskcluster[bot]'
 
   intree:
@@ -88,8 +88,8 @@ staging:
     jobQueue: 'jobs'
     deprecatedResultStatusQueue: 'deprecated-statuses'
     deprecatedInitialStatusQueue: 'deprecated-tasks'
-    resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    resultStatusQueue: 'checks-statuses'
+    initialStatusQueue: 'checks-tasks'
     buildsTableName: 'TaskclusterGithubBuildsStaging'
     ownersDirectoryTableName: 'TaskclusterIntegrationOwnersStaging'
     name: 'tc-github-staging'
@@ -116,8 +116,8 @@ test:
     jobQueue: 'test-jobs'
     deprecatedResultStatusQueue: 'deprecated-statuses'
     deprecatedInitialStatusQueue: 'deprecated-tasks'
-    resultStatusQueue: 'statuses'
-    initialStatusQueue: 'tasks'
+    resultStatusQueue: 'checks-statuses'
+    initialStatusQueue: 'checks-tasks'
 
   webhook:
     secret: ['abc123', 'def456']
