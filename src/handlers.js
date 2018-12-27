@@ -271,13 +271,16 @@ module.exports = Handlers;
  * GitHub Statuses: https://developer.github.com/v3/repos/statuses/
  **/
 async function deprecatedStatusHandler(message) {
+  let debug = Debug(`${debugPrefix}:deprecated-result-handler`);
+  debug(`Statuses API. Handling state change`);
+
   let taskGroupId = message.payload.taskGroupId || message.payload.status.taskGroupId;
 
   let build = await this.context.Builds.load({
     taskGroupId,
   });
 
-  let debug = Debug(debugPrefix + ':' + build.eventId);
+  debug = Debug(`${debugPrefix}:deprecated-result-handler:${build.eventId}`);
   debug(`Statuses API. Handling state change for task-group ${taskGroupId}`);
 
   let state = 'success';
