@@ -62,10 +62,10 @@ defaults:
 production:
   app:
     jobQueue: 'jobs'
-    deprecatedResultStatusQueue: 'deprecated-statuses'
-    deprecatedInitialStatusQueue: 'deprecated-tasks'
-    resultStatusQueue: 'checks-statuses'
-    initialStatusQueue: 'checks-tasks'
+    deprecatedResultStatusQueue: 'banana'
+    deprecatedInitialStatusQueue: 'apple'
+    resultStatusQueue: 'watermelon'
+    initialStatusQueue: 'tomato'
     botName: 'taskcluster[bot]'
 
   intree:
