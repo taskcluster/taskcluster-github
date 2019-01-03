@@ -103,6 +103,7 @@ class Handlers {
       githubEvents.release(),
     ];
 
+    const schedulerId = this.context.cfg.taskcluster.schedulerId;
     const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
 
     const statusBindings = [
@@ -118,7 +119,7 @@ class Handlers {
     const deprecatedResultStatusBindings = [
       queueEvents.taskFailed(`route.${this.context.cfg.app.statusTaskRoute}`),
       queueEvents.taskException(`route.${this.context.cfg.app.statusTaskRoute}`),
-      queueEvents.taskGroupResolved(`route.${this.context.cfg.app.statusTaskRoute}`),
+      queueEvents.taskGroupResolved({schedulerId}),
     ];
 
     // Listen for taskGroupCreationRequested event to create initial status on github
